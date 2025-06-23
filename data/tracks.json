@@ -1,0 +1,92 @@
+[
+  {
+    "title": "unlucky number",
+    "artist": "xaev",
+    "album": "berdlycore chapter 2",
+    "cover": "https://f4.bcbits.com/img/a2892008372_10.jpg",
+    "file": "/audio/unlucky number.mp3",
+    "isNew": true,
+    "isPopular": false,
+    "createdAt": "2022-05-05T00:00:00.000Z"
+  },
+  {
+    "title": "look idk what to call this song just give me plays",
+    "artist": "xaev",
+    "album": "berdlycore chapter 3",
+    "cover": "https://i1.sndcdn.com/artworks-lUjHI0CjQZOqqyj5-BWeyhA-t500x500.jpg",
+    "file": "/audio/yup.flac",
+    "isNew": false,
+    "isPopular": true,
+    "createdAt": "2022-07-23T00:00:00.000Z"
+  },
+  {
+    "title": "if u wanna be alone <3",
+    "artist": "Tripsoul",
+    "album": "if u wanna be alone <3",
+    "cover": "https://i1.sndcdn.com/artworks-AUUq18dCSlnRDNtg-ZQ65hg-t500x500.png",
+    "file": "/audio/if u wanna be alone _3.mp3",
+    "isNew": false,
+    "isPopular": false,
+    "createdAt": "2025-05-24T00:00:00.000Z"
+  },
+  {
+    "title": "virtual riot pizza",
+    "artist": "xaev",
+    "album": "berdlycore chapter 2",
+    "cover": "https://f4.bcbits.com/img/a2892008372_10.jpg",
+    "file": "/audio/virtual riot pizza.mp3",
+    "isNew": false,
+    "isPopular": false,
+    "createdAt": "2025-06-22T03:42:34.593Z"
+  },
+  {
+    "title": "homeswitcher",
+    "artist": "gingus",
+    "album": " giratinightcore: yellow",
+    "cover": "https://i.scdn.co/image/ab67616d0000b2736a845595b031f982fba67878",
+    "file": "/audio/homeswitcher.mp3",
+    "isNew": false,
+    "isPopular": true,
+    "createdAt": "2021-09-15T03:30:13.332Z"
+  },
+  {
+    "title": "it's always a good time",
+    "artist": "xaev",
+    "album": "berdlycore chapter 1",
+    "cover": "https://i1.sndcdn.com/artworks-9iDYtZyfFTfKjCcz-jtyoGQ-t500x500.jpg",
+    "file": "/audio/it's always a good time.mp3",
+    "isNew": false,
+    "isPopular": false,
+    "createdAt": "2025-06-21T23:51:15.242Z"
+  },
+  {
+    "title": "TAKE-ME-AWAY ˢᵒ ʷʰʸ ᵗʳʸ ᵗᵒ ᶠⁱᵍʰᵗ ⁱᵗ?",
+    "artist": "xaev",
+    "album": "TO-THE-CORE_153BPM",
+    "cover": "https://i1.sndcdn.com/artworks-7fznRxX5kZb59Oy5-vYgzig-t500x500.jpg",
+    "file": "/audio/TAKE ME AWAY so why try to fight it.mp3",
+    "isNew": true,
+    "isPopular": true,
+    "createdAt": "2025-05-09"
+  },
+  {
+    "title": "ta1lsd024",
+    "artist": "ta1lsd0ll",
+    "album": "cursed003",
+    "cover": "https://i1.sndcdn.com/artworks-Oq46huYBdV2Mdgyk-z5C8mw-t500x500.png",
+    "file": "/audio/ta1lsd024.mp3",
+    "isNew": true,
+    "isPopular": false,
+    "createdAt": "2025-01-23"
+  },
+  {
+    "title": "ta1lsd003",
+    "artist": "ta1lsd0ll",
+    "album": "cursed001",
+    "cover": "https://i1.sndcdn.com/artworks-MTQcZ6DmlGzZzt1B-DwiknQ-t500x500.jpg",
+    "file": "/audio/ta1lsd003.mp3",
+    "isNew": false,
+    "isPopular": true,
+    "createdAt": "2021-06-29"
+  }
+]

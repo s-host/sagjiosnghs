@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Add New Song - HackTunes</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="/style.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white p-8">
+  <h1 class="text-4xl mb-6">Add New Song</h1>
+
+  <form id="add-song-form" class="flex flex-col max-w-md space-y-4" enctype="multipart/form-data">
+    <input name="title" placeholder="Song Title" required class="p-2 rounded text-black" />
+    <input name="artist" placeholder="Artist" required class="p-2 rounded text-black" />
+    <input name="album" placeholder="Album" class="p-2 rounded text-black" />
+    <input name="cover" placeholder="Cover URL" class="p-2 rounded text-black" />
+    <input name="audioFile" type="file" accept="audio/*" required class="text-white" />
+    <label for="category" class="block text-sm font-medium text-gray-300">Category</label>
+    <select id="category" name="category" class="mt-1 block w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2">
+        <option value="">-- Select a category --</option>
+        <option value="isPopular">Popular</option>
+        <option value="isNew">New</option>
+    </select>
+    <label for="releaseDate" class="block text-sm font-medium text-gray-300">Release Date</label>
+<input type="date" id="releaseDate" name="releaseDate" required class="mt-1 block w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2" />
+    <button type="submit" class="bg-green-600 hover:bg-green-700 py-2 rounded font-bold">Upload & Add Song</button>
+  </form>
+
+  <script>
+    document.getElementById('add-song-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch('/api/upload-song', {
+          method: 'POST',
+          body: formData,
+        });
+        if (response.ok) {
+          alert('Song uploaded successfully!');
+          window.location.href = '/'; // redirect to main page or wherever you want
+        } else {
+          const error = await response.text();
+          alert('Error: ' + error);
+        }
+      } catch (err) {
+        alert('Upload failed: ' + err.message);
+      }
+    });
+  </script>
+
+</body>
+</html>
