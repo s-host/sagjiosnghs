@@ -202,7 +202,8 @@ app.post("/api/upload-song", upload.single("audioFile"), (req, res) => {
   });
 });
 
-// catch all
-app.get(/^\/(?!api)(?!.*\.\w+).*/, (req, res) => {
+// catch-all only for client-side routes
+app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
+
