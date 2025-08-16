@@ -359,7 +359,7 @@ function renderUpload() {
  
 }
 
-// album page stuff below this point //
+// album page stuff below this point key: albumbelow //
 
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
@@ -382,6 +382,9 @@ function playAlbumTrack(albumSlug, index) {
   albumPlayer.currentIndex = index;
   startAlbumAudio();
   updatePersistentPlayer();
+  const volume = parseFloat(volumeSlider.value);
+  audio.volume = volume;
+  updateVolumeFill();
 }
 
 function playAlbumTracks(albumSlug) {
@@ -727,6 +730,9 @@ function albumNextTrack(event) {
     startAlbumAudio();
     updatePersistentPlayer();
   }
+  const volume = parseFloat(volumeSlider.value);
+  audio.volume = volume;
+  updateVolumeFill();
 }
 
 function albumPrevTrack(event) {
@@ -737,6 +743,9 @@ function albumPrevTrack(event) {
     startAlbumAudio();
     updatePersistentPlayer();
   }
+  const volume = parseFloat(volumeSlider.value);
+  audio.volume = volume;
+  updateVolumeFill();
 }
 
 const trackDurationMap = {};
