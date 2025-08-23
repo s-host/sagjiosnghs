@@ -594,6 +594,8 @@ function updatePersistentPlayer() {
 
     bar = container;
 
+    
+
     const loopBtn = bar.querySelector("#persistentLoopBtn");
     loopBtn.classList.remove("loopall", "loop1", "noloop");
 
@@ -687,6 +689,30 @@ function updatePersistentPlayer() {
       if (img) img.src = current.cover;
     }
 
+  }
+
+  let coverBox = document.getElementById("persistent-cover-box");
+  if (!coverBox) {
+    coverBox = document.createElement("div");
+    coverBox.id = "persistent-cover-box";
+    coverBox.className = "fixed bottom-20 right-4 bg-gray-900 shadow-lg rounded-lg overflow-hidden border border-gray-700 z-50";
+    coverBox.style.width = "200px";
+    coverBox.style.height = "200px";
+    coverBox.innerHTML = `
+      <div class="relative w-full h-full">
+        <img id="cover-img" src="${current.cover}" alt="cover" class="w-full h-full object-cover"/>
+        <button id="cover-close" class="absolute top-1 right-1 bg-black bg-opacity-60 text-white text-xs px-1 rounded">✖</button>
+      </div>
+    `;
+    document.body.appendChild(coverBox);
+    coverBox.querySelector("#cover-close").addEventListener("click", () => coverBox.remove());
+  } else {
+    // always refresh cover image on track change
+    const img = coverBox.querySelector("#cover-img");
+    if (img) {
+      img.src = current.cover;
+      img.alt = current.album;
+    }
   }
 
   // always update track info and play/pause icons on track change
