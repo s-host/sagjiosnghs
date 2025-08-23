@@ -1,5 +1,16 @@
 [
   {
+    "title": "catch!",
+    "artist": "gingus",
+    "album": "catch!",
+    "cover": "https://i1.sndcdn.com/artworks-DXFJ9vyo7ADm2D5a-zvvNXw-t500x500.jpg",
+    "file": "/audio/catch!.mp3",
+    "isNew": false,
+    "isPopular": false,
+    "createdAt": "2021-09-15T00:00:00.000Z",
+    "albumNumber": "1"
+  },
+  {
     "title": "I WANNA TELL U ~WHAT'S ON MY MIND~",
     "artist": "xaev",
     "album": "TO-THE-CORE_153BPM",
