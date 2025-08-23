@@ -1,14 +1,36 @@
 [
   {
+    "title": "hell",
+    "artist": "gingus",
+    "album": "giratinightcore: unreleased",
+    "cover": "https://i1.sndcdn.com/artworks-S6DsabMNsTEyrb4X-4y7WPg-t500x500.jpg",
+    "file": "/audio/hell.mp3",
+    "isNew": false,
+    "isPopular": false,
+    "createdAt": "2021-09-15T00:00:00.000Z",
+    "albumNumber": "2"
+  },
+  {
+    "title": "plane",
+    "artist": "gingus",
+    "album": "giratinightcore: unreleased",
+    "cover": "https://i1.sndcdn.com/artworks-Zs5A3EGGX63EQe1g-IJVOKA-t500x500.jpg",
+    "file": "/audio/plane.mp3",
+    "isNew": false,
+    "isPopular": false,
+    "createdAt": "2021-09-15T00:00:00.000Z",
+    "albumNumber": "1"
+  },
+  {
     "title": "catch!",
     "artist": "gingus",
-    "album": "catch!",
+    "album": "giratinightcore: unreleased",
     "cover": "https://i1.sndcdn.com/artworks-DXFJ9vyo7ADm2D5a-zvvNXw-t500x500.jpg",
     "file": "/audio/catch!.mp3",
     "isNew": false,
     "isPopular": false,
     "createdAt": "2021-09-15T00:00:00.000Z",
-    "albumNumber": "1"
+    "albumNumber": "3"
   },
   {
     "title": "I WANNA TELL U ~WHAT'S ON MY MIND~",

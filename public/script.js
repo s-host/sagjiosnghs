@@ -811,9 +811,9 @@ function setupAudioPlayer(track) {
   playPause.addEventListener("click", () => {
     stopAlbumAudio();
     const bar = document.getElementById("persistent-album-bar");
-    const img = document.getElementById("cover-img");
+    let coverBox = document.getElementById("persistent-cover-box");
     if (bar) bar.classList.add("hide");
-    if (img) img.classList.add("hide");
+    if (coverBox) coverBox.remove()
     const isShared = albumPlayer.tracks.length === 1 && isSameTrack(albumPlayer.tracks[0], track);
     const albumAudio = albumPlayer.audio;
 
