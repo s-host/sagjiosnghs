@@ -187,6 +187,7 @@ app.post("/api/upload-song", upload.single("audioFile"), (req, res) => {
     file: `/audio/${audioFile.filename}`,
     isNew: category === "isNew",
     isPopular: category === "isPopular",
+    isClean: category === "isClean",
     createdAt: releaseDate ? new Date(releaseDate).toISOString() : new Date().toISOString(),
     albumNumber,
   };

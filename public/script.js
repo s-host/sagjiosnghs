@@ -101,6 +101,17 @@ function renderHome() {
           .join("")}
       </div>
     </section>
+
+    <section>
+      <h2 class="text-2xl mb-4 font-semibold">Clean Tracks</h2>
+      <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        ${tracks
+          .filter(t => t.isClean)
+          .map(renderTrackCard)
+          .join("")}
+      </div>
+    </section>
+    <br><br>
   `;
 }
 
@@ -343,6 +354,7 @@ function renderUpload() {
     file: form.file.value,
     isNew: form.isNew.checked,
     isPopular: form.isPopular.checked,
+    isClean: form.isClean.checked,
     albumNumber: albumNumber ? parseInt(albumNumber) : null,
   };
 
