@@ -444,9 +444,10 @@ function startAlbumAudio() {
   });
   albumPlayer.paused = false;
 
-  // volume control setup
-  audio.volume = 1;
   const persistentVolumeSlider = document.getElementById("volumeSlider");
+  const savedVolume = persistentVolumeSlider ? parseFloat(persistentVolumeSlider.value) : 1;
+  audio.volume = savedVolume;
+
   setupVolumeSlider(persistentVolumeSlider, albumPlayer.audio);
 
   audio.onended = () => {
@@ -475,7 +476,7 @@ function startAlbumAudio() {
     const bar = document.querySelector("#albumProgress");
     if (bar) {
       bar.value = percent;
-      bar.style.background = `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${percent}%, #444 ${percent}%, #444 100%)`; // will add themed bar laterrrr
+      bar.style.background = `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${percent}%, #444 ${percent}%, #444 100%)`;
     }
 
     const timestamp = document.querySelector("#albumTimestamp");
@@ -656,6 +657,35 @@ function updatePersistentPlayer() {
     });
 
     updateVolumeFill();
+
+    let coverBox = document.getElementById("persistent-cover-box");
+
+    if (!coverBox) {
+      coverBox = document.createElement("div");
+      coverBox.id = "persistent-cover-box";
+      coverBox.className = "fixed bottom-20 right-4 bg-gray-900 shadow-lg rounded-lg overflow-hidden border border-gray-700 z-50";
+      coverBox.style.width = "200px";
+      coverBox.style.height = "200px";
+
+      // wrapper for image & close button
+      coverBox.innerHTML = `
+        <div class="relative w-full h-full">
+          <img id="cover-img" src="${current.cover}" alt="cover" class="w-full h-full object-cover"/>
+          <button id="cover-close" class="absolute top-1 right-1 bg-black bg-opacity-60 text-white text-xs px-1 rounded">✖</button>
+        </div>
+      `;
+
+      document.body.appendChild(coverBox);
+
+      // close button logic
+      coverBox.querySelector("#cover-close").addEventListener("click", () => {
+        coverBox.remove();
+      });
+    } else {
+      // update existing cover image if element already exists
+      const img = coverBox.querySelector("#cover-img");
+      if (img) img.src = current.cover;
+    }
 
   }
 

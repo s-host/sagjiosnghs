@@ -1,12 +1,23 @@
 [
   {
+    "title": "I WANNA TELL U ~WHAT'S ON MY MIND~",
+    "artist": "xaev",
+    "album": "TO-THE-CORE_153BPM",
+    "cover": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcdn.albumoftheyear.org%2Falbum%2F1305868-to-the-core-153bpm_143409.jpg&f=1&nofb=1&ipt=301c0ca5ed61a67cb071fa4d8404dbcf67f5f1caaa0ceacb80ea6f64cf64c3e5",
+    "file": "/audio/I WANNA TELL U WHAT S ON MY MIND.mp3",
+    "isNew": true,
+    "isPopular": false,
+    "createdAt": "2025-05-09T00:00:00.000Z",
+    "albumNumber": "12"
+  },
+  {
     "title": "dilf repellent",
     "artist": "leroy",
     "album": "Dariacore 2: Enter Here, Hell to the Left",
     "cover": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.scdn.co%2Fimage%2Fab67616d0000b273a0cb942a76f8804a9cace72e&f=1&nofb=1&ipt=29906a490463048bfeba9c1a86b2ec3d5a313efe7afde4c0bd0ea0b5d34a0e7e",
     "file": "/audio/Leroy Dilf Repellent.mp3",
     "isNew": false,
-    "isPopular": true,
+    "isPopular": false,
     "createdAt": "2021-09-07T00:00:00.000Z",
     "albumNumber": "1"
   },
@@ -181,7 +192,7 @@
     "album": "berdlycore chapter 2",
     "cover": "https://f4.bcbits.com/img/a2892008372_10.jpg",
     "file": "/audio/unlucky number.mp3",
-    "isNew": true,
+    "isNew": false,
     "isPopular": false,
     "createdAt": "2022-05-05T00:00:00.000Z",
     "albumNumber": "13"
