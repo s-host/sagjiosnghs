@@ -807,11 +807,13 @@ function setupAudioPlayer(track) {
     }
     rafId = requestAnimationFrame(updateProgress);
   }
-
+  // key: audioplayer
   playPause.addEventListener("click", () => {
     stopAlbumAudio();
     const bar = document.getElementById("persistent-album-bar");
+    const img = document.getElementById("cover-img");
     if (bar) bar.classList.add("hide");
+    if (img) img.classList.add("hide");
     const isShared = albumPlayer.tracks.length === 1 && isSameTrack(albumPlayer.tracks[0], track);
     const albumAudio = albumPlayer.audio;
 
