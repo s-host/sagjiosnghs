@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Profile - HyperTunes</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="/style.css" rel="stylesheet">
+  <script type="module" src="/themes.js"></script>
+  <script src="/script.js" defer></script>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro' rel='stylesheet' type='text/css'>
+</head>
+<body class="bg-gray-900 text-white">
+  <header class="p-6 bg-gray-800 shadow-md flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <h1 class="text-3xl font-bold cursor-pointer" onclick="window.location.href='/'">HyperTunes</h1>
+    </div>
+    <label class="wt-white" for="theme-select">Theme:
+      <select id="theme-select">
+              <option value="dark" class="text-black">Dark</option>
+              <option value="light" class="text-black">Light</option>
+              <option value="blue" class="text-black">Blue</option>
+              <option value="sc" class="text-black">SC</option>
+              <option value="games" class="text-black">Games</option>
+              <option value="midnight-blurple" class="text-black">Midnight Blurple</option>
+              <option value="strawberry-lemonade" class="text-black">Strawberry Lemonade</option>
+              <option value="ocean-breeze" class="text-black">Ocean Breeze</option>
+              <option value="sunset-glow" class="text-black">Sunset Glow</option>
+              <option value="forest-night" class="text-black">Forest Night</option>
+              <option value="lavender-dreams" class="text-black">Lavender Dreams</option>
+      </select>
+    </label>
+    <div id="navbar-buttons" class="flex items-center space-x-4">
+      <button onclick="window.location.href='/'" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded navbutton">Back to Home</button>
+      
+      <!-- Authenticated buttons (hidden by default) -->
+      <button id="logout-btn" onclick="logout()" style="display:none;" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded navbutton">Log Out</button>
+
+      <!-- Non-authenticated buttons (visible by default) -->
+      <button id="register-btn" onclick="window.location.href='/register'" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded">Sign Up</button>
+      <button id="signin-btn" onclick="window.location.href='/'" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded">Sign In</button>
+    </div>
+  </header>
+
+  <main id="profile-app" class="p-6">
+    <div id="loading" class="text-center">
+      <p>Loading profile...</p>
+    </div>
+
+    <div id="profile-content" class="hidden">
+      <div class="max-w-4xl mx-auto">
+        <div class="bg-gray-800 rounded-lg shadow-lg p-6 mb-6 track">
+          <div class="flex items-center space-x-4">
+            <div class="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <span id="profile-avatar" class="text-2xl font-bold text-white"></span>
+            </div>
+            <div>
+              <h1 id="profile-username" class="text-3xl font-bold"></h1>
+              <p id="profile-member-since" class="text-gray-400"></p>
+              <span id="profile-admin-badge" class="hidden bg-yellow-600 text-yellow-100 px-2 py-1 rounded text-xs font-semibold">ADMIN</span>
+            </div>
+          </div>
+          
+          <div id="profile-bio-section" class="mt-4">
+            <div id="profile-bio-display">
+              <h3 class="text-lg font-semibold mb-2">About</h3>
+              <p id="profile-bio" class="text-gray-300"></p>
+            </div>
+            
+            <div id="profile-bio-edit" class="hidden">
+              <h3 class="text-lg font-semibold mb-2">Edit Bio</h3>
+              <textarea 
+                id="bio-edit-input" 
+                class="auth-input w-full px-3 py-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-500" 
+                placeholder="Tell us about yourself (max 500 characters)"
+                maxlength="500"
+                rows="4"
+              ></textarea>
+              <div class="mt-2 flex space-x-2">
+                <button id="save-bio-btn" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">Save</button>
+                <button id="cancel-bio-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm">Cancel</button>
+              </div>
+            </div>
+            
+            <button id="edit-bio-btn" class="hidden mt-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">Edit Bio</button>
+          </div>
+        </div>
+
+        <div class="grid gap-6 md:grid-cols-2">
+          <div class="bg-gray-800 rounded-lg shadow-lg p-6 track">
+            <h2 class="text-xl font-bold mb-4">Account Information</h2>
+            <div class="space-y-3">
+              <div>
+                <span class="text-gray-400">User ID:</span>
+                <span id="info-user-id" class="ml-2 font-mono text-sm"></span>
+              </div>
+              <div>
+                <span class="text-gray-400">Username:</span>
+                <span id="info-username" class="ml-2 font-semibold"></span>
+              </div>
+              <div>
+                <span class="text-gray-400">Account Type:</span>
+                <span id="info-account-type" class="ml-2"></span>
+              </div>
+              <div>
+                <span class="text-gray-400">Member Since:</span>
+                <span id="info-created-date" class="ml-2"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-gray-800 rounded-lg shadow-lg p-6 track">
+            <h2 class="text-xl font-bold mb-4">Activity Stats</h2>
+            <div class="space-y-3">
+              <div>
+                <span class="text-gray-400">Listening Sessions:</span>
+                <span class="ml-2 font-semibold">Coming Soon</span>
+              </div>
+              <div>
+                <span class="text-gray-400">Favorite Genres:</span>
+                <span class="ml-2 font-semibold">Coming Soon</span>
+              </div>
+              <div>
+                <span class="text-gray-400">Total Listen Time:</span>
+                <span class="ml-2 font-semibold">Coming Soon</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gray-800 rounded-lg shadow-lg p-6 mt-6 track">
+          <h2 class="text-xl font-bold mb-4">Recent Activity</h2>
+          <p class="text-gray-400">Activity tracking will be available in a future update.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="error-content" class="hidden text-center">
+      <div class="bg-red-900 border border-red-600 rounded-lg p-6 max-w-md mx-auto">
+        <h2 class="text-xl font-bold mb-2">Access Denied</h2>
+        <p id="error-message" class="text-red-200 mb-4"></p>
+        <button onclick="window.location.href='/'" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded">
+          Go to Home
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentUser = null;
+    let isOwnProfile = false;
+
+    async function logout() {
+      try {
+        const response = await fetch('/api/logout', { method: 'POST' });
+        if (response.ok) {
+          localStorage.removeItem('isLoggedIn');
+          window.location.href = '/';
+        }
+      } catch (error) {
+        console.error('Logout error:', error);
+        window.location.href = '/';
+      }
+    }
+
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    }
+
+    function getInitials(username) {
+      return username.substring(0, 2).toUpperCase();
+    }
+
+    function updateNavbar(isLoggedIn) {
+      const logoutBtn = document.getElementById('logout-btn');
+      const registerBtn = document.getElementById('register-btn');
+      const signinBtn = document.getElementById('signin-btn');
+
+      if (isLoggedIn) {
+        logoutBtn.style.display = 'inline-block';
+        registerBtn.style.display = 'none';
+        signinBtn.style.display = 'none';
+      } else {
+        logoutBtn.style.display = 'none';
+        registerBtn.style.display = 'inline-block';
+        signinBtn.style.display = 'inline-block';
+      }
+    }
+
+    async function loadProfile() {
+      try {
+        // Get current user info
+        const authResponse = await fetch('/api/auth-status');
+        const authData = await authResponse.json();
+
+        // Get user ID from URL path
+        const pathParts = window.location.pathname.split('/');
+        const profileUserId = pathParts[pathParts.length - 1];
+
+        if (!profileUserId) {
+          showError('Invalid profile URL');
+          return;
+        }
+
+        // Check if this is user's own profile
+        isOwnProfile = authData.isLoggedIn && authData.user?.id === profileUserId;
+
+        // Update navbar based on authentication status
+        updateNavbar(authData.isLoggedIn);
+
+        // Load profile data (no authentication required now)
+        const profileResponse = await fetch(`/api/profile/${profileUserId}`);
+        const profileData = await profileResponse.json();
+
+        if (!profileData.success) {
+          showError(profileData.message || 'Profile not found');
+          return;
+        }
+
+        displayProfile(profileData.user);
+
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        showError('Failed to load profile');
+      }
+    }
+
+    function displayProfile(user) {
+      currentUser = user;
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('profile-content').classList.remove('hidden');
+
+      // Set profile data
+      document.getElementById('profile-avatar').textContent = getInitials(user.username);
+      document.getElementById('profile-username').textContent = user.username;
+      document.getElementById('profile-member-since').textContent = `Member since ${formatDate(user.createdAt)}`;
+      
+      document.getElementById('info-user-id').textContent = user.id;
+      document.getElementById('info-username').textContent = user.username;
+      document.getElementById('info-account-type').textContent = user.isAdmin ? 'Administrator' : 'Standard User';
+      document.getElementById('info-created-date').textContent = formatDate(user.createdAt);
+
+      // Display bio
+      const bioElement = document.getElementById('profile-bio');
+      if (user.bio && user.bio.trim()) {
+        bioElement.textContent = user.bio;
+      } else {
+        bioElement.textContent = user.isAdmin ? 'System Administrator' : 'No bio available.';
+        bioElement.classList.add('text-gray-500', 'italic');
+      }
+
+      // Show edit button only for own profile
+      if (isOwnProfile && !user.isAdmin) {
+        document.getElementById('edit-bio-btn').classList.remove('hidden');
+      }
+
+      if (user.isAdmin) {
+        document.getElementById('profile-admin-badge').classList.remove('hidden');
+      }
+
+      // Update page title
+      document.title = `${user.username}'s Profile - HyperTunes`;
+    }
+
+    function showError(message) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('error-content').classList.remove('hidden');
+      document.getElementById('error-message').textContent = message;
+    }
+
+    // Bio editing functionality
+    document.getElementById('edit-bio-btn').addEventListener('click', () => {
+      document.getElementById('profile-bio-display').classList.add('hidden');
+      document.getElementById('profile-bio-edit').classList.remove('hidden');
+      document.getElementById('edit-bio-btn').classList.add('hidden');
+      
+      // Pre-fill current bio
+      document.getElementById('bio-edit-input').value = currentUser.bio || '';
+    });
+
+    document.getElementById('cancel-bio-btn').addEventListener('click', () => {
+      document.getElementById('profile-bio-display').classList.remove('hidden');
+      document.getElementById('profile-bio-edit').classList.add('hidden');
+      document.getElementById('edit-bio-btn').classList.remove('hidden');
+    });
+
+    document.getElementById('save-bio-btn').addEventListener('click', async () => {
+      const newBio = document.getElementById('bio-edit-input').value.trim();
+      
+      try {
+        const response = await fetch(`/api/profile/${currentUser.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ bio: newBio })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Update display
+          currentUser.bio = newBio;
+          const bioElement = document.getElementById('profile-bio');
+          bioElement.classList.remove('text-gray-500', 'italic');
+          
+          if (newBio) {
+            bioElement.textContent = newBio;
+          } else {
+            bioElement.textContent = 'No bio available.';
+            bioElement.classList.add('text-gray-500', 'italic');
+          }
+
+          // Switch back to display mode
+          document.getElementById('profile-bio-display').classList.remove('hidden');
+          document.getElementById('profile-bio-edit').classList.add('hidden');
+          document.getElementById('edit-bio-btn').classList.remove('hidden');
+        } else {
+          alert('Failed to update bio: ' + result.message);
+        }
+      } catch (error) {
+        console.error('Error updating bio:', error);
+        alert('Failed to update bio');
+      }
+    });
+
+    // Load profile on page load
+    loadProfile();
+  </script>
+</body>
+</html>

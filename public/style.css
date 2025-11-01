@@ -1,0 +1,3182 @@
+body {
+  font-family: 'Source Sans Pro';
+}
+
+.btn-loop {
+  transition: color 0.3s;
+}
+
+#albumProgress {
+  background: linear-gradient(to right, #3b82f6 0%, #3b82f6 0%, #444 0%, #444 100%);
+}
+
+.volume-icon {
+  color: #aaa;
+  transition: color 0.3s;
+}
+
+.volume-container:hover .volume-icon,
+.volume-container.active .volume-icon {
+  color: #3b82f6;
+}
+
+#progressBar {
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #3b82f6 0%, #3b82f6 0%, #444 0%, #444 100%);
+  cursor: pointer;
+  outline: none;
+}
+
+#progressBar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 14px;
+  width: 14px;
+  background: #3b82f6;
+  border-radius: 50%;
+  margin-top: -4px;
+  cursor: pointer;
+  z-index: 2;
+  position: relative;
+}
+
+#progressBar::-webkit-slider-runnable-track {
+  background: transparent;
+  height: 6px;
+  border-radius: 4px;
+}
+
+#progressBar::-moz-range-thumb {
+  height: 14px;
+  width: 14px;
+  background: #3b82f6;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+#progressBar::-moz-range-track {
+  background: transparent;
+  height: 6px;
+  border-radius: 4px;
+}
+
+#volumeSlider {
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #3b82f6 100%, #444 0%);
+  cursor: pointer;
+  outline: none;
+}
+
+#volumeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 14px;
+  width: 14px;
+  background: #3b82f6;
+  border-radius: 50%;
+  margin-top: -4px;
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+}
+
+#volumeSlider::-webkit-slider-runnable-track {
+  background: transparent;
+  height: 6px;
+  border-radius: 4px;
+}
+
+#volumeSlider::-moz-range-thumb {
+  height: 14px;
+  width: 14px;
+  background: #3b82f6;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+#volumeSlider::-moz-range-track {
+  background: transparent;
+  height: 6px;
+  border-radius: 4px;
+}
+
+#albumProgress {
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #3b82f6 0%, #3b82f6 0%, #444 0%, #444 100%);
+  cursor: pointer;
+  outline: none;
+}
+
+#albumProgress::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 14px;
+  width: 14px;
+  background: #3b82f6;
+  border-radius: 50%;
+  margin-top: -4px;
+  cursor: pointer;
+  z-index: 2;
+  position: relative;
+}
+
+#albumProgress::-webkit-slider-runnable-track {
+  background: transparent;
+  height: 6px;
+  border-radius: 4px;
+}
+
+#albumProgress::-moz-range-thumb {
+  height: 14px;
+  width: 14px;
+  background: #3b82f6;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+#albumProgress::-moz-range-track {
+  background: transparent;
+  height: 6px;
+  border-radius: 4px;
+}
+
+#persistent-album-bar.hide {
+    transform: translateY(100%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.4s ease, opacity 0.4s ease;
+  }
+
+#persistent-album-bar {
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+
+body.theme-light  {
+  background-color: rgb(246, 246, 246);
+  color: black;
+}
+
+body.theme-light .track {
+  background-color: rgb(255, 255, 255);
+}
+
+body.theme-light .albumlink:hover {
+  background-color: #c1c1c1;
+}
+
+body.theme-light .track p {
+  color: black;
+}
+
+body.theme-light header {
+  background-color: rgb(8,116,188);
+  color: white;
+}
+
+body.theme-light .albumlink {
+  background-color: rgb(255, 255, 255);
+  color: black;
+}
+
+body.theme-light .albumtrack {
+  background-color: rgb(232, 232, 232);
+  color: black;
+}
+
+body.theme-light .currenttrack {
+  background-color: rgb(255, 255, 255)
+}
+
+body.theme-light .albumtracktext {
+  color: black;
+}
+
+body.theme-light .playingtext {
+  color: rgb(16, 113, 239);
+}
+
+body.theme-dark #theme-select {
+  color: black;
+}
+
+body.theme-light #theme-select {
+  color: black;
+}
+
+body.theme-light .login-btn {
+  background-color: rgb(5, 150, 105);
+  color: white;
+}
+
+body.theme-light .login-btn:hover {
+  background-color: rgb(8, 177, 124);
+}
+
+#login-username, #login-password {
+  color: black;
+}
+
+body.theme-light #persistent-album-bar {
+  background-color: rgb(240, 240, 240);
+  color: black;
+}
+
+body.theme-light #persistent-album-bar button,
+body.theme-light #albumTimestamp,
+body.theme-light .volume-icon,
+body.theme-light #bar-track-title {
+  color: black;
+}
+
+body.theme-light .volume-icon.active,
+body.theme-light .volume-icon:hover {
+  color: rgb(59, 130, 246);
+}
+
+/* Persistent bar volume icon hover */
+body.theme-light #persistent-album-bar .volume-icon:hover {
+  color: rgb(59, 130, 246) !important;
+}
+
+body.theme-light #bar-track-meta {
+  color: rgb(39, 39, 39);
+}
+
+body.theme-light .submitbtn {
+  color: white;
+}
+
+body.theme-light .track {
+  background-color: rgb(255, 255, 255);
+  color: black;
+}
+
+body.theme-light select, body.theme-light #releaseDate {
+  background-color: rgb(218, 218, 218);
+  color: black;
+}
+
+body.theme-light .timestamp, body.theme-light input, body.theme-light label {
+  color: black;
+}
+
+body.theme-dark .loop1 { color: #059669 !important; }
+body.theme-dark .loopall { color: #2563eb !important; }
+body.theme-dark .noloop { color: #4b5563 !important; }
+
+/* Dark theme pagination */
+body.theme-dark .pagination button {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+body.theme-dark .pagination button:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+body.theme-dark .pagination button:disabled,
+body.theme-dark .pagination button.active {
+  background: #2563eb;
+  color: white;
+  border: 1px solid #2563eb;
+}
+
+body.theme-light .loop1 { color: #059669 !important; }
+body.theme-light .loopall { color: #2563eb !important; }
+body.theme-light .noloop { color: #000000 !important; }
+
+/* Light theme pagination */
+body.theme-light .pagination button {
+  background: rgba(255,255,255,0.2);
+  color: black;
+  border: 1px solid rgba(0,0,0,0.3);
+}
+
+body.theme-light .pagination button:hover {
+  background: rgba(255,255,255,0.4);
+}
+
+body.theme-light .pagination button:disabled,
+body.theme-light .pagination button.active {
+  background: #2563eb;
+  color: white;
+  border: 1px solid #2563eb;
+}
+
+body.theme-light .wt-white {
+  color: white;
+}
+
+body.theme-blue .loop1 { color: #059669 !important; }
+body.theme-blue .loopall { color: #25bdeb !important; }
+body.theme-blue .noloop { color: #ffffff !important; }
+
+/* Blue theme pagination */
+body.theme-blue .pagination button {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+body.theme-blue .pagination button:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+body.theme-blue .pagination button:disabled,
+body.theme-blue .pagination button.active {
+  background: #25bdeb;
+  color: white;
+  border: 1px solid #25bdeb;
+}
+
+body.theme-blue {
+  background-color: rgb(6, 40, 107);
+  color: white;
+}
+
+body.theme-blue header {
+  background-color: rgb(12, 64, 147);
+}
+
+body.theme-blue select {
+  color: black;
+}
+
+body.theme-blue .track {
+  background-color: rgb(18, 52, 139);
+}
+
+body.theme-blue .track p {
+  color: white;
+}
+
+body.theme-blue .albumPointer, body.theme-blue .artistPointer, body.theme-blue .albumtracktext {
+  color: white;
+}
+
+body.theme-blue .albumtrack {
+  background-color: rgb(18, 52, 139);
+  color: white;
+}
+
+body.theme-blue .currenttrack {
+  background-color: rgb(20, 72, 154)
+}
+
+body.theme-blue #persistent-album-bar {
+  background-color: #1a3a7f;
+  color: white !important;
+}
+
+body.theme-blue #persistent-album-bar span {
+  color: white;
+}
+
+body.theme-blue .albumlink {
+  background-color: rgb(18, 52, 139);
+}
+
+body.theme-blue .albumlink:hover {
+  background-color: rgb(23, 67, 177);
+}
+
+body.theme-blue #login-button, body.theme-blue #register-button {
+  background-color: rgb(16, 113, 239);
+}
+
+body.theme-blue #login-button:hover, body.theme-blue #register-button:hover {
+  background-color: rgb(48, 129, 236);
+}
+
+body.theme-sc .loop1 { color: #f45714 !important; }
+body.theme-sc .loopall { color: #ff005d !important; }
+body.theme-sc .noloop { color: #000000 !important; }
+
+/* SC theme pagination */
+body.theme-sc .pagination button {
+  background: rgba(255,255,255,0.2);
+  color: black;
+  border: 1px solid rgba(0,0,0,0.3);
+}
+
+body.theme-sc .pagination button:hover {
+  background: rgba(255,255,255,0.4);
+}
+
+body.theme-sc .pagination button:disabled,
+body.theme-sc .pagination button.active {
+  background: #f45714;
+  color: white;
+  border: 1px solid #f45714;
+}
+
+body.theme-sc #theme-select {
+  color: black;
+}
+
+body.theme-sc {
+  background-color: rgb(233, 233, 233);
+  color: black;
+}
+
+body.theme-sc #albumProgress {
+  background: linear-gradient(to right, #f45714 0%, #f45714 0%, #444 0%, #444 100%);
+}
+
+body.theme-sc header {
+  background-color: #f45714;
+  color: white;
+}
+
+body.theme-sc .albumlink {
+  background-color: white;
+  color: black;
+}
+
+body.theme-sc .albumtrack {
+  background-color: white;
+  color: black;
+}
+
+body.theme-sc .albumtracktext {
+  color: black;
+}
+
+body.theme-sc .currenttrack {
+  background-color: #f45714;
+  color: white;
+}
+
+body.theme-sc .currenttrack .albumtracktext {
+  color: white;
+}
+
+body.theme-sc #login-button {
+  background-color: #f47114;
+}
+
+body.theme-sc #login-button:hover{
+  background-color: #f47914;
+}
+
+body.theme-sc select, body.theme-light #releaseDate {
+  background-color: rgb(218, 218, 218);
+  color: black;
+}
+
+body.theme-sc .playingtext {
+  color: white;
+}
+
+body.theme-sc .login-btn {
+  background-color: rgb(5, 150, 105);
+  color: white;
+}
+
+body.theme-sc .login-btn:hover {
+  background-color: rgb(8, 177, 124);
+}
+
+body.theme-sc #persistent-album-bar {
+  background-color: rgb(240, 240, 240);
+  color: black;
+}
+
+body.theme-sc #persistent-album-bar button,
+body.theme-sc #albumTimestamp,
+body.theme-sc .volume-icon,
+body.theme-sc #bar-track-title {
+  color: black;
+}
+
+body.theme-sc .artistlink {
+  background-color: white;
+  color: black;
+}
+
+body.theme-light .artistlink {
+  background-color: white;
+  color: black;
+}
+
+body.theme-games .artistlink {
+  background-color: rgb(0, 0, 0);
+  color: black;
+}
+
+body.theme-sc .albumlink:hover {
+  background-color: #ffab8d;
+}
+
+body.theme-sc .volume-icon.active,
+body.theme-sc .volume-icon:hover {
+  color: rgb(250, 82, 16);
+}
+
+/* Persistent bar volume icon hover */
+body.theme-sc #persistent-album-bar .volume-icon:hover {
+  color: rgb(250, 82, 16) !important;
+}
+
+body.theme-sc #bar-track-meta {
+  color: rgb(39, 39, 39);
+}
+
+body.theme-sc .submitbtn {
+  color: white;
+}
+
+body.theme-sc .track {
+  background-color: rgb(255, 255, 255);
+  color: black;
+}
+
+body.theme-sc .timestamp, body.theme-light input, body.theme-light label {
+  color: black;
+}
+
+body.theme-games .loop1 { color: #f41414 !important; }
+body.theme-games .loopall { color: #ff4c4c !important; }
+body.theme-games .noloop { color: #b9b9b9 !important; }
+
+/* Games theme pagination */
+body.theme-games .pagination button {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+body.theme-games .pagination button:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+body.theme-games .pagination button:disabled,
+body.theme-games .pagination button.active {
+  background: #f41414;
+  color: white;
+  border: 1px solid #f41414;
+}
+
+body.theme-games #theme-select {
+  color: rgb(0, 0, 0);
+}
+
+body.theme-games {
+  background-color: rgb(32, 32, 32);
+  color: rgb(255, 255, 255);
+}
+
+body.theme-games #albumProgress {
+  background: linear-gradient(to right, #f41414 0%, #f41414 0%, #444 0%, #444 100%);
+}
+
+body.theme-games header {
+  background-color: #26272e;
+  color: rgb(255, 0, 0);
+}
+
+body.theme-games .albumlink {
+  background-color: rgb(150, 0, 0);
+  color: rgb(255, 255, 255);
+}
+
+body.theme-games .albumtrack {
+  background-color: rgb(150, 0, 0);
+  color: rgb(255, 255, 255);
+}
+
+body.theme-games .albumtracktext {
+  color: rgb(236, 236, 236);
+}
+
+body.theme-games .currenttrack {
+  background-color: #cd0000;
+  color: white;
+}
+
+body.theme-games .currenttrack .albumtracktext {
+  color: white;
+}
+
+body.theme-games #login-button, body.theme-games #register-button {
+  background-color: #f41414;
+}
+
+body.theme-games #login-button:hover, body.theme-games #register-button:hover {
+  background-color: #ff3c3c;
+}
+
+body.theme-games select, body.theme-light #releaseDate {
+  background-color: rgb(218, 218, 218);
+  color: black;
+}
+
+body.theme-games .playingtext {
+  color: white;
+}
+
+body.theme-games .login-btn {
+  background-color: rgb(5, 150, 105);
+  color: white;
+}
+
+body.theme-games .login-btn:hover {
+  background-color: rgb(8, 177, 124);
+}
+
+body.theme-games #persistent-album-bar {
+  background-color: rgb(47, 47, 47);
+  color: rgb(255, 255, 255);
+}
+
+body.theme-games #persistent-album-bar button,
+body.theme-games #albumTimestamp,
+body.theme-games #bar-track-title {
+  color: rgb(255, 255, 255);
+}
+
+body.theme-games .albumlink:hover {
+  background-color: #ff4444;
+}
+
+body.theme-games .volume-icon.active,
+body.theme-games .volume-icon:hover {
+  color: rgb(250, 16, 16);
+}
+
+body.theme-games #bar-track-meta {
+  color: rgb(225, 225, 225);
+}
+
+body.theme-games .submitbtn {
+  color: white;
+}
+
+body.theme-games .track {
+  background-color: rgb(65, 65, 65);
+  color: rgb(255, 255, 255);
+}
+
+body.theme-games .timestamp, body.theme-games input, body.theme-games label {
+  color: white;
+}
+
+#search-bar {
+  transition: max-width 0.3s, opacity 0.2s;
+  max-width: 380px;
+  opacity: 1;
+  margin-left: 0.5rem;
+}
+
+#search-bar[style*="display: none"] {
+  max-width: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#search-toggle svg {
+  vertical-align: middle;
+}
+
+.search-toggle {
+  -webkit-transition: background-color 0.2s linear;
+}
+
+body.theme-sc #search-toggle:hover {
+  background-color: rgb(255, 60, 0);
+}
+
+body.theme-light #search-toggle:hover {
+  background-color: rgb(15, 119, 255);
+}
+
+body.theme-dark #search-toggle:hover {
+  background-color: #364153;
+}
+
+body.theme-blue #search-toggle:hover {
+  background-color: rgb(39, 114, 226);
+}
+
+body.theme-games #search-toggle:hover {
+  background-color: rgb(167, 4, 4);
+}
+
+body.theme-sc .volume-container:hover .volume-icon,
+body.theme-sc .volume-container.active .volume-icon {
+  color: #ee5214;
+}
+
+body.theme-blue .volume-container:hover .volume-icon,
+body.theme-blue .volume-container.active .volume-icon {
+  color: #149eee;
+}
+
+/* Persistent bar volume icon hover */
+body.theme-blue #persistent-album-bar .volume-icon:hover {
+  color: #149eee !important;
+}
+
+body.theme-games .volume-container:hover .volume-icon,
+body.theme-games .volume-container.active .volume-icon {
+  color: rgb(255, 0, 0);
+}
+
+/* Persistent bar volume icon hover */
+body.theme-games #persistent-album-bar .volume-icon:hover {
+  color: rgb(255, 0, 0) !important;
+}
+
+body.theme-light #user-login-form input,
+body.theme-sc #user-login-form input {
+  background-color: rgb(230, 230, 230);
+}
+
+/* Register page styling for all themes */
+
+/* Light theme register page */
+body.theme-light #register-form input,
+body.theme-light #register-form textarea {
+  background-color: rgb(230, 230, 230) !important;
+  color: black !important;
+  border-color: #ccc !important;
+}
+
+body.theme-light #register-form input::placeholder,
+body.theme-light #register-form textarea::placeholder {
+  color: #555 !important;
+}
+
+body.theme-light #register-form .bg-gray-700 {
+  background-color: rgb(230, 230, 230) !important;
+}
+
+/* SC theme register page */
+body.theme-sc #register-form input,
+body.theme-sc #register-form textarea {
+  background-color: rgb(230, 230, 230) !important;
+  color: black !important;
+  border-color: #ccc !important;
+}
+
+body.theme-sc #register-form input::placeholder,
+body.theme-sc #register-form textarea::placeholder {
+  color: #555 !important;
+}
+
+body.theme-sc #register-form .bg-gray-700 {
+  background-color: rgb(230, 230, 230) !important;
+}
+
+/* Dark theme register page */
+body.theme-dark #register-form input,
+body.theme-dark #register-form textarea {
+  background-color: #374151 !important;
+  color: white !important;
+  border-color: #4b5563 !important;
+}
+
+body.theme-dark #register-form input::placeholder,
+body.theme-dark #register-form textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Blue theme register page */
+body.theme-blue #register-form input,
+body.theme-blue #register-form textarea {
+  background-color: #1e3a8a !important;
+  color: white !important;
+  border-color: #3b82f6 !important;
+}
+
+body.theme-blue #register-form input::placeholder,
+body.theme-blue #register-form textarea::placeholder {
+  color: #93c5fd !important;
+}
+
+/* Games theme register page */
+body.theme-games #register-form input,
+body.theme-games #register-form textarea {
+  background-color: #374151 !important;
+  color: white !important;
+  border-color: #f41414 !important;
+}
+
+body.theme-games #register-form input::placeholder,
+body.theme-games #register-form textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Midnight Blurple theme register page */
+body.theme-midnight-blurple #register-form input,
+body.theme-midnight-blurple #register-form textarea {
+  background-color: rgba(255,255,255,0.1) !important;
+  color: white !important;
+  border-color: #6366f1 !important;
+}
+
+body.theme-midnight-blurple #register-form input::placeholder,
+body.theme-midnight-blurple #register-form textarea::placeholder {
+  color: #a5b4fc !important;
+}
+
+/* Strawberry Lemonade theme register page */
+body.theme-strawberry-lemonade #register-form input,
+body.theme-strawberry-lemonade #register-form textarea {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+  border-color: #ff69b4 !important;
+}
+
+body.theme-strawberry-lemonade #register-form input::placeholder,
+body.theme-strawberry-lemonade #register-form textarea::placeholder {
+  color: #fbb6ce !important;
+}
+
+/* Ocean Breeze theme register page */
+body.theme-ocean-breeze #register-form input,
+body.theme-ocean-breeze #register-form textarea {
+  background-color: #f0fdfa !important;
+  color: #134e4a !important;
+  border-color: #5eead4 !important;
+}
+
+body.theme-ocean-breeze #register-form input::placeholder,
+body.theme-ocean-breeze #register-form textarea::placeholder {
+  color: #14b8a6 !important;
+}
+
+/* Sunset Glow theme register page */
+body.theme-sunset-glow #register-form input,
+body.theme-sunset-glow #register-form textarea {
+  background-color: rgba(255,255,255,0.9) !important;
+  color: #bf360c !important;
+  border-color: #ff6347 !important;
+}
+
+body.theme-sunset-glow #register-form input::placeholder,
+body.theme-sunset-glow #register-form textarea::placeholder {
+  color: #8d6e63 !important;
+}
+
+/* Lavender Dreams theme register page */
+body.theme-lavender-dreams #register-form input,
+body.theme-lavender-dreams #register-form textarea {
+  background-color: rgba(255,255,255,0.9) !important;
+  color: #4a148c !important;
+  border-color: #9370db !important;
+}
+
+body.theme-lavender-dreams #register-form input::placeholder,
+body.theme-lavender-dreams #register-form textarea::placeholder {
+  color: #7b1fa2 !important;
+}
+
+/* Forest Night theme register page */
+body.theme-forest-night #register-form input,
+body.theme-forest-night #register-form textarea {
+  background-color: #1f2937 !important;
+  color: #10b981 !important;
+  border-color: #065f46 !important;
+}
+
+body.theme-forest-night #register-form input::placeholder,
+body.theme-forest-night #register-form textarea::placeholder {
+  color: #6ee7b7 !important;
+}
+
+/* Fix for Back to Home button border issue on register page */
+.back-to-home-btn {
+  border: none !important;
+  outline: none !important;
+}
+
+.back-to-home-btn:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Reset Activity Modal Styles */
+#reset-activity-modal {
+  animation: fadeIn 0.2s ease-out;
+}
+
+#reset-activity-modal .bg-gray-800 {
+  animation: slideIn 0.3s ease-out;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Success/Error message styles */
+#success-message, #error-message {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Theme-specific modal styling */
+body.theme-light #reset-activity-modal .bg-gray-800 {
+  background-color: #f8f9fa !important;
+  color: #000 !important;
+  border: 1px solid #dee2e6 !important;
+}
+
+body.theme-light #reset-activity-modal .text-white {
+  color: #000 !important;
+}
+
+body.theme-light #reset-activity-modal .text-gray-300 {
+  color: #495057 !important;
+}
+
+body.theme-sc #reset-activity-modal .bg-gray-800 {
+  background-color: #fff !important;
+  color: #000 !important;
+  border: 1px solid #ff5500 !important;
+}
+
+body.theme-sc #reset-activity-modal .text-white {
+  color: #000 !important;
+}
+
+body.theme-sc #reset-activity-modal .text-gray-300 {
+  color: #495057 !important;
+}
+
+body.theme-midnight-blurple #reset-activity-modal .bg-gray-800 {
+  background: linear-gradient(45deg, #234483 0%, #6353be 100%) !important;
+  border: 1px solid #9b89fd !important;
+}
+
+body.theme-strawberry-lemonade #reset-activity-modal .bg-gray-800 {
+  background: linear-gradient(45deg, #d946ef 0%, #f97316 100%) !important;
+  border: 1px solid #ff69b4 !important;
+}
+
+body.theme-ocean-breeze #reset-activity-modal .bg-gray-800 {
+  background: linear-gradient(45deg, #0891b2 0%, #06b6d4 100%) !important;
+  color: #000 !important;
+  border: 1px solid #22d3ee !important;
+}
+
+body.theme-ocean-breeze #reset-activity-modal .text-white {
+  color: #000 !important;
+}
+
+body.theme-ocean-breeze #reset-activity-modal .text-gray-300 {
+  color: #374151 !important;
+}
+
+body.theme-sunset-glow #reset-activity-modal .bg-gray-800 {
+  background: linear-gradient(45deg, #f59e0b 0%, #f97316 100%) !important;
+  color: #000 !important;
+  border: 1px solid #fbbf24 !important;
+}
+
+body.theme-sunset-glow #reset-activity-modal .text-white {
+  color: #000 !important;
+}
+
+body.theme-sunset-glow #reset-activity-modal .text-gray-300 {
+  color: #374151 !important;
+}
+
+body.theme-lavender-dreams #reset-activity-modal .bg-gray-800 {
+  background: linear-gradient(45deg, #a855f7 0%, #d946ef 100%) !important;
+  border: 1px solid #c084fc !important;
+}
+
+/* User search result card styles */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* User search card hover effects */
+.track:hover .profile-gradient-1,
+.track:hover .profile-gradient-2,
+.track:hover .profile-gradient-3,
+.track:hover .profile-gradient-4,
+.track:hover .profile-gradient-5,
+.track:hover .profile-gradient-6,
+.track:hover .profile-gradient-7,
+.track:hover .profile-gradient-8,
+.track:hover .profile-gradient-9,
+.track:hover .profile-gradient-10,
+.track:hover .profile-gradient-11,
+.track:hover .profile-gradient-12 {
+  transform: scale(1.05);
+  transition: transform 0.2s ease-in-out;
+}
+
+body.theme-midnight-blurple {
+  background: linear-gradient(45deg, #1e3c72 0%, #1a345f 20%, #523e94 100%);
+  color: white;
+  background-attachment: fixed;
+  min-height: 100vh;
+  background-repeat: no-repeat;
+}
+
+body.theme-midnight-blurple header {
+  background: linear-gradient(45deg, #234483 0%, #6353be 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(30,60,114,0.15);
+}
+
+body.theme-midnight-blurple .track,
+body.theme-midnight-blurple .albumlink,
+body.theme-midnight-blurple .artistlink,
+body.theme-midnight-blurple .albumtrack,
+body.theme-midnight-blurple .currenttrack,
+body.theme-midnight-blurple .song-card,
+body.theme-midnight-blurple .search-results,
+body.theme-midnight-blurple #persistent-album-bar {
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 2px 12px rgba(30,60,114,0.10);
+  color: white;
+}
+
+body.theme-midnight-blurple #persistent-album-bar {
+  border: 0px;
+}
+
+body.theme-midnight-blurple #persistent-album-bar .text-sm,
+body.theme-midnight-blurple #persistent-album-bar .volume-icon {
+  color: white;
+}
+
+body.theme-midnight-blurple #persistent-album-bar .volume-icon:hover,
+body.theme-midnight-blurple #persistent-album-bar .volume-icon.active {
+  color: #809ef1;
+}
+
+body.theme-midnight-blurple .albumPointer,
+body.theme-midnight-blurple .artistPointer {
+  color: #cccccc;
+}
+
+body.theme-midnight-blurple .albumlink:hover,
+body.theme-midnight-blurple .artistlink:hover,
+body.theme-midnight-blurple .albumtrack:hover,
+body.theme-midnight-blurple .currenttrack:hover {
+  background: rgba(255,255,255,0.16);
+}
+
+body.theme-midnight-blurple .timestamp,
+body.theme-midnight-blurple .albumtracktext,
+body.theme-midnight-blurple .playingtext,
+body.theme-midnight-blurple #bar-track-meta {
+  color: #e0e7ff;
+}
+
+body.theme-midnight-blurple .login-btn,
+body.theme-midnight-blurple #login-button,
+body.theme-midnight-blurple #search-btn {
+  background: rgba(255,255,255,0.12);
+  color: white;
+}
+
+body.theme-midnight-blurple .login-btn:hover,
+body.theme-midnight-blurple #search-btn:hover {
+  background: rgba(255,255,255,0.22);
+}
+
+body.theme-midnight-blurple input,
+body.theme-midnight-blurple select {
+  background: rgba(255,255,255,0.18);
+  color: white;
+  border: none;
+}
+
+body.theme-midnight-blurple .currenttrack {
+  background: rgba(255,255,255,0.25);
+  color: white;
+}
+
+body.theme-midnight-blurple .currenttrack:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+body.theme-midnight-blurple #search-bar input {
+  background: rgba(255,255,255,0.18);
+}
+
+body.theme-midnight-blurple #persistent-album-bar {
+  background: rgba(255,255,255,0.10);
+  color: white;
+  box-shadow: 0 -2px 12px rgba(30,60,114,0.10);
+}
+
+body.theme-midnight-blurple #theme-select,
+body.theme-midnight-blurple #login-username,
+body.theme-midnight-blurple #login-password {
+  color: white;
+}
+
+body.theme-midnight-blurple #login-username::placeholder,
+body.theme-midnight-blurple #login-password::placeholder,
+body.theme-midnight-blurple #search-input::placeholder {
+  color: white;
+}
+
+body.theme-midnight-blurple #search-input {
+  color: white;
+}
+
+body.theme-midnight-blurple .volume-container:hover .volume-icon,
+body.theme-midnight-blurple .volume-container.active .volume-icon {
+  color: #9b89fd !important;
+}
+
+/* Persistent bar volume icon hover */
+body.theme-midnight-blurple #persistent-album-bar .volume-icon:hover {
+  color: #9b89fd !important;
+}
+
+body.theme-midnight-blurple .loop1 { color: #809ef1 !important; }
+body.theme-midnight-blurple .loopall { color: #9b89fd !important; }
+body.theme-midnight-blurple .noloop { color: #ffffff !important; }
+
+/* Midnight Blurple pagination */
+body.theme-midnight-blurple .pagination button {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+body.theme-midnight-blurple .pagination button:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+body.theme-midnight-blurple .pagination button:disabled,
+body.theme-midnight-blurple .pagination button.active {
+  background: #9b89fd;
+  color: white;
+  border: 1px solid #9b89fd;
+}
+
+body.theme-midnight-blurple #progressBar,
+body.theme-midnight-blurple #albumProgress {
+  background: linear-gradient(to right, #9b89fd 0%, #9b89fd var(--progress, 0%), #444 var(--progress, 0%), #444 100%);
+}
+
+body.theme-midnight-blurple #progressBar::-webkit-slider-thumb,
+body.theme-midnight-blurple #albumProgress::-webkit-slider-thumb {
+  background: #9b89fd;
+}
+
+body.theme-midnight-blurple #progressBar::-moz-range-thumb,
+body.theme-midnight-blurple #albumProgress::-moz-range-thumb {
+  background: #9b89fd;
+}
+
+body.theme-midnight-blurple #progressBar::-webkit-slider-runnable-track,
+body.theme-midnight-blurple #albumProgress::-webkit-slider-runnable-track {
+  background: transparent;
+}
+
+body.theme-midnight-blurple #progressBar::-moz-range-track,
+body.theme-midnight-blurple #albumProgress::-moz-range-track {
+  background: transparent;
+}
+
+body.theme-midnight-blurple #volumeSlider::-webkit-slider-thumb {
+  background: #9b89fd;
+  border: none;
+}
+
+body.theme-midnight-blurple #volumeSlider::-moz-range-thumb {
+  background: #9b89fd;
+  border: none;
+}
+
+body.theme-midnight-blurple #volumeSlider::-ms-thumb {
+  background: #9b89fd;
+  border: none;
+}
+
+body.theme-midnight-blurple #volumeSlider::-webkit-slider-thumb {
+  box-shadow: 0 0 2px #6a4fbf;
+}
+
+body.theme-midnight-blurple #volumeSlider::-moz-range-thumb {
+  box-shadow: 0 0 2px #6a4fbf;
+}
+
+body.theme-midnight-blurple #volumeSlider::-ms-thumb {
+  box-shadow: 0 0 2px #6a4fbf;
+}
+
+body.theme-strawberry-lemonade {
+  background: linear-gradient(45deg, #8c1556 0%, #b9841e 100%);
+  color: white;
+  background-attachment: fixed;
+  min-height: 100vh;
+  background-repeat: no-repeat;
+}
+
+body.theme-strawberry-lemonade header {
+  background: linear-gradient(45deg, #9b4067 0%, #dbc177 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(140,21,86,0.15);
+}
+
+body.theme-strawberry-lemonade .track,
+body.theme-strawberry-lemonade .albumlink,
+body.theme-strawberry-lemonade .artistlink,
+body.theme-strawberry-lemonade .albumtrack,
+body.theme-strawberry-lemonade .currenttrack,
+body.theme-strawberry-lemonade .song-card,
+body.theme-strawberry-lemonade .search-results,
+body.theme-strawberry-lemonade #persistent-album-bar {
+  background: rgba(255,255,255,0.10);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 2px 12px rgba(140,21,86,0.10);
+  color: white;
+}
+
+body.theme-strawberry-lemonade .albumlink:hover,
+body.theme-strawberry-lemonade .artistlink:hover,
+body.theme-strawberry-lemonade .albumtrack:hover,
+body.theme-strawberry-lemonade .currenttrack:hover {
+  background: rgba(255,255,255,0.18);
+}
+
+body.theme-strawberry-lemonade .currenttrack:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+body.theme-strawberry-lemonade .timestamp,
+body.theme-strawberry-lemonade .albumtracktext,
+body.theme-strawberry-lemonade .playingtext,
+body.theme-strawberry-lemonade #bar-track-meta {
+  color: #ffe0f0;
+}
+
+body.theme-strawberry-lemonade .login-btn,
+body.theme-strawberry-lemonade #login-button,
+body.theme-strawberry-lemonade #search-btn {
+  background: rgba(255,255,255,0.14);
+  color: white;
+}
+
+body.theme-strawberry-lemonade .login-btn:hover,
+body.theme-strawberry-lemonade #search-btn:hover {
+  background: rgba(255,255,255,0.24);
+}
+
+body.theme-strawberry-lemonade input,
+body.theme-strawberry-lemonade select {
+  background: rgba(255,255,255,0.20);
+  color: white;
+  border: none;
+}
+
+body.theme-strawberry-lemonade .currenttrack {
+  background: rgba(255,255,255,0.25);
+  color: white;
+}
+
+body.theme-strawberry-lemonade #search-bar input {
+  background: rgba(255,255,255,0.20);
+}
+
+body.theme-strawberry-lemonade #persistent-album-bar {
+  background: rgba(255,255,255,0.12);
+  color: white;
+  box-shadow: 0 -2px 12px rgba(140,21,86,0.10);
+}
+
+body.theme-strawberry-lemonade #theme-select,
+body.theme-strawberry-lemonade #login-username,
+body.theme-strawberry-lemonade #login-password {
+  color: white;
+}
+
+body.theme-strawberry-lemonade #login-username::placeholder,
+body.theme-strawberry-lemonade #login-password::placeholder,
+body.theme-strawberry-lemonade #search-input::placeholder {
+  color: #ffffff !important;
+}
+/* Ensure all placeholders are white in Strawberry Lemonade theme */
+body.theme-strawberry-lemonade input::placeholder,
+body.theme-strawberry-lemonade textarea::placeholder,
+body.theme-strawberry-lemonade select::placeholder {
+  color: #ffffff !important;
+}
+
+body.theme-strawberry-lemonade #search-input {
+  color: white;
+}
+
+body.theme-strawberry-lemonade .btn-loop.loop1 svg { color: #ffb6d5 !important }
+body.theme-strawberry-lemonade .btn-loop.loopall svg { color: #e84c8c !important }
+body.theme-strawberry-lemonade .btn-loop.noloop svg { color: #ffffff !important }
+
+/* Strawberry Lemonade pagination */
+body.theme-strawberry-lemonade .pagination button {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+body.theme-strawberry-lemonade .pagination button:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+body.theme-strawberry-lemonade .pagination button:disabled,
+body.theme-strawberry-lemonade .pagination button.active {
+  background: #e84c8c;
+  color: white;
+  border: 1px solid #e84c8c;
+}
+
+body.theme-strawberry-lemonade .btn-loop svg {
+  transition: color 0.3s;
+}
+
+body.theme-strawberry-lemonade #progressBar,
+body.theme-strawberry-lemonade #albumProgress {
+  background: linear-gradient(to right, #e84c8c 0%, #e84c8c var(--progress, 0%), #444 var(--progress, 0%), #444 100%);
+}
+
+body.theme-strawberry-lemonade #progressBar::-webkit-slider-thumb,
+body.theme-strawberry-lemonade #albumProgress::-webkit-slider-thumb {
+  background: #e84c8c;
+}
+
+body.theme-strawberry-lemonade #progressBar::-moz-range-thumb,
+body.theme-strawberry-lemonade #albumProgress::-moz-range-thumb {
+  background: #e84c8c;
+}
+
+body.theme-strawberry-lemonade #progressBar::-webkit-slider-runnable-track,
+body.theme-strawberry-lemonade #albumProgress::-webkit-slider-runnable-track {
+  background: transparent;
+}
+
+body.theme-strawberry-lemonade #progressBar::-moz-range-track,
+body.theme-strawberry-lemonade #albumProgress::-moz-range-track {
+  background: transparent;
+}
+
+body.theme-strawberry-lemonade #volumeSlider::-webkit-slider-thumb {
+  background: #e84c8c;
+  border: none;
+}
+
+body.theme-strawberry-lemonade #volumeSlider::-moz-range-thumb {
+  background: #e84c8c;
+  border: none;
+}
+
+body.theme-strawberry-lemonade #volumeSlider::-ms-thumb {
+  background: #e84c8c;
+  border: none;
+}
+
+body.theme-strawberry-lemonade #volumeSlider::-webkit-slider-thumb {
+  box-shadow: 0 0 2px #8c1556;
+}
+
+body.theme-strawberry-lemonade #volumeSlider::-moz-range-thumb {
+  box-shadow: 0 0 2px #8c1556;
+}
+
+body.theme-strawberry-lemonade #volumeSlider::-ms-thumb {
+  box-shadow: 0 0 2px #8c1556;
+}
+
+body.theme-strawberry-lemonade .track p {
+  color: rgb(219, 219, 219);
+}
+
+body.theme-strawberry-lemonade .volume-container .volume-icon,
+body.theme-strawberry-lemonade .speed-container button svg {
+  color: white !important;
+}
+
+body.theme-light .speed-container button svg,
+body.theme-sc .speed-container button svg {
+  color: black !important;
+}
+
+body.theme-strawberry-lemonade .volume-container:hover .volume-icon,
+body.theme-strawberry-lemonade .volume-container.active .volume-icon {
+  color: #e84c8c !important;
+}
+
+/* Persistent bar volume icon hover */
+body.theme-strawberry-lemonade #persistent-album-bar .volume-icon:hover {
+  color: #e84c8c !important;
+}
+
+body.theme-strawberry-lemonade #persistent-album-bar {
+  border: 0px;
+  color: white;
+}
+
+body.theme-strawberry-lemonade #persistent-album-bar #albumTimestamp,
+body.theme-strawberry-lemonade #btnPlayPause svg {
+  color: white;
+}
+
+#albumSpeedModal.speed-modal {
+  position: fixed;
+  right: 24px;
+  bottom: 80px;
+  z-index: 101;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  text-align: center;
+  border: 1px solid rgb(0,0,0)
+}
+
+.speed-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.speed-modal {
+  position: absolute;
+  bottom: 70px;   /* distance above button */
+  left: 77.7%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 100;
+  padding: 8px;
+  width: max-content;
+  min-width: 120px;
+  border-radius: 8px;
+  border: 1px solid rgb(0,0,0);
+}
+
+.speed-modal label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.speed-value {
+  margin-top: 4px;
+}
+
+.speed-modal.hidden { display: none; }
+
+.speed-slider {
+  appearance: none;
+  width: 100px;
+  height: 6px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #3b82f6 100%, #444 0%);
+  cursor: pointer;
+  outline: none;
+}
+
+.speed-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 14px;
+  width: 14px;
+  background: #3b82f6;
+  border-radius: 50%;
+  margin-top: -4px;
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+}
+
+.speed-slider::-webkit-slider-runnable-track {
+  background: transparent;
+  height: 6px;
+  border-radius: 4px;
+}
+
+.speed-slider::-moz-range-thumb {
+  height: 14px;
+  width: 14px;
+  background: #3b82f6;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.speed-slider::-moz-range-track {
+  background: transparent;
+  height: 6px;
+  border-radius: 4px;
+}
+
+/* Theme-specific modal backgrounds */
+body.theme-light .speed-modal,
+body.theme-sc .speed-modal {
+  background: white;
+  color: black;
+}
+
+body.theme-blue .speed-modal {
+  background: #1a3a7f;
+  color: white;
+}
+
+body.theme-dark .speed-modal,
+body.theme-games .speed-modal {
+  background: #222;
+  color: white;
+}
+
+body.theme-midnight-blurple .speed-modal,
+body.theme-strawberry-lemonade .speed-modal {
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  color: white;
+  border: 0px !important;
+}
+
+.speed-container button svg,
+#albumSpeedBtn svg,
+#albumSpeedBtn svg {
+  transition: color 0.3s;
+}
+
+body.theme-strawberry-lemonade .speed-container button:hover svg,
+body.theme-strawberry-lemonade .speed-container button.active svg,
+body.theme-strawberry-lemonade #albumSpeedBtn:hover svg,
+body.theme-strawberry-lemonade #albumSpeedBtn.active svg {
+  color: #e84c8c !important;
+}
+
+/* Example for Midnight Blurple */
+body.theme-midnight-blurple .speed-container button:hover svg,
+body.theme-midnight-blurple .speed-container button.active svg,
+body.theme-midnight-blurple #albumSpeedBtn:hover svg,
+body.theme-midnight-blurple #albumSpeedBtn.active svg {
+  color: #9b89fd !important;
+}
+
+/* Example for Light theme */
+body.theme-light .speed-container button:hover svg,
+body.theme-light .speed-container button.active svg,
+body.theme-light #albumSpeedBtn:hover svg,
+body.theme-light #albumSpeedBtn.active svg {
+  color: #2563eb !important;
+}
+
+/* Track page speed button hover */
+body.theme-light #speedBtn:hover svg {
+  color: #2563eb !important;
+}
+
+/* Example for Dark theme */
+body.theme-dark .speed-container button:hover svg,
+body.theme-dark .speed-container button.active svg,
+body.theme-dark #albumSpeedBtn:hover svg,
+body.theme-dark #albumSpeedBtn.active svg {
+  color: #2563eb !important;
+}
+
+/* Track page speed button hover */
+body.theme-dark #speedBtn:hover svg {
+  color: #2563eb !important;
+}
+
+body.theme-sc .speed-container button:hover svg,
+body.theme-sc .speed-container button.active svg,
+body.theme-sc #albumSpeedBtn:hover svg,
+body.theme-sc #albumSpeedBtn.active svg {
+  color: #f45714 !important;
+}
+
+/* Track page speed button hover */
+body.theme-sc #speedBtn:hover svg {
+  color: #f45714 !important;
+}
+
+body.theme-games .speed-container button:hover svg,
+body.theme-games .speed-container button.active svg,
+body.theme-games #albumSpeedBtn:hover svg,
+body.theme-games #albumSpeedBtn.active svg {
+  color: #f41414 !important;
+}
+
+/* Track page speed button hover */
+body.theme-games #speedBtn:hover svg {
+  color: #f41414 !important;
+}
+
+body.theme-blue .speed-container button:hover svg,
+body.theme-blue .speed-container button.active svg,
+body.theme-blue #albumSpeedBtn:hover svg,
+body.theme-blue #albumSpeedBtn.active svg {
+  color: #149eee !important;
+}
+
+/* Track page speed button hover */
+body.theme-blue #speedBtn:hover svg {
+  color: #149eee !important;
+}
+
+body.theme-midnight-blurple .speed-container button:hover svg,
+body.theme-midnight-blurple .speed-container button.active svg,
+body.theme-midnight-blurple #albumSpeedBtn:hover svg,
+body.theme-midnight-blurple #albumSpeedBtn.active svg {
+  color: #9b89fd !important;
+}
+
+/* Track page speed button hover */
+body.theme-midnight-blurple #speedBtn:hover svg {
+  color: #9b89fd !important;
+}
+
+body.theme-strawberry-lemonade .speed-container button:hover svg,
+body.theme-strawberry-lemonade .speed-container button.active svg,
+body.theme-strawberry-lemonade #albumSpeedBtn:hover svg,
+body.theme-strawberry-lemonade #albumSpeedBtn.active svg {
+  color: #e84c8c !important;
+}
+
+/* Track page speed button hover */
+body.theme-strawberry-lemonade #speedBtn:hover svg {
+  color: #e84c8c !important;
+}
+
+body.theme-ocean-breeze .speed-container button:hover svg,
+body.theme-ocean-breeze .speed-container button.active svg,
+body.theme-ocean-breeze #albumSpeedBtn:hover svg,
+body.theme-ocean-breeze #albumSpeedBtn.active svg {
+  color: #20B2AA !important;
+}
+
+/* Track page speed button hover */
+body.theme-ocean-breeze #speedBtn:hover svg {
+  color: #20B2AA !important;
+}
+
+body.theme-sunset-glow .speed-container button:hover svg,
+body.theme-sunset-glow .speed-container button.active svg,
+body.theme-sunset-glow #albumSpeedBtn:hover svg,
+body.theme-sunset-glow #albumSpeedBtn.active svg {
+  color: #FF6347 !important;
+}
+
+/* Track page speed button hover */
+body.theme-sunset-glow #speedBtn:hover svg {
+  color: #FF6347 !important;
+}
+
+body.theme-lavender-dreams .speed-container button:hover svg,
+body.theme-lavender-dreams .speed-container button.active svg,
+body.theme-lavender-dreams #albumSpeedBtn:hover svg,
+body.theme-lavender-dreams #albumSpeedBtn.active svg {
+  color: #9370DB !important;
+}
+
+/* Track page speed button hover */
+body.theme-lavender-dreams #speedBtn:hover svg {
+  color: #9370DB !important;
+}
+
+body.theme-strawberry-lemonade .speed-slider {
+  background: linear-gradient(to right, #e84c8c 100%, #444 0%);
+}
+
+body.theme-strawberry-lemonade .speed-slider::-webkit-slider-thumb {
+  background: #e84c8c;
+}
+body.theme-strawberry-lemonade .speed-slider::-moz-range-thumb {
+  background: #e84c8c;
+}
+body.theme-strawberry-lemonade .speed-slider::-ms-thumb {
+  background: #e84c8c;
+  border: none;
+}
+
+body.theme-midnight-blurple .speed-slider::-webkit-slider-thumb {
+  background: #9b89fd;
+}
+body.theme-midnight-blurple .speed-slider::-moz-range-thumb {
+  background: #9b89fd;
+}
+body.theme-midnight-blurple .speed-slider::-ms-thumb {
+  background: #9b89fd;
+  border: none;
+}
+
+#progressBar,
+#albumProgress,
+#volumeSlider,
+.speed-slider {
+  transition: background 0s;
+}
+
+#progressBar::-webkit-slider-thumb,
+#albumProgress::-webkit-slider-thumb,
+#volumeSlider::-webkit-slider-thumb,
+.speed-slider::-webkit-slider-thumb {
+  transition: background 0s, box-shadow 0s;
+}
+
+#progressBar::-moz-range-thumb,
+#albumProgress::-moz-range-thumb,
+#volumeSlider::-moz-range-thumb,
+.speed-slider::-moz-range-thumb {
+  transition: background 0s, box-shadow 0s;
+}
+
+/* Update slider colors immediately for Strawberry Lemonade */
+body.theme-strawberry-lemonade #progressBar,
+body.theme-strawberry-lemonade #albumProgress,
+body.theme-strawberry-lemonade #volumeSlider,
+body.theme-strawberry-lemonade .speed-slider {
+  background: linear-gradient(to right, #e84c8c var(--progress, 0%), #444 var(--progress, 0%));
+}
+
+body.theme-midnight-blurple #progressBar,
+body.theme-midnight-blurple #albumProgress,
+body.theme-midnight-blurple #volumeSlider,
+body.theme-midnight-blurple .speed-slider {
+  background: linear-gradient(to right, #9b89fd var(--progress, 0%), #444 var(--progress, 0%));
+}
+
+/* Midnight Blurple - Control hover states */
+body.theme-midnight-blurple .volume-icon:hover,
+body.theme-midnight-blurple #albumSpeedBtn:hover {
+  color: #9b89fd;
+}
+
+body.theme-midnight-blurple #speedBtn:hover {
+  background: rgba(155,137,253,0.1);
+  border-radius: 4px;
+}
+
+/* Midnight Blurple - Speed modal styling */
+body.theme-midnight-blurple .speed-modal {
+  background: rgba(255, 255, 255, 0.2);
+  color: #e0e0ff;
+  border: 1px solid #9b89fd;
+}
+
+body.theme-midnight-blurple .profilelink,
+body.theme-strawberry-lemonade .profilelink {
+  color: white;
+  background: rgba(255,255,255,0);
+}
+
+body.theme-midnight-blurple #albumSpeedModal {
+  background: rgba(255,255,255,0.2);
+  color: #e0e0ff;
+  border: 1px solid #9b89fd;
+}
+
+/* Strawberry Lemonade - Control hover states */
+body.theme-strawberry-lemonade .volume-icon:hover,
+body.theme-strawberry-lemonade #albumSpeedBtn:hover {
+  color: #e84c8c;
+}
+
+body.theme-strawberry-lemonade #speedBtn:hover {
+  background: rgba(232,76,140,0.1);
+  border-radius: 4px;
+}
+
+/* Strawberry Lemonade - Speed modal styling */
+body.theme-strawberry-lemonade .speed-modal {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffe0f0;
+  border: 1px solid #e84c8c;
+}
+
+body.theme-strawberry-lemonade #albumSpeedModal {
+  background: rgba(255,255,255,0.2);
+  color: #ffffff;
+  border: 1px solid #e84c8c;
+}
+
+/* Ocean Breeze Theme - Light aqua/teal theme */
+body.theme-ocean-breeze {
+  background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 50%, #80deea 100%);
+  color: #006064;
+  background-attachment: fixed;
+  min-height: 100vh;
+  background-repeat: no-repeat;
+}
+
+body.theme-ocean-breeze .loop1 { color: #00695C !important; }
+body.theme-ocean-breeze .loopall { color: #0097A7 !important; }
+body.theme-ocean-breeze .loop1 { color: #4DD0E1 !important; }
+body.theme-ocean-breeze .loopall { color: #20B2AA !important; }
+body.theme-ocean-breeze .noloop { color: #78909C !important; }
+
+body.theme-ocean-breeze .btn-loop.loop1 svg { color: #4DD0E1 !important; }
+body.theme-ocean-breeze .btn-loop.loopall svg { color: #20B2AA !important; }
+body.theme-ocean-breeze .btn-loop.noloop svg { color: #78909C !important; }
+
+body.theme-ocean-breeze .btn-loop svg {
+  transition: color 0.3s;
+}
+
+/* Ocean Breeze pagination */
+body.theme-ocean-breeze .pagination button {
+  background: rgba(255,255,255,0.2);
+  color: #006064;
+  border: 1px solid rgba(32,178,170,0.3);
+}
+
+body.theme-ocean-breeze .pagination button:hover {
+  background: rgba(255,255,255,0.4);
+}
+
+body.theme-ocean-breeze .pagination button:disabled,
+body.theme-ocean-breeze .pagination button.active {
+  background: #20B2AA;
+  color: white;
+  border: 1px solid #20B2AA;
+}
+
+body.theme-ocean-breeze .volume-container .volume-icon,
+body.theme-ocean-breeze .speed-container button svg {
+  color: #006064 !important;
+}
+
+body.theme-ocean-breeze .volume-container:hover .volume-icon,
+body.theme-ocean-breeze .volume-container.active .volume-icon {
+  color: #20B2AA !important;
+}
+
+body.theme-ocean-breeze #persistent-album-bar .volume-icon:hover {
+  color: #20B2AA !important;
+}
+
+body.theme-ocean-breeze .speed-container button:hover svg,
+body.theme-ocean-breeze .speed-container button.active svg,
+body.theme-ocean-breeze #albumSpeedBtn:hover svg,
+body.theme-ocean-breeze #albumSpeedBtn.active svg {
+  color: #20B2AA !important;
+}
+
+body.theme-ocean-breeze header {
+  background: linear-gradient(135deg, #4dd0e1 0%, #26c6da 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0,96,100,0.2);
+}
+
+body.theme-ocean-breeze .track,
+body.theme-ocean-breeze .albumlink,
+body.theme-ocean-breeze .artistlink,
+body.theme-ocean-breeze .albumtrack,
+body.theme-ocean-breeze .currenttrack,
+body.theme-ocean-breeze .song-card,
+body.theme-ocean-breeze .search-results,
+body.theme-ocean-breeze #persistent-album-bar {
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 2px 12px rgba(0,96,100,0.15);
+  color: #006064;
+  border: 1px solid rgba(32,178,170,0.3);
+}
+
+body.theme-ocean-breeze .albumlink:hover,
+body.theme-ocean-breeze .artistlink:hover,
+body.theme-ocean-breeze .albumtrack:hover {
+  background: rgba(255,255,255,0.9);
+  transform: translateY(-2px);
+}
+
+body.theme-ocean-breeze .currenttrack:hover {
+  transform: translateY(-2px);
+}
+
+body.theme-ocean-breeze .timestamp,
+body.theme-ocean-breeze .albumtracktext,
+body.theme-ocean-breeze .playingtext,
+body.theme-ocean-breeze #bar-track-meta {
+  color: #004d52;
+}
+
+body.theme-ocean-breeze .login-btn,
+body.theme-ocean-breeze #login-button,
+body.theme-ocean-breeze #search-btn,
+body.theme-ocean-breeze #register-button {
+  background: #20B2AA;
+  color: white;
+  border: none;
+}
+
+body.theme-ocean-breeze .login-btn:hover,
+body.theme-ocean-breeze #login-button:hover,
+body.theme-ocean-breeze #search-btn:hover,
+body.theme-ocean-breeze #register-button:hover {
+  background: #1e9e96;
+}
+
+body.theme-ocean-breeze input,
+body.theme-ocean-breeze select {
+  background: rgba(255,255,255,0.8);
+  color: #006064;
+  border: 1px solid rgba(32,178,170,0.5);
+}
+
+body.theme-ocean-breeze .currenttrack {
+  background: rgba(32,178,170,0.2);
+  color: #004d52;
+}
+
+body.theme-ocean-breeze #progressBar,
+body.theme-ocean-breeze #albumProgress,
+body.theme-ocean-breeze #volumeSlider,
+body.theme-ocean-breeze .speed-slider {
+  background: linear-gradient(to right, #20B2AA var(--progress, 0%), #b0bec5 var(--progress, 0%));
+}
+
+body.theme-ocean-breeze #progressBar::-webkit-slider-thumb,
+body.theme-ocean-breeze #albumProgress::-webkit-slider-thumb,
+body.theme-ocean-breeze #volumeSlider::-webkit-slider-thumb,
+body.theme-ocean-breeze .speed-slider::-webkit-slider-thumb {
+  background: #20B2AA;
+  box-shadow: 0 0 4px rgba(32,178,170,0.6);
+}
+
+body.theme-ocean-breeze #progressBar::-moz-range-thumb,
+body.theme-ocean-breeze #albumProgress::-moz-range-thumb,
+body.theme-ocean-breeze #volumeSlider::-moz-range-thumb,
+body.theme-ocean-breeze .speed-slider::-moz-range-thumb {
+  background: #20B2AA;
+  box-shadow: 0 0 4px rgba(32,178,170,0.6);
+}
+
+/* Ocean Breeze - Persistent bar text colors */
+body.theme-ocean-breeze #persistent-album-bar {
+  color: #004d52;
+}
+
+body.theme-ocean-breeze #bar-track-title {
+  color: #004d52;
+}
+
+body.theme-ocean-breeze #bar-track-meta {
+  color: #006064;
+}
+
+body.theme-ocean-breeze #albumTimestamp {
+  color: #006064;
+}
+
+/* Ocean Breeze - Persistent bar button colors */
+body.theme-ocean-breeze #persistent-album-bar button,
+body.theme-ocean-breeze #persistent-album-bar svg {
+  color: #004d52;
+}
+
+body.theme-ocean-breeze #persistent-album-bar button:not(#persistentLoopBtn):hover,
+body.theme-ocean-breeze #persistent-album-bar button:not(#persistentLoopBtn):hover svg {
+  color: #20B2AA;
+}
+
+/* Ocean Breeze - Control hover states */
+body.theme-ocean-breeze .volume-icon:hover,
+body.theme-ocean-breeze #albumSpeedBtn:hover {
+  color: #20B2AA;
+}
+
+body.theme-ocean-breeze .speed-container button:hover svg,
+body.theme-ocean-breeze .speed-container button.active svg {
+  background: rgba(32,178,170,0.1);
+  border-radius: 4px;
+}
+
+/* Ocean Breeze - Speed modal styling */
+body.theme-ocean-breeze .speed-modal {
+  background: rgba(255,255,255,0.95);
+  color: #004d52;
+  border: 1px solid #20B2AA;
+}
+
+body.theme-ocean-breeze #speedModal {
+  background: rgba(255,255,255,0.95);
+  color: #004d52;
+  border: 1px solid #20B2AA;
+}
+
+body.theme-ocean-breeze #albumSpeedModal {
+  background: rgba(255,255,255,0.2);
+  color: #004d52;
+  border: 1px solid #20B2AA;
+}
+
+/* Sunset Glow Theme - Warm orange/red light theme */
+body.theme-sunset-glow {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 50%, #ffcc80 100%);
+  color: #bf360c;
+  background-attachment: fixed;
+  min-height: 100vh;
+  background-repeat: no-repeat;
+}
+
+body.theme-sunset-glow .loop1 { color: #E65100 !important; }
+body.theme-sunset-glow .loopall { color: #FF6347 !important; }
+body.theme-sunset-glow .noloop { color: #8D6E63 !important; }
+
+body.theme-sunset-glow .btn-loop.loop1 svg { color: #FFAB91 !important; }
+body.theme-sunset-glow .btn-loop.loopall svg { color: #FF6347 !important; }
+body.theme-sunset-glow .btn-loop.noloop svg { color: #8D6E63 !important; }
+
+body.theme-sunset-glow .btn-loop svg {
+  transition: color 0.3s;
+}
+
+/* Sunset Glow pagination */
+body.theme-sunset-glow .pagination button {
+  background: rgba(255,255,255,0.2);
+  color: #bf360c;
+  border: 1px solid rgba(255,99,71,0.3);
+}
+
+body.theme-sunset-glow .pagination button:hover {
+  background: rgba(255,255,255,0.4);
+}
+
+body.theme-sunset-glow .pagination button:disabled,
+body.theme-sunset-glow .pagination button.active {
+  background: #FF6347;
+  color: white;
+  border: 1px solid #FF6347;
+}
+
+body.theme-sunset-glow .volume-container .volume-icon,
+body.theme-sunset-glow .speed-container button svg {
+  color: #8f2a00 !important;
+}
+
+body.theme-sunset-glow .volume-container:hover .volume-icon,
+body.theme-sunset-glow .volume-container.active .volume-icon {
+  color: #FF6347 !important;
+}
+
+body.theme-sunset-glow #persistent-album-bar .volume-icon:hover {
+  color: #FF6347 !important;
+}
+
+body.theme-sunset-glow .speed-container button:hover svg,
+body.theme-sunset-glow .speed-container button.active svg,
+body.theme-sunset-glow #albumSpeedBtn:hover svg,
+body.theme-sunset-glow #albumSpeedBtn.active svg {
+  color: #FF6347 !important;
+}
+
+body.theme-sunset-glow header {
+  background: linear-gradient(225deg, #ff8a65 0%, #fd684e 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(191,54,12,0.2);
+}
+
+body.theme-sunset-glow .track,
+body.theme-sunset-glow .albumlink,
+body.theme-sunset-glow .artistlink,
+body.theme-sunset-glow .albumtrack,
+body.theme-sunset-glow .currenttrack,
+body.theme-sunset-glow .song-card,
+body.theme-sunset-glow .search-results,
+body.theme-sunset-glow #persistent-album-bar {
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 2px 12px rgba(191,54,12,0.15);
+  color: #bf360c;
+  border: 1px solid rgba(255,99,71,0.3);
+}
+
+body.theme-sunset-glow .albumlink:hover,
+body.theme-sunset-glow .artistlink:hover,
+body.theme-sunset-glow .albumtrack:hover {
+  background: rgba(255,255,255,0.95);
+  transform: translateY(-2px);
+}
+
+body.theme-sunset-glow .currenttrack:hover {
+  transform: translateY(-2px);
+}
+
+body.theme-sunset-glow .timestamp,
+body.theme-sunset-glow .albumtracktext,
+body.theme-sunset-glow .playingtext,
+body.theme-sunset-glow #bar-track-meta {
+  color: #8f2a00;
+}
+
+body.theme-sunset-glow .login-btn,
+body.theme-sunset-glow #login-button,
+body.theme-sunset-glow #search-btn,
+body.theme-sunset-glow #register-button {
+  background: #FF6347;
+  color: white;
+  border: none;
+}
+
+body.theme-sunset-glow .login-btn:hover,
+body.theme-sunset-glow #search-btn:hover,
+body.theme-sunset-glow #login-button:hover,
+body.theme-sunset-glow #register-button:hover {
+  background: #e5543d;
+}
+
+body.theme-sunset-glow input,
+body.theme-sunset-glow select {
+  background: rgba(255,255,255,0.9);
+  color: #bf360c;
+  border: 1px solid rgba(255,99,71,0.5);
+}
+
+body.theme-sunset-glow .currenttrack {
+  background: rgba(255,99,71,0.2);
+  color: #8f2a00;
+}
+
+body.theme-sunset-glow #progressBar,
+body.theme-sunset-glow #albumProgress,
+body.theme-sunset-glow #volumeSlider,
+body.theme-sunset-glow .speed-slider {
+  background: linear-gradient(to right, #FF6347 var(--progress, 0%), #d7ccc8 var(--progress, 0%));
+}
+
+body.theme-sunset-glow #progressBar::-webkit-slider-thumb,
+body.theme-sunset-glow #albumProgress::-webkit-slider-thumb,
+body.theme-sunset-glow #volumeSlider::-webkit-slider-thumb,
+body.theme-sunset-glow .speed-slider::-webkit-slider-thumb {
+  background: #FF6347;
+  box-shadow: 0 0 4px rgba(255,99,71,0.6);
+}
+
+body.theme-sunset-glow #progressBar::-moz-range-thumb,
+body.theme-sunset-glow #albumProgress::-moz-range-thumb,
+body.theme-sunset-glow #volumeSlider::-moz-range-thumb,
+body.theme-sunset-glow .speed-slider::-moz-range-thumb {
+  background: #FF6347;
+  box-shadow: 0 0 4px rgba(255,99,71,0.6);
+}
+
+/* Sunset Glow - Persistent bar text colors */
+body.theme-sunset-glow #persistent-album-bar {
+  color: #8f2a00;
+}
+
+body.theme-sunset-glow #bar-track-title {
+  color: #8f2a00;
+}
+
+body.theme-sunset-glow #bar-track-meta {
+  color: #bf360c;
+}
+
+body.theme-sunset-glow #albumTimestamp {
+  color: #bf360c;
+}
+
+/* Sunset Glow - Persistent bar button colors */
+body.theme-sunset-glow #persistent-album-bar button,
+body.theme-sunset-glow #persistent-album-bar svg {
+  color: #8f2a00;
+}
+
+body.theme-sunset-glow #persistent-album-bar button:not(#persistentLoopBtn):hover,
+body.theme-sunset-glow #persistent-album-bar button:not(#persistentLoopBtn):hover svg {
+  color: #FF6347;
+}
+
+/* Sunset Glow - Control hover states */
+body.theme-sunset-glow .volume-icon:hover,
+body.theme-sunset-glow #albumSpeedBtn:hover {
+  color: #FF6347;
+}
+
+body.theme-sunset-glow .speed-container button:hover svg,
+body.theme-sunset-glow .speed-container button.active svg {
+  background: rgba(255,99,71,0.1);
+  border-radius: 4px;
+}
+
+/* Sunset Glow - Speed modal styling */
+body.theme-sunset-glow .speed-modal {
+  background: rgba(255,255,255,0.95);
+  color: #8f2a00;
+  border: 1px solid #FF6347;
+}
+
+body.theme-sunset-glow #speedModal {
+  background: rgba(255,255,255,0.95);
+  color: #8f2a00;
+  border: 1px solid #FF6347;
+}
+
+body.theme-sunset-glow #albumSpeedModal {
+  background: rgba(255,255,255,0.2);
+  color: #8f2a00;
+  border: 1px solid #FF6347;
+}
+
+/* Lavender Dreams Theme - Light purple theme */
+body.theme-lavender-dreams {
+  background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 50%, #ce93d8 100%);
+  color: #4a148c;
+  background-attachment: fixed;
+  min-height: 100vh;
+  background-repeat: no-repeat;
+}
+
+body.theme-lavender-dreams .loop1 { color: #7B1FA2 !important; }
+body.theme-lavender-dreams .loopall { color: #9370DB !important; }
+body.theme-lavender-dreams .noloop { color: #4a148c !important; }
+
+body.theme-lavender-dreams .btn-loop.loop1 svg { color: #CE93D8 !important; }
+body.theme-lavender-dreams .btn-loop.loopall svg { color: #BA68C8 !important; }
+body.theme-lavender-dreams .btn-loop.noloop svg { color: #4a148c !important; }
+
+body.theme-lavender-dreams .btn-loop svg {
+  transition: color 0.3s;
+}
+
+/* Lavender Dreams pagination */
+body.theme-lavender-dreams .pagination button {
+  background: rgba(255,255,255,0.2);
+  color: #4a148c;
+  border: 1px solid rgba(147,112,219,0.3);
+}
+
+body.theme-lavender-dreams .pagination button:hover {
+  background: rgba(255,255,255,0.4);
+}
+
+body.theme-lavender-dreams .pagination button:disabled,
+body.theme-lavender-dreams .pagination button.active {
+  background: #9370DB;
+  color: white;
+  border: 1px solid #9370DB;
+}
+
+body.theme-lavender-dreams .volume-container .volume-icon,
+body.theme-lavender-dreams .speed-container button svg {
+  color: #4a148c !important;
+}
+
+body.theme-lavender-dreams .volume-container:hover .volume-icon,
+body.theme-lavender-dreams .volume-container.active .volume-icon {
+  color: #9370DB !important;
+}
+
+body.theme-lavender-dreams #persistent-album-bar .volume-icon:hover {
+  color: #9370DB !important;
+}
+
+body.theme-lavender-dreams .speed-container button:hover svg,
+body.theme-lavender-dreams .speed-container button.active svg,
+body.theme-lavender-dreams #albumSpeedBtn:hover svg,
+body.theme-lavender-dreams #albumSpeedBtn.active svg {
+  color: #9370DB !important;
+}
+
+body.theme-lavender-dreams header {
+  background: linear-gradient(135deg, #ba68c8 0%, #9370DB 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(74,20,140,0.2);
+}
+
+body.theme-lavender-dreams .track,
+body.theme-lavender-dreams .albumlink,
+body.theme-lavender-dreams .artistlink,
+body.theme-lavender-dreams .albumtrack,
+body.theme-lavender-dreams .currenttrack,
+body.theme-lavender-dreams .song-card,
+body.theme-lavender-dreams .search-results,
+body.theme-lavender-dreams #persistent-album-bar {
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 2px 12px rgba(74,20,140,0.15);
+  color: #4a148c;
+  border: 1px solid rgba(147,112,219,0.3);
+}
+
+body.theme-lavender-dreams .albumlink:hover,
+body.theme-lavender-dreams .artistlink:hover,
+body.theme-lavender-dreams .albumtrack:hover {
+  background: rgba(255,255,255,0.9);
+  transform: translateY(-2px);
+}
+
+body.theme-lavender-dreams .currenttrack:hover {
+  transform: translateY(-2px);
+}
+
+body.theme-lavender-dreams .timestamp,
+body.theme-lavender-dreams .albumtracktext,
+body.theme-lavender-dreams .playingtext,
+body.theme-lavender-dreams #bar-track-meta {
+  color: #6a1b9a;
+}
+
+body.theme-lavender-dreams .login-btn,
+body.theme-lavender-dreams #login-button,
+body.theme-lavender-dreams #search-btn {
+  background: #ba68c8;
+  color: white;
+  border: none;
+}
+
+body.theme-lavender-dreams .login-btn:hover,
+body.theme-lavender-dreams #search-btn:hover {
+  background: #9f59ac;
+}
+
+body.theme-lavender-dreams input,
+body.theme-lavender-dreams select {
+  background: rgba(255,255,255,0.85);
+  color: #4a148c;
+  border: 1px solid rgba(147,112,219,0.5);
+}
+
+body.theme-lavender-dreams .currenttrack {
+  background: rgba(147,112,219,0.2);
+  color: #4a148c;
+}
+
+body.theme-lavender-dreams #progressBar,
+body.theme-lavender-dreams #albumProgress,
+body.theme-lavender-dreams #volumeSlider,
+body.theme-lavender-dreams .speed-slider {
+  background: linear-gradient(to right, #9370DB var(--progress, 0%), #d1c4e9 var(--progress, 0%));
+}
+
+body.theme-lavender-dreams #progressBar::-webkit-slider-thumb,
+body.theme-lavender-dreams #albumProgress::-webkit-slider-thumb,
+body.theme-lavender-dreams #volumeSlider::-webkit-slider-thumb,
+body.theme-lavender-dreams .speed-slider::-webkit-slider-thumb {
+  background: #9370DB;
+  box-shadow: 0 0 4px rgba(147,112,219,0.6);
+}
+
+body.theme-lavender-dreams #progressBar::-moz-range-thumb,
+body.theme-lavender-dreams #albumProgress::-moz-range-thumb,
+body.theme-lavender-dreams #volumeSlider::-moz-range-thumb,
+body.theme-lavender-dreams .speed-slider::-moz-range-thumb {
+  background: #9370DB;
+  box-shadow: 0 0 4px rgba(147,112,219,0.6);
+}
+
+/* Lavender Dreams - Persistent bar text colors */
+body.theme-lavender-dreams #persistent-album-bar {
+  color: #4a148c;
+}
+
+body.theme-lavender-dreams #bar-track-title {
+  color: #4a148c;
+}
+
+body.theme-lavender-dreams #bar-track-meta {
+  color: #6a1b9a;
+}
+
+body.theme-lavender-dreams #albumTimestamp {
+  color: #6a1b9a;
+}
+
+/* Lavender Dreams - Persistent bar button colors */
+body.theme-lavender-dreams #persistent-album-bar button,
+body.theme-lavender-dreams #persistent-album-bar svg {
+  color: #4a148c;
+}
+
+body.theme-lavender-dreams #persistent-album-bar button:not(#persistentLoopBtn):hover,
+body.theme-lavender-dreams #persistent-album-bar button:not(#persistentLoopBtn):hover svg {
+  color: #9370DB;
+}
+
+/* Lavender Dreams - Control hover states */
+body.theme-lavender-dreams .volume-icon:hover,
+body.theme-lavender-dreams #albumSpeedBtn:hover {
+  color: #9370DB;
+}
+
+body.theme-lavender-dreams .speed-container button:hover svg,
+body.theme-lavender-dreams .speed-container button.active svg{
+  background: rgba(147,112,219,0.1);
+  border-radius: 4px;
+}
+
+/* Lavender Dreams - Speed modal styling */
+body.theme-lavender-dreams .speed-modal {
+  background: rgba(255,255,255,0.95);
+  color: #4a148c;
+  border: 1px solid #9370DB;
+}
+
+body.theme-lavender-dreams #speedModal {
+  background: rgba(255,255,255,0.95);
+  color: #4a148c;
+  border: 1px solid #9370DB;
+}
+
+body.theme-lavender-dreams #albumSpeedModal {
+  background: rgba(255,255,255,0.2);
+  color: #4a148c;
+  border: 1px solid #9370DB;
+}
+
+/* Draggable cover image styling */
+#persistent-cover-box {
+  cursor: default;
+  user-select: none;
+}
+
+#persistent-cover-box .drag-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  cursor: move;
+  z-index: 1;
+}
+
+#persistent-cover-box .drag-handle:hover {
+  background: rgba(0,0,0,0.1);
+}
+
+#persistent-cover-box #cover-close {
+  z-index: 2;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+#persistent-cover-box #cover-close:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+body.theme-lavender-dreams .currenttrack:hover {
+  background: rgba(147, 112, 219, 0.2);
+}
+
+body.theme-ocean-breeze .currenttrack:hover {
+  background: rgba(32, 178, 170, 0.2);
+}
+
+body.theme-sunset-glow .currenttrack:hover {
+  background: rgba(255, 99, 71, 0.2);
+}
+
+/* User Authentication Form Styles */
+.auth-input {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: border-color 0.3s, background-color 0.3s;
+}
+
+.auth-input:focus {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-color: #3b82f6;
+  outline: none;
+}
+
+/* Profile Page Styles */
+.profile-avatar {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  border-radius: 50%;
+}
+
+body.theme-light thead {
+  background-color: #f3f4f6;
+
+}
+
+/* Theme-specific auth form styles */
+body.theme-light .auth-input,
+body.theme-light textarea.auth-input {
+  background-color: white;
+  border-color: #d1d5db;
+  color: black;
+}
+
+body.theme-light .auth-input:focus,
+body.theme-light textarea.auth-input:focus {
+  border-color: #3b82f6;
+  background-color: #f9fafb;
+}
+
+body.theme-sc .auth-input,
+body.theme-sc textarea.auth-input {
+  background-color: rgba(255, 69, 0, 0.1);
+  border-color: rgba(255, 69, 0, 0.3);
+}
+
+body.theme-sc .auth-input:focus,
+body.theme-sc textarea.auth-input:focus {
+  border-color: #ff4500;
+  background-color: rgba(255, 69, 0, 0.2);
+}
+
+body.theme-blue .auth-input,
+body.theme-blue textarea.auth-input {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+body.theme-blue .auth-input:focus,
+body.theme-blue textarea.auth-input:focus {
+  border-color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.2);
+}
+
+body.theme-games .auth-input,
+body.theme-games textarea.auth-input {
+  background-color: rgba(244, 20, 20, 0.1);
+  border-color: rgba(244, 20, 20, 0.3);
+}
+
+body.theme-games .auth-input:focus,
+body.theme-games textarea.auth-input:focus {
+  border-color: #f41414;
+  background-color: rgba(244, 20, 20, 0.2);
+}
+
+body.theme-midnight-blurple .auth-input,
+body.theme-midnight-blurple textarea.auth-input {
+  background-color: rgba(155, 137, 253, 0.1);
+  border-color: rgba(155, 137, 253, 0.3);
+}
+
+body.theme-midnight-blurple .auth-input:focus,
+body.theme-midnight-blurple textarea.auth-input:focus {
+  border-color: #9b89fd;
+  background-color: rgba(155, 137, 253, 0.2);
+}
+
+body.theme-midnight-blurple .navbutton,
+body.theme-strawberry-lemonade .navbutton {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+body.theme-ocean-breeze .navbutton,
+body.theme-sunset-glow .navbutton,
+body.theme-lavender-dreams .navbutton {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+/* Strawberry Lemonade theme auth inputs */
+body.theme-strawberry-lemonade .auth-input,
+body.theme-strawberry-lemonade textarea.auth-input {
+  background-color: rgba(255, 182, 193, 0.1);
+  border-color: rgba(255, 182, 193, 0.3);
+}
+
+body.theme-strawberry-lemonade .auth-input:focus,
+body.theme-strawberry-lemonade textarea.auth-input:focus {
+  border-color: #ffb6c1;
+  background-color: rgba(255, 182, 193, 0.2);
+}
+
+/* Ocean Breeze theme auth inputs */
+body.theme-ocean-breeze .auth-input,
+body.theme-ocean-breeze textarea.auth-input {
+  background-color: rgba(0, 191, 255, 0.1);
+  border-color: rgba(0, 191, 255, 0.3);
+}
+
+body.theme-ocean-breeze .auth-input:focus,
+body.theme-ocean-breeze textarea.auth-input:focus {
+  border-color: #00bfff;
+  background-color: rgba(0, 191, 255, 0.2);
+}
+
+/* Sunset Glow theme auth inputs */
+body.theme-sunset-glow .auth-input,
+body.theme-sunset-glow textarea.auth-input {
+  background-color: rgba(255, 165, 0, 0.1);
+  border-color: rgba(255, 165, 0, 0.3);
+}
+
+body.theme-sunset-glow .auth-input:focus,
+body.theme-sunset-glow textarea.auth-input:focus {
+  border-color: #ffa500;
+  background-color: rgba(255, 165, 0, 0.2);
+}
+
+/* Lavender Dreams theme auth inputs */
+body.theme-lavender-dreams .auth-input,
+body.theme-lavender-dreams textarea.auth-input {
+  background-color: rgba(230, 230, 250, 0.1);
+  border-color: rgba(230, 230, 250, 0.3);
+}
+
+body.theme-lavender-dreams .auth-input:focus,
+body.theme-lavender-dreams textarea.auth-input:focus {
+  border-color: #e6e6fa;
+  background-color: rgba(230, 230, 250, 0.2);
+}
+
+/* Dark theme auth inputs (default fallback) */
+body.theme-dark .auth-input,
+body.theme-dark textarea.auth-input {
+  background-color: rgba(75, 85, 99, 0.5);
+  border-color: rgba(107, 114, 128, 0.5);
+}
+
+body.theme-dark .auth-input:focus,
+body.theme-dark textarea.auth-input:focus {
+  border-color: #3b82f6;
+  background-color: rgba(75, 85, 99, 0.7);
+}
+
+body.theme-strawberry-lemonade #register-form input::placeholder {
+  color: white !important;
+}
+
+/* Activity Tracking Theme Styles */
+
+/* Activity cards base styles */
+.activity-track-card {
+  transition: all 0.3s ease;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Dark theme activity cards */
+body.theme-dark .activity-track-card {
+  background-color: rgb(55, 65, 81);
+  color: white;
+}
+
+body.theme-dark .activity-track-card:hover {
+  background-color: rgb(75, 85, 99);
+}
+
+body.theme-dark .activity-track-card .play-count {
+  color: #10b981;
+}
+
+body.theme-dark .activity-track-card .track-artist {
+  color: rgb(156, 163, 175);
+}
+
+body.theme-dark .activity-track-card .track-date {
+  color: rgb(107, 114, 128);
+}
+
+/* Light theme activity cards */
+body.theme-light .activity-track-card {
+  background-color: white;
+  color: black;
+  border: 1px solid #e5e7eb;
+}
+
+body.theme-light .activity-track-card:hover {
+  background-color: #f9fafb;
+}
+
+body.theme-light .activity-track-card .play-count {
+  color: #059669;
+}
+
+body.theme-light .activity-track-card .track-artist {
+  color: rgb(107, 114, 128);
+}
+
+body.theme-light .activity-track-card .track-date {
+  color: rgb(156, 163, 175);
+}
+
+/* Blue theme activity cards */
+body.theme-blue .activity-track-card {
+  background-color: rgb(18, 52, 139);
+  color: white;
+}
+
+body.theme-blue .activity-track-card:hover {
+  background-color: rgb(23, 67, 177);
+}
+
+body.theme-blue .activity-track-card .play-count {
+  color: #60a5fa;
+}
+
+body.theme-blue .activity-track-card .track-artist {
+  color: rgb(203, 213, 225);
+}
+
+body.theme-blue .activity-track-card .track-date {
+  color: rgb(148, 163, 184);
+}
+
+/* SC theme activity cards */
+body.theme-sc .activity-track-card {
+  background-color: white;
+  color: black;
+  border: 1px solid rgba(244, 87, 20, 0.3);
+}
+
+body.theme-sc .activity-track-card:hover {
+  background-color: #ffab8d;
+}
+
+body.theme-sc .activity-track-card .play-count {
+  color: #f45714;
+}
+
+body.theme-sc .activity-track-card .track-artist {
+  color: rgb(75, 85, 99);
+}
+
+body.theme-sc .activity-track-card .track-date {
+  color: rgb(107, 114, 128);
+}
+
+/* Games theme activity cards */
+body.theme-games .activity-track-card {
+  background-color: rgb(150, 0, 0);
+  color: white;
+}
+
+body.theme-games .activity-track-card:hover {
+  background-color: #ff4444;
+}
+
+body.theme-games .activity-track-card .play-count {
+  color: #ffcccb;
+}
+
+body.theme-games .activity-track-card .track-artist {
+  color: rgb(236, 236, 236);
+}
+
+body.theme-games .activity-track-card .track-date {
+  color: rgb(203, 203, 203);
+}
+
+/* Midnight Blurple theme activity cards */
+body.theme-midnight-blurple .activity-track-card {
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 2px 12px rgba(30,60,114,0.10);
+  color: white;
+  border: 1px solid rgba(155, 137, 253, 0.3);
+}
+
+body.theme-midnight-blurple .activity-track-card:hover {
+  background: rgba(255,255,255,0.18);
+  transform: translateY(-2px);
+}
+
+body.theme-midnight-blurple .activity-track-card .play-count {
+  color: #ffffff;
+}
+
+body.theme-midnight-blurple .activity-track-card .track-artist {
+  color: #e0e7ff;
+}
+
+body.theme-midnight-blurple .activity-track-card .track-date {
+  color: #c7d2fe;
+}
+
+/* Strawberry Lemonade theme activity cards */
+body.theme-strawberry-lemonade .activity-track-card {
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 2px 12px rgba(140,21,86,0.10);
+  color: white;
+  border: 1px solid rgba(232, 76, 140, 0.3);
+}
+
+body.theme-strawberry-lemonade .activity-track-card:hover {
+  background: rgba(255,255,255,0.20);
+  transform: translateY(-2px);
+}
+
+body.theme-strawberry-lemonade .activity-track-card .play-count {
+  color: #ffffff;
+}
+
+body.theme-strawberry-lemonade .activity-track-card .track-artist {
+  color: #ffe0f0;
+}
+
+body.theme-strawberry-lemonade .activity-track-card .track-date {
+  color: #ffb6d5;
+}
+
+/* Ocean Breeze theme activity cards */
+body.theme-ocean-breeze .activity-track-card {
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 2px 12px rgba(0,96,100,0.15);
+  color: #006064;
+  border: 1px solid rgba(32,178,170,0.3);
+}
+
+body.theme-ocean-breeze .activity-track-card:hover {
+  background: rgba(255,255,255,0.95);
+  transform: translateY(-2px);
+}
+
+body.theme-ocean-breeze .activity-track-card .play-count {
+  color: #20B2AA;
+}
+
+body.theme-ocean-breeze .activity-track-card .track-artist {
+  color: #004d52;
+}
+
+body.theme-ocean-breeze .activity-track-card .track-date {
+  color: #006064;
+}
+
+/* Sunset Glow theme activity cards */
+body.theme-sunset-glow .activity-track-card {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 2px 12px rgba(191,54,12,0.15);
+  color: #bf360c;
+  border: 1px solid rgba(255,99,71,0.3);
+}
+
+body.theme-sunset-glow .activity-track-card:hover {
+  background: rgba(255,255,255,0.95);
+  transform: translateY(-2px);
+}
+
+body.theme-sunset-glow .activity-track-card .play-count {
+  color: #FF6347;
+}
+
+body.theme-sunset-glow .activity-track-card .track-artist {
+  color: #8f2a00;
+}
+
+body.theme-sunset-glow .activity-track-card .track-date {
+  color: #bf360c;
+}
+
+/* Lavender Dreams theme activity cards */
+body.theme-lavender-dreams .activity-track-card {
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 2px 12px rgba(74,20,140,0.15);
+  color: #4a148c;
+  border: 1px solid rgba(147,112,219,0.3);
+}
+
+body.theme-lavender-dreams .activity-track-card:hover {
+  background: rgba(255,255,255,0.95);
+  transform: translateY(-2px);
+}
+
+body.theme-lavender-dreams .activity-track-card .play-count {
+  color: #9370DB;
+}
+
+body.theme-lavender-dreams .activity-track-card .track-artist {
+  color: #6a1b9a;
+}
+
+body.theme-lavender-dreams .activity-track-card .track-date {
+  color: #4a148c;
+}
+
+/* Activity empty and hidden states */
+.activity-empty, .activity-hidden, .activity-error {
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+}
+
+/* Dark theme activity states */
+body.theme-dark .activity-empty,
+body.theme-dark .activity-hidden,
+body.theme-dark .activity-error {
+  background-color: rgb(31, 41, 55);
+  color: rgb(156, 163, 175);
+}
+
+/* Light theme activity states */
+body.theme-light .activity-empty,
+body.theme-light .activity-hidden,
+body.theme-light .activity-error {
+  background-color: #f9fafb;
+  color: rgb(107, 114, 128);
+  border: 1px solid #e5e7eb;
+}
+
+/* Blue theme activity states */
+body.theme-blue .activity-empty,
+body.theme-blue .activity-hidden,
+body.theme-blue .activity-error {
+  background-color: rgb(30, 58, 138);
+  color: rgb(203, 213, 225);
+}
+
+/* SC theme activity states */
+body.theme-sc .activity-empty,
+body.theme-sc .activity-hidden,
+body.theme-sc .activity-error {
+  background-color: #fff5f2;
+  color: rgb(75, 85, 99);
+  border: 1px solid rgba(244, 87, 20, 0.2);
+}
+
+/* Games theme activity states */
+body.theme-games .activity-empty,
+body.theme-games .activity-hidden,
+body.theme-games .activity-error {
+  background-color: rgb(120, 0, 0);
+  color: rgb(236, 236, 236);
+}
+
+/* Midnight Blurple theme activity states */
+body.theme-midnight-blurple .activity-empty,
+body.theme-midnight-blurple .activity-hidden,
+body.theme-midnight-blurple .activity-error {
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(2px);
+  color: #c7d2fe;
+  border: 1px solid rgba(155, 137, 253, 0.2);
+}
+
+/* Strawberry Lemonade theme activity states */
+body.theme-strawberry-lemonade .activity-empty,
+body.theme-strawberry-lemonade .activity-hidden,
+body.theme-strawberry-lemonade .activity-error {
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(2px);
+  color: #ffb6d5;
+  border: 1px solid rgba(232, 76, 140, 0.2);
+}
+
+/* Ocean Breeze theme activity states */
+body.theme-ocean-breeze .activity-empty,
+body.theme-ocean-breeze .activity-hidden,
+body.theme-ocean-breeze .activity-error {
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(2px);
+  color: #004d52;
+  border: 1px solid rgba(32,178,170,0.2);
+}
+
+/* Sunset Glow theme activity states */
+body.theme-sunset-glow .activity-empty,
+body.theme-sunset-glow .activity-hidden,
+body.theme-sunset-glow .activity-error {
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(2px);
+  color: #8f2a00;
+  border: 1px solid rgba(255,99,71,0.2);
+}
+
+/* Lavender Dreams theme activity states */
+body.theme-lavender-dreams .activity-empty,
+body.theme-lavender-dreams .activity-hidden,
+body.theme-lavender-dreams .activity-error {
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(2px);
+  color: #6a1b9a;
+  border: 1px solid rgba(147,112,219,0.2);
+}
+
+/* Profile picture gradients */
+.profile-gradient-1 {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.profile-gradient-2 {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.profile-gradient-3 {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.profile-gradient-4 {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.profile-gradient-5 {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.profile-gradient-6 {
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+}
+
+.profile-gradient-7 {
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+}
+
+.profile-gradient-8 {
+  background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+}
+
+.profile-gradient-9 {
+  background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%);
+}
+
+.profile-gradient-10 {
+  background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
+}
+
+.profile-gradient-11 {
+  background: linear-gradient(135deg, #fdbb2d 0%, #22c1c3 100%);
+}
+
+.profile-gradient-12 {
+  background: linear-gradient(135deg, #ff7eb3 0%, #ff758c 100%);
+}
+
+/* Gradient selector dropdown */
+.gradient-selector {
+  position: relative;
+  display: inline-block;
+}
+
+.gradient-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: rgb(31, 41, 55);
+  border: 1px solid rgb(75, 85, 99);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  min-width: 200px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  display: none;
+}
+
+.gradient-dropdown.show {
+  display: grid;
+}
+
+.gradient-option {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.gradient-option:hover {
+  transform: scale(1.1);
+  border-color: white;
+}
+
+.gradient-option.selected {
+  border-color: #3b82f6;
+  border-width: 3px;
+}
+
+/* Theme-specific gradient dropdown styling */
+body.theme-light .gradient-dropdown {
+  background: white;
+  border-color: #e5e7eb;
+  color: black;
+}
+
+body.theme-blue .gradient-dropdown {
+  background: rgb(30, 58, 138);
+  border-color: rgb(59, 130, 246);
+}
+
+body.theme-sc .gradient-dropdown {
+  background: white;
+  border-color: #f45714;
+  color: black;
+}
+
+body.theme-games .gradient-dropdown {
+  background: rgb(120, 0, 0);
+  border-color: #ff4444;
+}
+
+body.theme-midnight-blurple .gradient-dropdown {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border-color: rgba(155, 137, 253, 0.5);
+}
+
+body.theme-strawberry-lemonade .gradient-dropdown {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border-color: rgba(232, 76, 140, 0.5);
+}
+
+body.theme-ocean-breeze .gradient-dropdown {
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(10px);
+  border-color: rgba(32,178,170,0.5);
+  color: #006064;
+}
+
+body.theme-sunset-glow .gradient-dropdown {
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(10px);
+  border-color: rgba(255,99,71,0.5);
+  color: #bf360c;
+}
+
+body.theme-lavender-dreams .gradient-dropdown {
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(10px);
+  border-color: rgba(147,112,219,0.5);
+  color: #4a148c;
+}

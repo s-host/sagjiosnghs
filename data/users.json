@@ -1,0 +1,46 @@
+[
+  {
+    "id": "1",
+    "username": "admin",
+    "password": "$2b$10$oMq2FyxskrNFAgx84i0Q9uLilFFQBIH/EaMegVcawXkgsUY6KLjMm",
+    "createdAt": "2025-10-17T04:22:48.352Z",
+    "isAdmin": true,
+    "bio": "ok im cool",
+    "selectedGradient": 5
+  },
+  {
+    "id": "2",
+    "username": "2on",
+    "password": "$2b$10$fPqoydaNn4LsCZyr2q21L.ocYPkk/LtnQ1oXEyUqrCLhiYMwvqeWu",
+    "createdAt": "2025-10-17T06:50:01.432Z",
+    "isAdmin": false,
+    "bio": "second user ever?? extreme???",
+    "muted": false,
+    "selectedGradient": 5
+  },
+  {
+    "id": "3",
+    "username": "Tathaagat_Fish",
+    "password": "$2b$10$SixIHxxtAvNWKfmqNGzrQ.iELtVqDOEDeJbuujeGgTxqfazXcJc2i",
+    "createdAt": "2025-10-28T23:35:35.756Z",
+    "isAdmin": false,
+    "bio": "Existing on Earth",
+    "selectedGradient": 3
+  },
+  {
+    "id": "4",
+    "username": "tuffdu",
+    "password": "$2b$10$XF6i2IdYALmnEDBwKZhUh.8K3p.95S/NL/4qWPGAp0mEW8ABs0I6K",
+    "createdAt": "2025-10-29T22:44:20.199Z",
+    "isAdmin": false,
+    "bio": "i'm a cool dude what can I say, i'm just that nonchalant"
+  },
+  {
+    "id": "5",
+    "username": "marting99",
+    "password": "$2b$10$SYr13YlI95QNIHIrsEkX9.DeWbfb72q5O38BnrhI52JcrVpsVKenu",
+    "createdAt": "2025-11-01T18:00:10.382Z",
+    "isAdmin": false,
+    "bio": "i am new to HyperTunes"
+  }
+]

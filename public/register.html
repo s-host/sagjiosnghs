@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register - HyperTunes</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="/style.css" rel="stylesheet">
+  <script type="module" src="/themes.js"></script>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro' rel='stylesheet' type='text/css'>
+</head>
+<body class="bg-gray-900 text-white">
+  <header class="p-6 bg-gray-800 shadow-md flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <h1 class="text-3xl font-bold cursor-pointer" onclick="window.location.href='/'">HyperTunes</h1>
+    </div>
+    <label class="wt-white" for="theme-select">Theme:
+      <select id="theme-select">
+              <option value="dark" class="text-black">Dark</option>
+              <option value="light" class="text-black">Light</option>
+              <option value="blue" class="text-black">Blue</option>
+              <option value="sc" class="text-black">SC</option>
+              <option value="games" class="text-black">Games</option>
+              <option value="midnight-blurple" class="text-black">Midnight Blurple</option>
+              <option value="strawberry-lemonade" class="text-black">Strawberry Lemonade</option>
+              <option value="ocean-breeze" class="text-black">Ocean Breeze</option>
+              <option value="sunset-glow" class="text-black">Sunset Glow</option>
+              <option value="lavender-dreams" class="text-black">Lavender Dreams</option>
+      </select>
+    </label>
+    <button onclick="window.location.href='/'" class="bg-green-600 hover:bg-green-700 hover:bg-gray-600 text-white px-3 py-1 rounded back-to-home-btn">Back to Home</button>
+  </header>
+
+  <main class="p-6 flex justify-center">
+    <div class="max-w-md w-full">
+      <div class="bg-gray-800 rounded-lg shadow-lg p-6 track">
+        <h2 class="text-2xl font-bold mb-6 text-center">Create Account</h2>
+        
+        <form id="register-form" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-2" for="reg-username">Username</label>
+            <input 
+              id="reg-username" 
+              type="text" 
+              class="w-full px-3 py-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-500" 
+              placeholder="Enter username (3-20 characters)"
+              required
+              minlength="3"
+              maxlength="20"
+              pattern="[a-zA-Z0-9_]+"
+              title="Username must contain only letters, numbers, and underscores"
+            />
+            <p class="text-xs text-gray-400 mt-1">Only letters, numbers, and underscores allowed</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-2" for="reg-password">Password</label>
+            <input 
+              id="reg-password" 
+              type="password" 
+              class="w-full px-3 py-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-500" 
+              placeholder="Enter password (minimum 6 characters)"
+              required
+              minlength="6"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-2" for="reg-confirm-password">Confirm Password</label>
+            <input 
+              id="reg-confirm-password" 
+              type="password" 
+              class="w-full px-3 py-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-500" 
+              placeholder="Confirm your password"
+              required
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-2" for="reg-bio">Bio (Optional)</label>
+            <textarea 
+              id="reg-bio" 
+              class="w-full px-3 py-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-500" 
+              placeholder="Tell us about yourself (max 500 characters)"
+              maxlength="500"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-2" for="verification-answer">Verification Question</label>
+            <p id="verification-question" class="text-sm text-gray-300 mb-2">Loading question...</p>
+            <input 
+              id="verification-answer" 
+              type="text" 
+              class="w-full px-3 py-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-500" 
+              placeholder="Enter your answer"
+              required
+            />
+            <button 
+              type="button" 
+              id="new-question-btn"
+              class="text-xs text-blue-400 hover:text-blue-300 mt-1"
+            >
+              Get new question
+            </button>
+          </div>
+
+          <div id="error-message" class="text-red-500 text-sm hidden"></div>
+          <div id="success-message" class="text-green-500 text-sm hidden"></div>
+
+          <button 
+            type="submit" 
+            id="register-btn"
+            class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded font-semibold submitbtn"
+          >
+            Create Account
+          </button>
+        </form>
+
+        <div class="mt-6 text-center">
+          <p class="text-gray-400">Already have an account?</p>
+          <button onclick="window.location.href='/login'" class="text-blue-400 hover:text-blue-300">Sign In</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentQuestionId = null;
+
+    async function loadVerificationQuestion() {
+      try {
+        const response = await fetch('/api/verification-question');
+        const data = await response.json();
+        document.getElementById('verification-question').textContent = data.question;
+        currentQuestionId = data.id;
+      } catch (error) {
+        console.error('Error loading verification question:', error);
+        document.getElementById('verification-question').textContent = 'Error loading question. Please try again.';
+      }
+    }
+
+    document.getElementById('new-question-btn').addEventListener('click', loadVerificationQuestion);
+
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const username = document.getElementById('reg-username').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const confirmPassword = document.getElementById('reg-confirm-password').value;
+      const verificationAnswer = document.getElementById('verification-answer').value.trim();
+      const bio = document.getElementById('reg-bio').value.trim();
+      
+      const errorEl = document.getElementById('error-message');
+      const successEl = document.getElementById('success-message');
+      
+      // Hide previous messages
+      errorEl.classList.add('hidden');
+      successEl.classList.add('hidden');
+      
+      // Validate passwords match
+      if (password !== confirmPassword) {
+        errorEl.textContent = 'Passwords do not match';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+      
+      if (currentQuestionId === null) {
+        errorEl.textContent = 'Please wait for verification question to load';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+      
+      const registerBtn = document.getElementById('register-btn');
+      registerBtn.disabled = true;
+      registerBtn.textContent = 'Creating Account...';
+      
+      try {
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            username,
+            password,
+            verificationAnswer,
+            verificationId: currentQuestionId,
+            bio
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          successEl.textContent = result.message;
+          successEl.classList.remove('hidden');
+          
+          // Redirect to login after successful registration
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
+        } else {
+          errorEl.textContent = result.message;
+          errorEl.classList.remove('hidden');
+          
+          // Reload verification question if answer was wrong
+          if (result.message.includes('verification')) {
+            loadVerificationQuestion();
+          }
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        errorEl.textContent = 'Registration failed. Please try again.';
+        errorEl.classList.remove('hidden');
+      } finally {
+        registerBtn.disabled = false;
+        registerBtn.textContent = 'Create Account';
+      }
+    });
+
+    // Load initial verification question
+    loadVerificationQuestion();
+  </script>
+</body>
+</html>
