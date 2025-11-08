@@ -103,6 +103,11 @@ async function router() {
     return renderCategoryPage(segments[1], page);
   }
 
+  // Playlist page
+  if (segments[0] === "playlist" && segments[1]) {
+    return renderPlaylist(segments[1]);
+  }
+
   if (segments[0] === "album" && segments[1]) return renderAlbum(segments[1]);
   if (segments.length === 2) return renderSong(segments[0], segments[1]);
   if (segments.length === 1) return renderArtist(segments[0]);
@@ -421,7 +426,12 @@ function renderTrackCard(track) {
   const truncatedTitle = truncateTitle(track.title);
 
   return `
-    <div class="bg-gray-800 rounded-lg overflow-hidden shadow-lg p-4 text-center track">
+    <div class="bg-gray-800 rounded-lg overflow-hidden shadow-lg p-4 text-center track relative">
+      <button class="absolute top-2 right-2 text-gray-400 hover:text-white p-1 playlist-menu-btn" 
+              onclick="event.stopPropagation(); togglePlaylistMenu(this, '${artistSlug}', '${songSlug}', '${escapeHtml(track.title)}', '${escapeHtml(track.artist)}')"
+              aria-label="Add to playlist">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-more-vertical"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+      </button>
       <img src="${track.cover}" alt="${track.album}" class="w-32 h-32 mx-auto object-cover rounded mb-4" />
       <h3 class="text-lg font-bold hover:underline cursor-pointer" onclick="navigateTo('/${artistSlug}/${songSlug}')" title="${track.title}">
         ${truncatedTitle}
@@ -672,6 +682,578 @@ function renderAlbum(albumSlug) {
   `;
 }
 
+async function renderPlaylist(playlistId) {
+  try {
+    const response = await fetch(`/api/playlists/${playlistId}`);
+    const data = await response.json();
+
+    if (!data.success) {
+      return renderNotFound();
+    }
+
+    const playlist = data.playlist;
+
+    // Get auth status to check if user owns this playlist
+    const authResponse = await fetch('/api/auth-status');
+    const authData = await authResponse.json();
+    let userId = null;
+    if (authData.isLoggedIn) {
+      userId = authData.user?.id;
+    }
+    const isOwner = userId === playlist.userId;
+
+    // Get playlist owner info
+    const ownerResponse = await fetch(`/api/profile/${playlist.userId}`);
+    const ownerData = await ownerResponse.json();
+    const ownerUsername = ownerData.success ? ownerData.user.username : 'Unknown User';
+
+    // Resolve full track details for songs in playlist
+    const playlistTracks = playlist.songs.map(song => {
+      const track = tracks.find(t => 
+        slugify(t.artist) === song.artistSlug && slugify(t.title) === song.songSlug
+      );
+      return track ? { ...track, playlistEntry: song } : null;
+    }).filter(Boolean);
+
+    // Get unique artists from the playlist
+    const artistCount = {};
+    playlistTracks.forEach(t => {
+      artistCount[t.artist] = (artistCount[t.artist] || 0) + 1;
+    });
+    const sortedArtists = Object.entries(artistCount).sort((a, b) => b[1] - a[1]);
+
+    getApp().innerHTML = `
+      <div class="max-w-3xl mx-auto space-y-6">
+        <h2 class="text-3xl font-bold mb-2">
+          ${escapeHtml(playlist.name)}
+          <span class="text-sm text-gray-400 block mt-1 artistPointer">
+            by <span class="hover:underline cursor-pointer" onclick="navigateTo('/profile/${playlist.userId}')">${escapeHtml(ownerUsername)}</span>
+          </span>
+          ${sortedArtists.length > 0 ? `
+            <span class="text-sm text-gray-400 block mt-1">
+              Artists: ${sortedArtists.map(([name]) => `<span class="hover:underline cursor-pointer" onclick="navigateTo('/${slugify(name)}')">${escapeHtml(name)}</span>`).join(', ')}
+            </span>
+          ` : ''}
+        </h2>
+        ${playlist.description ? `<p class="text-gray-400 mb-4">${escapeHtml(playlist.description)}</p>` : ''}
+        <p class="text-sm text-gray-500 mb-4">${playlist.songs.length} song${playlist.songs.length !== 1 ? 's' : ''}</p>
+        
+        <div class="flex gap-2">
+          ${playlistTracks.length > 0 ? `
+            <button onclick="playPlaylist('${playlist.id}')" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-white text-sm font-semibold">
+              ▶ Play Playlist
+            </button>
+          ` : ''}
+          ${isOwner ? `
+            <button onclick="editPlaylistDetails('${playlist.id}')" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white text-sm">
+              Edit Details
+            </button>
+          ` : ''}
+        </div>
+
+        ${playlistTracks.length === 0 ? `
+          <p class="text-gray-400 text-center py-8">This playlist is empty.</p>
+        ` : `
+          <div id="playlist-tracks" class="flex flex-col divide-y-4 divide-transparent mt-4">
+            ${playlistTracks.map((track, idx) => `
+              <div class="p-4 flex justify-between items-center albumtrack playlist-track-item" data-index="${idx}" draggable="${isOwner}">
+                <div class="flex items-center gap-3 flex-1">
+                  ${isOwner ? `
+                    <div class="drag-handle cursor-move text-gray-500 hover:text-gray-300">
+                      ⋮⋮
+                    </div>
+                  ` : ''}
+                  <div class="flex-1">
+                    <div class="text-lg font-semibold hover:underline cursor-pointer" onclick="navigateTo('/${slugify(track.artist)}/${slugify(track.title)}')">
+                      ${track.title}
+                    </div>
+                    <div class="text-gray-400 text-sm albumtracktext hover:underline cursor-pointer" onclick="navigateTo('/${slugify(track.artist)}')">
+                      ${track.artist}
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  ${isOwner ? `
+                    <button onclick="removeSongFromPlaylist('${playlist.id}', '${slugify(track.artist)}', '${slugify(track.title)}')" 
+                            class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
+                      Remove
+                    </button>
+                  ` : ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `}
+      </div>
+    `;
+
+    // Setup drag and drop if owner
+    if (isOwner && playlistTracks.length > 0) {
+      setupPlaylistDragAndDrop(playlist.id);
+    }
+  } catch (error) {
+    console.error('Error rendering playlist:', error);
+    renderNotFound();
+  }
+}
+
+async function editPlaylistDetails(playlistId) {
+  const response = await fetch(`/api/playlists/${playlistId}`);
+  const data = await response.json();
+  
+  if (!data.success) {
+    alert('Failed to load playlist details');
+    return;
+  }
+
+  const playlist = data.playlist;
+  const newName = prompt('Enter new playlist name:', playlist.name);
+  if (!newName || !newName.trim()) return;
+
+  const newDescription = prompt('Enter new playlist description:', playlist.description);
+
+  try {
+    const updateResponse = await fetch(`/api/playlists/${playlistId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newName.trim(), description: newDescription ? newDescription.trim() : '' })
+    });
+
+    const updateData = await updateResponse.json();
+    if (updateData.success) {
+      renderPlaylist(playlistId);
+    } else {
+      alert('Failed to update playlist: ' + updateData.error);
+    }
+  } catch (error) {
+    console.error('Error updating playlist:', error);
+    alert('Failed to update playlist');
+  }
+}
+
+async function playPlaylist(playlistId) {
+  try {
+    const response = await fetch(`/api/playlists/${playlistId}`);
+    const data = await response.json();
+
+    if (!data.success) {
+      alert('Failed to load playlist');
+      return;
+    }
+
+    const playlist = data.playlist;
+
+    // Resolve full track details for songs in playlist
+    const playlistTracks = playlist.songs.map(song => {
+      const track = tracks.find(t => 
+        slugify(t.artist) === song.artistSlug && slugify(t.title) === song.songSlug
+      );
+      return track ? { ...track, playlistEntry: song } : null;
+    }).filter(Boolean);
+
+    if (playlistTracks.length === 0) {
+      alert('This playlist has no playable songs');
+      return;
+    }
+
+    // Use the album player to play the playlist
+    albumPlayer.tracks = playlistTracks;
+    albumPlayer.albumSlug = `playlist-${playlistId}`;
+    albumPlayer.currentIndex = 0;
+    albumPlayer.loopMode = 0;
+    
+    // Start playing the first track without calling playAlbumTracks (which would reset tracks)
+    startAlbumAudio();
+    updatePersistentPlayer();
+    saveAlbumPlayerState();
+
+    const persistentVolumeSlider = document.getElementById("volumeSlider");
+    if (albumPlayer.audio && persistentVolumeSlider) {
+      const volume = parseFloat(persistentVolumeSlider.value);
+      albumPlayer.audio.volume = volume;
+      persistentVolumeSlider.value = volume;
+      const percent = volume * 100;
+      const color = getProgressBarColor();
+      persistentVolumeSlider.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${percent}%, #444 ${percent}%, #444 100%)`;
+    }
+  } catch (error) {
+    console.error('Error playing playlist:', error);
+    alert('Failed to play playlist');
+  }
+}
+
+async function removeSongFromPlaylist(playlistId, artistSlug, songSlug) {
+  try {
+    const response = await fetch(`/api/playlists/${playlistId}/songs`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ artistSlug, songSlug })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      renderPlaylist(playlistId);
+    } else {
+      alert('Failed to remove song: ' + data.error);
+    }
+  } catch (error) {
+    console.error('Error removing song:', error);
+    alert('Failed to remove song');
+  }
+}
+
+function setupPlaylistDragAndDrop(playlistId) {
+  const container = document.getElementById('playlist-tracks');
+  if (!container) return;
+
+  let draggedElement = null;
+  let draggedIndex = null;
+
+  const items = container.querySelectorAll('.playlist-track-item');
+  
+  items.forEach(item => {
+    item.addEventListener('dragstart', function(e) {
+      draggedElement = this;
+      draggedIndex = parseInt(this.getAttribute('data-index'));
+      this.style.opacity = '0.5';
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    item.addEventListener('dragend', function() {
+      this.style.opacity = '1';
+    });
+
+    item.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      
+      const afterElement = getDragAfterElement(container, e.clientY);
+      if (afterElement == null) {
+        container.appendChild(draggedElement);
+      } else {
+        container.insertBefore(draggedElement, afterElement);
+      }
+    });
+  });
+
+  container.addEventListener('drop', async function(e) {
+    e.preventDefault();
+    
+    // Get new order
+    const items = container.querySelectorAll('.playlist-track-item');
+    const newOrder = [];
+    const response = await fetch(`/api/playlists/${playlistId}`);
+    const data = await response.json();
+    
+    if (!data.success) return;
+    
+    const currentSongs = data.playlist.songs;
+    
+    items.forEach(item => {
+      const originalIndex = parseInt(item.getAttribute('data-index'));
+      newOrder.push(currentSongs[originalIndex]);
+    });
+
+    // Save new order
+    try {
+      const updateResponse = await fetch(`/api/playlists/${playlistId}/reorder`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ songs: newOrder })
+      });
+
+      const updateData = await updateResponse.json();
+
+      if (updateData.success) {
+        renderPlaylist(playlistId); // Refresh to show new order
+      } else {
+        alert('Failed to reorder songs: ' + updateData.error);
+      }
+    } catch (error) {
+      console.error('Error reordering songs:', error);
+      alert('Failed to reorder songs');
+    }
+  });
+}
+
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll('.playlist-track-item:not(.dragging)')];
+
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+// Playlist menu functions
+let currentPlaylistMenu = null;
+
+async function togglePlaylistMenu(button, artistSlug, songSlug, title, artist) {
+  // Close any existing menu
+  if (currentPlaylistMenu) {
+    currentPlaylistMenu.remove();
+    currentPlaylistMenu = null;
+    return;
+  }
+
+  // Check if user is logged in
+  const authResponse = await fetch('/api/auth-status');
+  const authData = await authResponse.json();
+
+  if (!authData.isLoggedIn) {
+    showAuthPopup('Log in or register to create playlists!');
+    return;
+  }
+
+  const userId = authData.isAdmin ? '0' : authData.user?.id;
+
+  // Fetch user's playlists
+  const playlistsResponse = await fetch(`/api/playlists/user/${userId}`);
+  const playlistsData = await playlistsResponse.json();
+
+  if (!playlistsData.success) {
+    alert('Failed to load playlists');
+    return;
+  }
+
+  const playlists = playlistsData.playlists;
+
+  // Create dropdown menu
+  const menu = document.createElement('div');
+  menu.className = 'playlist-dropdown-menu';
+  menu.style.position = 'absolute';
+  menu.style.zIndex = '1000';
+  
+  const buttonRect = button.getBoundingClientRect();
+  menu.style.top = `${buttonRect.bottom + window.scrollY}px`;
+  menu.style.left = `${buttonRect.left + window.scrollX}px`;
+
+  if (playlists.length === 0) {
+    menu.innerHTML = `
+      <div class="playlist-menu-header">Add Song To:</div>
+      <div class="playlist-menu-item disabled">No playlists available</div>
+      <div class="playlist-menu-divider"></div>
+      <div class="playlist-menu-item" onclick="createPlaylistFromTrackMenu('${artistSlug}', '${songSlug}', '${escapeForAttribute(title)}', '${escapeForAttribute(artist)}')">Create Playlist</div>
+    `;
+  } else {
+    menu.innerHTML = `
+      <div class="playlist-menu-header">Add Song To:</div>
+      ${playlists.map(playlist => `
+        <div class="playlist-menu-item" onclick="addSongToPlaylistFromMenu('${playlist.id}', '${artistSlug}', '${songSlug}', '${escapeForAttribute(title)}', '${escapeForAttribute(artist)}')">
+          ${escapeHtml(playlist.name)}
+        </div>
+      `).join('')}
+      <div class="playlist-menu-divider"></div>
+      <div class="playlist-menu-item" onclick="createPlaylistFromTrackMenu('${artistSlug}', '${songSlug}', '${escapeForAttribute(title)}', '${escapeForAttribute(artist)}')">+ New Playlist</div>
+    `;
+  }
+
+  document.body.appendChild(menu);
+  currentPlaylistMenu = menu;
+
+  // Close menu when clicking outside
+  setTimeout(() => {
+    document.addEventListener('click', closePlaylistMenu);
+  }, 0);
+}
+
+function closePlaylistMenu(e) {
+  if (currentPlaylistMenu && !currentPlaylistMenu.contains(e.target)) {
+    currentPlaylistMenu.remove();
+    currentPlaylistMenu = null;
+    document.removeEventListener('click', closePlaylistMenu);
+  }
+}
+
+async function addSongToPlaylistFromMenu(playlistId, artistSlug, songSlug, title, artist) {
+  try {
+    const response = await fetch(`/api/playlists/${playlistId}/songs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ artistSlug, songSlug, title, artist })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Show success message
+      showTempMessage('Song added to playlist!', 'success');
+    } else {
+      showTempMessage(data.error || 'Failed to add song', 'error');
+    }
+  } catch (error) {
+    console.error('Error adding song to playlist:', error);
+    showTempMessage('Failed to add song to playlist', 'error');
+  }
+
+  // Close the menu
+  if (currentPlaylistMenu) {
+    currentPlaylistMenu.remove();
+    currentPlaylistMenu = null;
+    document.removeEventListener('click', closePlaylistMenu);
+  }
+}
+
+async function createPlaylistFromTrackMenu(artistSlug, songSlug, title, artist) {
+  // Close the menu first
+  if (currentPlaylistMenu) {
+    currentPlaylistMenu.remove();
+    currentPlaylistMenu = null;
+    document.removeEventListener('click', closePlaylistMenu);
+  }
+
+  // Check if user is logged in
+  const authResponse = await fetch('/api/auth-status');
+  const authData = await authResponse.json();
+
+  if (!authData.isLoggedIn) {
+    showAuthPopup('Please log in or register to create a playlist');
+    return;
+  }
+
+  // Use default values
+  const name = 'Untitled Playlist';
+  const description = '';
+
+  try {
+    const response = await fetch('/api/playlists', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name.trim(), description: description.trim() })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      const playlistId = data.playlist.id;
+      
+      // Now add the song to the newly created playlist
+      const addResponse = await fetch(`/api/playlists/${playlistId}/songs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ artistSlug, songSlug, title, artist })
+      });
+
+      const addData = await addResponse.json();
+
+      if (addData.success) {
+        showTempMessage(`Playlist created and song added!`, 'success');
+      } else {
+        showTempMessage('Playlist created but failed to add song', 'error');
+      }
+    } else {
+      showTempMessage('Failed to create playlist: ' + data.error, 'error');
+    }
+  } catch (error) {
+    console.error('Error creating playlist:', error);
+    showTempMessage('Failed to create playlist', 'error');
+  }
+}
+
+function showTempMessage(message, type = 'success') {
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `temp-message temp-message-${type}`;
+  messageDiv.textContent = message;
+  messageDiv.style.position = 'fixed';
+  messageDiv.style.top = '20px';
+  messageDiv.style.right = '20px';
+  messageDiv.style.zIndex = '9999';
+  messageDiv.style.padding = '12px 20px';
+  messageDiv.style.borderRadius = '8px';
+  messageDiv.style.fontWeight = 'bold';
+  messageDiv.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.3)';
+  
+  if (type === 'success') {
+    messageDiv.style.backgroundColor = '#10b981';
+    messageDiv.style.color = 'white';
+  } else {
+    messageDiv.style.backgroundColor = '#ef4444';
+    messageDiv.style.color = 'white';
+  }
+
+  document.body.appendChild(messageDiv);
+
+  setTimeout(() => {
+    messageDiv.remove();
+  }, 3000);
+}
+
+function showAuthPopup(message) {
+  // Create modal HTML styled to match theme
+  const modalHtml = `
+    <div id="auth-popup-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="backdrop-filter: blur(4px); animation: fadeIn 0.2s ease-out;">
+      <div class="bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 track" style="border: 1px solid rgba(255,255,255,0.1); animation: slideIn 0.3s ease-out; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+        <div class="p-6">
+          <div class="flex items-center mb-4">
+            <div class="text-3xl mr-3">🔒</div>
+            <h3 class="text-xl font-bold text-white">Authentication Required</h3>
+          </div>
+          
+          <div class="mb-6">
+            <p class="text-gray-300">
+              ${message}
+            </p>
+          </div>
+          
+          <div class="flex gap-3">
+            <button id="auth-popup-login" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded font-semibold transition-colors" style="color: white; font-weight: bold;">
+              Sign In
+            </button>
+            <button id="auth-popup-register" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded font-semibold transition-colors" style="color: white; font-weight: bold;">
+              Register
+            </button>
+          </div>
+          
+          <button id="auth-popup-close" class="w-full mt-3 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded font-semibold transition-colors" style="color: white; font-weight: bold;">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Add modal to document
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+  // Add event listeners
+  document.getElementById('auth-popup-login').onclick = () => {
+    closeAuthPopup();
+    navigateTo('/login');
+  };
+  
+  document.getElementById('auth-popup-register').onclick = () => {
+    closeAuthPopup();
+    navigateTo('/register');
+  };
+  
+  document.getElementById('auth-popup-close').onclick = closeAuthPopup;
+
+  // Close on backdrop click
+  document.getElementById('auth-popup-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'auth-popup-modal') {
+      closeAuthPopup();
+    }
+  });
+}
+
+function closeAuthPopup() {
+  const modal = document.getElementById('auth-popup-modal');
+  if (modal) {
+    modal.remove();
+  }
+}
+
+function escapeForAttribute(str) {
+  return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
 function renderNotFound() {
   const app = getApp();
   if (app) {
@@ -892,6 +1474,21 @@ async function renderProfile(userId) {
             </div>
           </div>
         </div>
+
+        <!-- Playlists Section -->
+        <div class="bg-gray-800 rounded-lg shadow-lg p-6 mt-6 track">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold">Playlists</h2>
+            ${isOwnProfile ? `
+              <button id="create-playlist-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">
+                Create Playlist
+              </button>
+            ` : ''}
+          </div>
+          <div id="playlists-container">
+            <p class="text-gray-400">Loading playlists...</p>
+          </div>
+        </div>
       </div>
     `;
 
@@ -954,6 +1551,9 @@ async function renderProfile(userId) {
 
     // Load and display activity tracking
     await loadActivityTracking(userId, isOwnProfile);
+
+    // Load playlists
+    await loadUserPlaylists(userId, isOwnProfile);
 
     // Wire change password link
     const changePasswordLink = document.getElementById('change-password-link');
@@ -1052,6 +1652,104 @@ async function renderProfile(userId) {
           <button class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded" onclick="navigateTo('/')">Go to Home</button>
         </div>
       </div>`;
+  }
+}
+
+async function loadUserPlaylists(userId, isOwnProfile) {
+  try {
+    const response = await fetch(`/api/playlists/user/${userId}`);
+    const data = await response.json();
+    
+    const container = document.getElementById('playlists-container');
+    
+    if (!data.success) {
+      container.innerHTML = '<p class="text-gray-400">Failed to load playlists</p>';
+      return;
+    }
+
+    if (data.playlists.length === 0) {
+      container.innerHTML = '<p class="text-gray-400">No playlists yet.</p>';
+      return;
+    }
+
+    container.innerHTML = data.playlists.map(playlist => `
+      <div class="bg-gray-700 p-4 rounded-lg mb-3 cursor-pointer transition track" onclick="navigateTo('/playlist/${playlist.id}')">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-semibold text-lg">${escapeHtml(playlist.name)}</h3>
+            <p class="text-sm text-gray-400">${playlist.songs.length} song${playlist.songs.length !== 1 ? 's' : ''}</p>
+            ${playlist.description ? `<p class="text-sm text-gray-300 mt-1">${escapeHtml(playlist.description)}</p>` : ''}
+          </div>
+          ${isOwnProfile ? `
+            <button onclick="event.stopPropagation(); deleteUserPlaylist('${playlist.id}', '${escapeHtml(playlist.name)}', '${userId}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
+              Delete
+            </button>
+          ` : ''}
+        </div>
+      </div>
+    `).join('');
+
+    // Wire create playlist button
+    const createBtn = document.getElementById('create-playlist-btn');
+    if (createBtn && isOwnProfile) {
+      createBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Use default values
+        const name = 'Untitled Playlist';
+        const description = '';
+
+        try {
+          const response = await fetch('/api/playlists', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name.trim(), description: description.trim() })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            // Navigate to the new playlist page
+            navigateTo(`/playlist/${data.playlist.id}`);
+          } else {
+            showTempMessage('Failed to create playlist: ' + data.error, 'error');
+          }
+        } catch (error) {
+          console.error('Error creating playlist:', error);
+          showTempMessage('Failed to create playlist', 'error');
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error loading playlists:', error);
+    document.getElementById('playlists-container').innerHTML = '<p class="text-gray-400">Error loading playlists</p>';
+  }
+}
+
+async function deleteUserPlaylist(playlistId, playlistName, userId) {
+  if (!confirm(`Are you sure you want to delete the playlist "${playlistName}"?`)) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/playlists/${playlistId}`, {
+      method: 'DELETE'
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Reload playlists for this user
+      const auth = await getAuthStatus();
+      const isOwnProfile = auth.isLoggedIn && auth.user && auth.user.id === userId;
+      await loadUserPlaylists(userId, isOwnProfile);
+    } else {
+      alert('Failed to delete playlist: ' + data.error);
+    }
+  } catch (error) {
+    console.error('Error deleting playlist:', error);
+    alert('Failed to delete playlist');
   }
 }
 
@@ -2702,6 +3400,28 @@ async function searchUsers(query) {
   }
 }
 
+async function searchPlaylists(query) {
+  try {
+    // Fetch all playlists from the server
+    const response = await fetch(`/api/playlists`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch playlists');
+    }
+    const data = await response.json();
+    const playlists = data.playlists || [];
+    
+    // Filter playlists by name or description
+    const q = query.toLowerCase();
+    return playlists.filter(p => 
+      p.name.toLowerCase().includes(q) || 
+      (p.description || '').toLowerCase().includes(q)
+    );
+  } catch (error) {
+    console.error('Error searching playlists:', error);
+    return [];
+  }
+}
+
 function renderSearchResults(query) {
   const q = query.toLowerCase();
   const matchingTracks = tracks.filter(
@@ -2728,8 +3448,11 @@ function renderSearchResults(query) {
       .map(t => t.artist)
   );
 
-  // Search for users
-  searchUsers(query).then(matchingUsers => {
+  // Search for users and playlists
+  Promise.all([
+    searchUsers(query),
+    searchPlaylists(query)
+  ]).then(([matchingUsers, matchingPlaylists]) => {
     let html = `<h2 class="text-2xl font-bold mb-4">Search Results for "${query}"</h2>`;
 
     if (matchingTracks.length) {
@@ -2762,6 +3485,24 @@ function renderSearchResults(query) {
         </div>`;
     }
 
+    if (matchingPlaylists.length) {
+      html += `<h3 class="text-xl font-semibold mt-6 mb-2">Playlists</h3>
+        <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        ${matchingPlaylists.map(playlist =>
+          `<div class="bg-gray-800 rounded-lg shadow p-4 hover:bg-gray-700 transition duration-200 track cursor-pointer" onclick="navigateTo('/playlist/${playlist.id}')">
+            <div class="flex items-center mb-2">
+              <svg class="w-8 h-8 text-purple-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+              </svg>
+            </div>
+            <div class="font-semibold text-lg">${escapeHtml(playlist.name)}</div>
+            ${playlist.description ? `<div class="text-sm text-gray-400 mt-1 line-clamp-2">${escapeHtml(playlist.description)}</div>` : '<div class="text-sm text-gray-400 mt-1">No description</div>'}
+            <div class="text-xs text-gray-500 mt-2">${playlist.songs.length} songs</div>
+          </div>`
+        ).join("")}
+        </div>`;
+    }
+
     if (matchingUsers.length) {
       html += `<h3 class="text-xl font-semibold mt-6 mb-2">Users</h3>
         <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -2783,7 +3524,7 @@ function renderSearchResults(query) {
         </div>`;
     }
 
-    if (!matchingTracks.length && !albumMap.size && !artistSet.size && !matchingUsers.length) {
+    if (!matchingTracks.length && !albumMap.size && !artistSet.size && !matchingPlaylists.length && !matchingUsers.length) {
       html += `<p class="text-gray-400 mt-6">No results found.</p>`;
     }
 
@@ -2791,8 +3532,7 @@ function renderSearchResults(query) {
 
     getApp().innerHTML = html;
   }).catch(error => {
-    console.error('Error searching users:', error);
-    // Fallback to original results without users
+    console.error('Error during search:', error);
     let html = `<h2 class="text-2xl font-bold mb-4">Search Results for "${query}"</h2>`;
 
     if (matchingTracks.length) {

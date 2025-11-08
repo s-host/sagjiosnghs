@@ -1029,6 +1029,54 @@ body.theme-lavender-dreams #reset-activity-modal .bg-gray-800 {
   overflow: hidden;
 }
 
+/* Auth popup modal styling */
+#auth-popup-modal {
+  animation: fadeIn 0.2s ease-out;
+}
+
+#auth-popup-modal .bg-gray-800 {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Ocean Breeze theme - black text for readability */
+body.theme-ocean-breeze #auth-popup-modal .text-white {
+  color: #000000 !important;
+}
+
+body.theme-ocean-breeze #auth-popup-modal .text-gray-300 {
+  color: #000000 !important;
+}
+
+body.theme-ocean-breeze #auth-popup-modal h3 {
+  color: #000000 !important;
+}
+
+/* Sunset Glow theme - black text for readability */
+body.theme-sunset-glow #auth-popup-modal .text-white {
+  color: #000000 !important;
+}
+
+body.theme-sunset-glow #auth-popup-modal .text-gray-300 {
+  color: #000000 !important;
+}
+
+body.theme-sunset-glow #auth-popup-modal h3 {
+  color: #000000 !important;
+}
+
+/* Lavender Dreams theme - black text for readability */
+body.theme-lavender-dreams #auth-popup-modal .text-white {
+  color: #000000 !important;
+}
+
+body.theme-lavender-dreams #auth-popup-modal .text-gray-300 {
+  color: #000000 !important;
+}
+
+body.theme-lavender-dreams #auth-popup-modal h3 {
+  color: #000000 !important;
+}
+
 /* User search card hover effects */
 .track:hover .profile-gradient-1,
 .track:hover .profile-gradient-2,
@@ -3179,4 +3227,262 @@ body.theme-lavender-dreams .gradient-dropdown {
   backdrop-filter: blur(10px);
   border-color: rgba(147,112,219,0.5);
   color: #4a148c;
+}
+
+/* Playlist dropdown menu */
+.playlist-dropdown-menu {
+  background-color: rgb(55, 65, 81);
+  border: 1px solid rgb(75, 85, 99);
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  min-width: 200px;
+  overflow: hidden;
+  animation: fadeIn 0.15s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.playlist-menu-header {
+  padding: 10px 16px;
+  font-weight: bold;
+  font-size: 14px;
+  color: rgb(209, 213, 219);
+  background-color: rgb(45, 55, 72);
+  border-bottom: 1px solid rgb(75, 85, 99);
+}
+
+.playlist-menu-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  color: white;
+  font-size: 14px;
+  transition: background-color 0.15s;
+}
+
+.playlist-menu-item:hover {
+  background-color: rgb(75, 85, 99);
+}
+
+.playlist-menu-item.disabled {
+  cursor: default;
+  color: rgb(156, 163, 175);
+  font-style: italic;
+}
+
+.playlist-menu-item.disabled:hover {
+  background-color: transparent;
+}
+
+.playlist-menu-divider {
+  height: 1px;
+  background-color: rgb(75, 85, 99);
+  margin: 4px 0;
+}
+
+/* Drag handle styling */
+.drag-handle {
+  font-size: 18px;
+  user-select: none;
+}
+
+.playlist-track-item[draggable="true"] {
+  cursor: move;
+}
+
+.playlist-track-item[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* Light theme playlist menu */
+body.theme-light .playlist-dropdown-menu {
+  background-color: white;
+  border-color: rgb(209, 213, 219);
+}
+
+body.theme-light .playlist-menu-header {
+  background-color: rgb(243, 244, 246);
+  color: rgb(31, 41, 55);
+}
+
+body.theme-light .playlist-menu-item {
+  color: rgb(31, 41, 55);
+}
+
+body.theme-light .playlist-menu-item:hover {
+  background-color: rgb(243, 244, 246);
+}
+
+body.theme-light .playlist-menu-item.disabled {
+  color: rgb(156, 163, 175);
+}
+
+/* Blue theme playlist menu */
+body.theme-blue .playlist-dropdown-menu {
+  background-color: rgb(30, 58, 138);
+  border-color: rgb(59, 130, 246);
+}
+
+body.theme-blue .playlist-menu-header {
+  background-color: rgb(23, 37, 84);
+}
+
+body.theme-blue .playlist-menu-item:hover {
+  background-color: rgb(37, 99, 235);
+}
+
+/* SC theme playlist menu */
+body.theme-sc .playlist-dropdown-menu {
+  background-color: white;
+  border-color: #f45714;
+}
+
+body.theme-sc .playlist-menu-header {
+  background-color: #fff3e0;
+  color: #333;
+}
+
+body.theme-sc .playlist-menu-item {
+  color: #333;
+}
+
+body.theme-sc .playlist-menu-item:hover {
+  background-color: #ffe0cc;
+}
+
+body.theme-sc .playlist-menu-item.disabled {
+  color: rgb(156, 163, 175);
+}
+
+/* Games theme playlist menu */
+body.theme-games .playlist-dropdown-menu {
+  background-color: rgb(80, 0, 0);
+  border-color: #ff4444;
+}
+
+body.theme-games .playlist-menu-header {
+  background-color: rgb(60, 0, 0);
+}
+
+body.theme-games .playlist-menu-item:hover {
+  background-color: rgb(120, 0, 0);
+}
+
+/* Midnight Blurple theme playlist menu */
+body.theme-midnight-blurple .playlist-dropdown-menu {
+  background-color: rgba(20, 20, 40, 0.95);
+  border-color: rgba(155, 137, 253, 0.5);
+  backdrop-filter: blur(10px);
+}
+
+body.theme-midnight-blurple .playlist-menu-header {
+  background-color: rgba(30, 30, 60, 0.95);
+}
+
+body.theme-midnight-blurple .playlist-menu-item:hover {
+  background-color: rgba(155, 137, 253, 0.2);
+}
+
+/* Strawberry Lemonade theme playlist menu */
+body.theme-strawberry-lemonade .playlist-dropdown-menu {
+  background-color: rgba(255, 245, 250, 0.95);
+  border-color: rgba(232, 76, 140, 0.5);
+  backdrop-filter: blur(10px);
+}
+
+body.theme-strawberry-lemonade .playlist-menu-header {
+  background-color: rgba(255, 235, 245, 0.95);
+  color: #c2185b;
+}
+
+body.theme-strawberry-lemonade .playlist-menu-item {
+  color: #c2185b;
+}
+
+body.theme-strawberry-lemonade .playlist-menu-item:hover {
+  background-color: rgba(232, 76, 140, 0.15);
+}
+
+body.theme-strawberry-lemonade .playlist-menu-item.disabled {
+  color: #f48fb1;
+}
+
+/* Ocean Breeze theme playlist menu */
+body.theme-ocean-breeze .playlist-dropdown-menu {
+  background-color: rgba(240, 255, 255, 0.95);
+  border-color: rgba(32, 178, 170, 0.5);
+  backdrop-filter: blur(10px);
+}
+
+body.theme-ocean-breeze .playlist-menu-header {
+  background-color: rgba(224, 242, 241, 0.95);
+  color: #006064;
+}
+
+body.theme-ocean-breeze .playlist-menu-item {
+  color: #006064;
+}
+
+body.theme-ocean-breeze .playlist-menu-item:hover {
+  background-color: rgba(32, 178, 170, 0.15);
+}
+
+body.theme-ocean-breeze .playlist-menu-item.disabled {
+  color: #80cbc4;
+}
+
+/* Sunset Glow theme playlist menu */
+body.theme-sunset-glow .playlist-dropdown-menu {
+  background-color: rgba(255, 248, 245, 0.95);
+  border-color: rgba(255, 99, 71, 0.5);
+  backdrop-filter: blur(10px);
+}
+
+body.theme-sunset-glow .playlist-menu-header {
+  background-color: rgba(255, 235, 230, 0.95);
+  color: #bf360c;
+}
+
+body.theme-sunset-glow .playlist-menu-item {
+  color: #bf360c;
+}
+
+body.theme-sunset-glow .playlist-menu-item:hover {
+  background-color: rgba(255, 99, 71, 0.15);
+}
+
+body.theme-sunset-glow .playlist-menu-item.disabled {
+  color: #ff8a65;
+}
+
+/* Lavender Dreams theme playlist menu */
+body.theme-lavender-dreams .playlist-dropdown-menu {
+  background-color: rgba(250, 245, 255, 0.95);
+  border-color: rgba(147, 112, 219, 0.5);
+  backdrop-filter: blur(10px);
+}
+
+body.theme-lavender-dreams .playlist-menu-header {
+  background-color: rgba(243, 229, 255, 0.95);
+  color: #4a148c;
+}
+
+body.theme-lavender-dreams .playlist-menu-item {
+  color: #4a148c;
+}
+
+body.theme-lavender-dreams .playlist-menu-item:hover {
+  background-color: rgba(147, 112, 219, 0.15);
+}
+
+body.theme-lavender-dreams .playlist-menu-item.disabled {
+  color: #ce93d8;
 }

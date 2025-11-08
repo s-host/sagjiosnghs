@@ -1,44 +1,5 @@
 [
   {
-    "title": "cookie of a lifetime",
-    "artist": "xaev",
-    "album": "berdlycore chapter zero",
-    "cover": "https://i1.sndcdn.com/artworks-9uCUHrzzxLirkjI0-PO65eg-t500x500.jpg",
-    "file": "/audio/cookie of a lifetime.mp3",
-    "isNew": false,
-    "isPopular": false,
-    "isClean": true,
-    "isFeatured": false,
-    "createdAt": "2022-07-29T00:00:00.000Z",
-    "albumNumber": "3"
-  },
-  {
-    "title": "daria math",
-    "artist": "xaev",
-    "album": "berdlycore chapter 3",
-    "cover": "https://f4.bcbits.com/img/a1113075234_16.jpg",
-    "file": "/audio/13 - daria math.mp3",
-    "isNew": false,
-    "isPopular": false,
-    "isClean": false,
-    "isFeatured": false,
-    "createdAt": "2023-02-24T00:00:00.000Z",
-    "albumNumber": "13"
-  },
-  {
-    "title": "before the story",
-    "artist": "xaev",
-    "album": "berdlycore chapter 3",
-    "cover": "https://f4.bcbits.com/img/a1113075234_16.jpg",
-    "file": "/audio/before the story.mp3",
-    "isNew": false,
-    "isPopular": false,
-    "isClean": false,
-    "isFeatured": false,
-    "createdAt": "2023-02-24T00:00:00.000Z",
-    "albumNumber": "1"
-  },
-  {
     "title": "homosick",
     "artist": "xaev",
     "album": "berdlycore chapter 3",
@@ -112,7 +73,7 @@
     "isNew": false,
     "isPopular": false,
     "isClean": false,
-    "isFeatured": true,
+    "isFeatured": false,
     "createdAt": "2023-05-23T00:00:00.000Z",
     "albumNumber": "1"
   },
@@ -162,7 +123,7 @@
     "artist": "leroy",
     "album": "dariacore",
     "cover": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fstyles.redditmedia.com%2Ft5_4vyqgn%2Fstyles%2FcommunityIcon_ngeevy733sg71.jpg%3Fformat%3Dpjpg%26s%3Da68df35d674c49c59d957c3c5ca73fb83f279d7a&f=1&nofb=1&ipt=e3fa954edecf042c27ff4aa1e7484eb66d15808e51d72c072214ab8f1f0304b1",
-    "file": "/audio/13 dessert.mp3",
+    "file": "/audio/dessert.mp3",
     "isNew": false,
     "isPopular": false,
     "isClean": false,
@@ -436,7 +397,7 @@
     "isNew": false,
     "isPopular": false,
     "isClean": true,
-    "isFeatured": false,
+    "isFeatured": true,
     "createdAt": "2022-12-25T00:00:00.000Z",
     "albumNumber": "3"
   },

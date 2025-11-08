@@ -133,6 +133,19 @@
           <h2 class="text-xl font-bold mb-4">Recent Activity</h2>
           <p class="text-gray-400">Activity tracking will be available in a future update.</p>
         </div>
+
+        <!-- Playlists Section -->
+        <div class="bg-gray-800 rounded-lg shadow-lg p-6 mt-6 track">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold">Playlists</h2>
+            <button id="create-playlist-btn" class="hidden bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">
+              Create Playlist
+            </button>
+          </div>
+          <div id="playlists-container">
+            <p class="text-gray-400">Loading playlists...</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -258,6 +271,7 @@
       // Show edit button only for own profile
       if (isOwnProfile && !user.isAdmin) {
         document.getElementById('edit-bio-btn').classList.remove('hidden');
+        document.getElementById('create-playlist-btn').classList.remove('hidden');
       }
 
       if (user.isAdmin) {
@@ -266,6 +280,9 @@
 
       // Update page title
       document.title = `${user.username}'s Profile - HyperTunes`;
+      
+      // Load playlists
+      loadPlaylists(user.id);
     }
 
     function showError(message) {
@@ -329,6 +346,104 @@
         alert('Failed to update bio');
       }
     });
+
+    // Playlist functions
+    async function loadPlaylists(userId) {
+      try {
+        const response = await fetch(`/api/playlists/user/${userId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          displayPlaylists(data.playlists);
+        } else {
+          document.getElementById('playlists-container').innerHTML = '<p class="text-gray-400">Failed to load playlists</p>';
+        }
+      } catch (error) {
+        console.error('Error loading playlists:', error);
+        document.getElementById('playlists-container').innerHTML = '<p class="text-gray-400">Error loading playlists</p>';
+      }
+    }
+
+    function displayPlaylists(playlists) {
+      const container = document.getElementById('playlists-container');
+      
+      if (playlists.length === 0) {
+        container.innerHTML = '<p class="text-gray-400">No playlists yet.</p>';
+        return;
+      }
+
+      container.innerHTML = playlists.map(playlist => `
+        <div class="bg-gray-700 p-4 rounded-lg mb-3 hover:bg-gray-600 cursor-pointer transition" onclick="navigateTo('/playlist/${playlist.id}')">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-semibold text-lg">${escapeHtml(playlist.name)}</h3>
+              <p class="text-sm text-gray-400">${playlist.songs.length} song${playlist.songs.length !== 1 ? 's' : ''}</p>
+              ${playlist.description ? `<p class="text-sm text-gray-300 mt-1">${escapeHtml(playlist.description)}</p>` : ''}
+            </div>
+            ${isOwnProfile ? `
+              <button onclick="event.stopPropagation(); deletePlaylist('${playlist.id}', '${escapeHtml(playlist.name)}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
+                Delete
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('create-playlist-btn').addEventListener('click', async () => {
+      const name = prompt('Enter playlist name:');
+      if (!name || !name.trim()) return;
+
+      const description = prompt('Enter playlist description (optional):') || '';
+
+      try {
+        const response = await fetch('/api/playlists', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name.trim(), description: description.trim() })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          loadPlaylists(currentUser.id);
+        } else {
+          alert('Failed to create playlist: ' + data.error);
+        }
+      } catch (error) {
+        console.error('Error creating playlist:', error);
+        alert('Failed to create playlist');
+      }
+    });
+
+    async function deletePlaylist(playlistId, playlistName) {
+      if (!confirm(`Are you sure you want to delete the playlist "${playlistName}"?`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/playlists/${playlistId}`, {
+          method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          loadPlaylists(currentUser.id);
+        } else {
+          alert('Failed to delete playlist: ' + data.error);
+        }
+      } catch (error) {
+        console.error('Error deleting playlist:', error);
+        alert('Failed to delete playlist');
+      }
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
 
     // Load profile on page load
     loadProfile();

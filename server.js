@@ -144,6 +144,27 @@ function saveActivity() {
   }
 }
 
+// --- Playlists storage ---
+const playlistsFile = path.join(dataDir, "playlists.json");
+let playlists = [];
+try {
+  if (!fs.existsSync(playlistsFile)) {
+    // Initialize empty playlists store if not present
+    fs.writeFileSync(playlistsFile, "[]", "utf-8");
+  }
+  playlists = JSON.parse(fs.readFileSync(playlistsFile, "utf-8"));
+} catch (e) {
+  console.error("Failed to read/initialize playlists.json, starting fresh.", e);
+  playlists = [];
+}
+function savePlaylists() {
+  try {
+    fs.writeFileSync(playlistsFile, JSON.stringify(playlists, null, 2));
+  } catch (e) {
+    console.error("Failed to write playlists.json", e);
+  }
+}
+
 // basic profanity list; case-insensitive; replace with ***
 const PROFANITY = [
   'fuck','shit','bitch','asshole','bastard','dick','cunt','piss','slut','whore','fag','retard','nigger','motherfucker','bullshit','cock','prick','twat','wank','cum'
@@ -237,16 +258,13 @@ commentsRouter.post('/:artistSlug/:songSlug', (req, res) => {
   const key = trackKeyFromSlugs(artistSlug, songSlug);
   if (!commentsByTrack[key]) commentsByTrack[key] = [];
 
-  // Identify user: admin or regular
-  let userId = '0';
-  let username = ADMIN_PROFILE.username;
-  
-  if (req.session.user) {
-    userId = req.session.user.id;
-    username = req.session.user.username;
-  } else if (req.session.isAdmin) {
-    // Already set to admin defaults
+  // Identify user
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, message: 'User session not found' });
   }
+
+  const userId = req.session.user.id;
+  const username = req.session.user.username;
 
   const newComment = {
     id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -259,13 +277,8 @@ commentsRouter.post('/:artistSlug/:songSlug', (req, res) => {
   saveComments();
   
   // Add current gradient for immediate display
-  let currentGradient = 1;
-  if (userId === '0') {
-    currentGradient = (req.session.admin && req.session.admin.selectedGradient) || 1;
-  } else {
-    const user = users.find(u => u.id === userId);
-    currentGradient = user ? (user.selectedGradient || 1) : 1;
-  }
+  const user = users.find(u => u.id === userId);
+  const currentGradient = user ? (user.selectedGradient || 1) : 1;
   
   const responseComment = { ...newComment, selectedGradient: currentGradient };
   res.json({ success: true, comment: responseComment });
@@ -379,17 +392,6 @@ app.get("/api/users/search", (req, res) => {
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword;
   });
-
-  // Include admin user if it matches the search
-  if (ADMIN_PROFILE.username.toLowerCase().includes(q)) {
-    matchingUsers.unshift({
-      id: ADMIN_PROFILE.id,
-      username: ADMIN_PROFILE.username,
-      isAdmin: true,
-      createdAt: ADMIN_PROFILE.createdAt,
-      bio: ADMIN_PROFILE.bio
-    });
-  }
 
   res.json(matchingUsers);
 });
@@ -548,21 +550,6 @@ app.put('/api/tracks/:artistSlug/:songSlug/file', ensureAdmin, upload.single("au
   }
 });
 
-// hardcoded admin credentials
-const ADMIN_CREDENTIALS = {
-  username: "admin",
-  password: "iHATEtomatoes1$ff"
-};
-
-// Admin user profile (virtual - not stored in users.json)
-const ADMIN_PROFILE = {
-  id: "0",
-  username: "admin", 
-  isAdmin: true,
-  createdAt: "2023-01-01T00:00:00.000Z",
-  bio: "System Administrator - Managing HyperTunes platform"
-};
-
 // load existing users data
 const usersFile = path.join(__dirname, "data", "users.json");
 let users = [];
@@ -636,11 +623,6 @@ app.post("/api/register", async (req, res) => {
     return res.status(409).json({ success: false, message: "Username already exists" });
   }
 
-  // check if admin username
-  if (username.toLowerCase() === ADMIN_CREDENTIALS.username.toLowerCase()) {
-    return res.status(409).json({ success: false, message: "Username not available" });
-  }
-
   try {
     // Hash password
     const saltRounds = 10;
@@ -669,53 +651,60 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-// login endpoint (updated to handle both admin and user logins)
+// login endpoint
 app.post("/api/login", async (req, res) => {
-  const { username, password, isAdminLogin } = req.body;
+  const { username, password } = req.body;
 
-  if (isAdminLogin) {
-    // admin login
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+  // Find user
+  const user = users.find(u => u.username.toLowerCase() === username.toLowerCase());
+  
+  if (!user) {
+    return res.status(401).json({ success: false, message: "User not found" });
+  }
+
+  // Check if user is banned
+  if (user.banned) {
+    return res.status(403).json({ 
+      success: false, 
+      message: 'Your account has been banned. Please contact an administrator.',
+      banned: true 
+    });
+  }
+
+  try {
+    // Verify password
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    
+    if (!passwordMatch) {
+      return res.status(401).json({ success: false, message: "Incorrect password" });
+    }
+
+    // Login successful
+    req.session.isLoggedIn = true;
+    const isUserAdmin = !!user.isAdmin;
+    req.session.user = { 
+      id: user.id, 
+      username: user.username, 
+      isAdmin: isUserAdmin
+    };
+    
+    // Set isAdmin flag if user has admin privileges
+    if (isUserAdmin) {
       req.session.isAdmin = true;
-      req.session.user = { username: ADMIN_CREDENTIALS.username, isAdmin: true, id: "0" };
-      res.json({ success: true, isAdmin: true, user: { username: ADMIN_CREDENTIALS.username, id: "0" } });
-    } else {
-      res.status(401).json({ success: false, message: "Incorrect admin username or password" });
-    }
-  } else {
-    // user login
-    const user = users.find(u => u.username.toLowerCase() === username.toLowerCase());
-    if (!user) {
-      return res.status(401).json({ success: false, message: "Username not found" });
     }
     
-    // Check if user is banned
-    if (user.banned) {
-      return res.status(403).json({ success: false, message: "Your account has been banned. Please contact an administrator." });
-    }
-    
-    try {
-      const passwordMatch = await bcrypt.compare(password, user.password);
-      if (passwordMatch) {
-        req.session.isLoggedIn = true;
-        const isUserAdmin = !!user.isAdmin;
-        req.session.user = { 
-          id: user.id, 
-          username: user.username, 
-          isAdmin: isUserAdmin
-        };
-        // Set isAdmin flag if user has admin privileges
-        if (isUserAdmin) {
-          req.session.isAdmin = true;
-        }
-        res.json({ success: true, isAdmin: isUserAdmin, user: { id: user.id, username: user.username, isAdmin: isUserAdmin } });
-      } else {
-        res.status(401).json({ success: false, message: "Incorrect password" });
-      }
-    } catch (error) {
-      console.error("Password comparison error:", error);
-      res.status(500).json({ success: false, message: "Server error during login" });
-    }
+    res.json({ 
+      success: true, 
+      isAdmin: isUserAdmin, 
+      user: { 
+        id: user.id, 
+        username: user.username, 
+        isAdmin: isUserAdmin 
+      } 
+    });
+  } catch (error) {
+    console.error("Password comparison error:", error);
+    res.status(500).json({ success: false, message: "Server error during login" });
   }
 });
 
@@ -735,23 +724,11 @@ app.get("/api/auth-status", (req, res) => {
   });
 });
 
-// get user profile (updated to not require authentication and support admin profile)
+// get user profile
 app.get("/api/profile/:userId", (req, res) => {
   const { userId } = req.params;
-  
-  // Check if requesting admin profile (ID 0)
-  if (userId === "0") {
-    const { password, ...adminProfile } = ADMIN_PROFILE;
-    // Add gradient selection from session if available
-    if (req.session.admin && req.session.admin.selectedGradient) {
-      adminProfile.selectedGradient = req.session.admin.selectedGradient;
-    } else {
-      adminProfile.selectedGradient = 1; // Default gradient
-    }
-    return res.json({ success: true, user: adminProfile });
-  }
 
-  // Find regular user by ID
+  // Find user by ID
   const user = users.find(u => u.id === userId);
   if (!user) {
     return res.status(404).json({ success: false, message: "User not found" });
@@ -778,11 +755,6 @@ app.put("/api/profile/:userId", async (req, res) => {
   // Check if user can edit this profile
   if (!req.session.isAdmin && req.session.user.id !== userId) {
     return res.status(403).json({ success: false, message: "Access denied" });
-  }
-
-  // Can't edit admin profile through regular endpoint
-  if (userId === "0") {
-    return res.status(403).json({ success: false, message: "Cannot edit admin profile" });
   }
 
   const userIndex = users.findIndex(u => u.id === userId);
@@ -813,11 +785,6 @@ app.put("/api/profile/:userId/change-password", async (req, res) => {
   // Check if user can change this password (must be own account)
   if (!req.session.isAdmin && req.session.user.id !== userId) {
     return res.status(403).json({ success: false, message: "Access denied" });
-  }
-
-  // Can't change hardcoded admin password through this endpoint
-  if (userId === "0") {
-    return res.status(403).json({ success: false, message: "Cannot change system admin password" });
   }
 
   // Validate new password
@@ -872,14 +839,7 @@ app.put("/api/profile/:userId/gradient", async (req, res) => {
     return res.status(400).json({ success: false, message: "Invalid gradient selection" });
   }
 
-  // Handle hardcoded admin (store in session since it's not in users.json)
-  if (userId === "0") {
-    if (!req.session.admin) req.session.admin = {};
-    req.session.admin.selectedGradient = selectedGradient;
-    return res.json({ success: true, message: "Gradient updated successfully" });
-  }
-
-  // Handle regular users
+  // Find user
   const userIndex = users.findIndex(u => u.id === userId);
   if (userIndex === -1) {
     return res.status(404).json({ success: false, message: "User not found" });
@@ -895,11 +855,6 @@ app.put("/api/profile/:userId/gradient", async (req, res) => {
 app.put("/api/admin/users/:userId/ban", ensureAdmin, (req, res) => {
   const { userId } = req.params;
   const { banned } = req.body;
-
-  // Can't ban the hardcoded admin
-  if (userId === "0") {
-    return res.status(400).json({ error: "Cannot ban the system administrator" });
-  }
 
   // Can't ban yourself
   if (req.session.user && req.session.user.id === userId) {
@@ -933,11 +888,6 @@ app.put("/api/admin/users/:userId/mute", ensureAdmin, (req, res) => {
   const { userId } = req.params;
   const { muted } = req.body;
 
-  // Can't mute the hardcoded admin
-  if (userId === "0") {
-    return res.status(400).json({ error: "Cannot mute the system administrator" });
-  }
-
   // Can't mute yourself
   if (req.session.user && req.session.user.id === userId) {
     return res.status(400).json({ error: "Cannot mute yourself" });
@@ -960,11 +910,6 @@ app.put("/api/admin/users/:userId/admin", ensureAdmin, (req, res) => {
   const { userId } = req.params;
   const { isAdmin } = req.body;
 
-  // Can't change admin status of hardcoded admin
-  if (userId === "0") {
-    return res.status(400).json({ error: "Cannot change system administrator status" });
-  }
-
   // Can't demote yourself
   if (!isAdmin && req.session.user && req.session.user.id === userId) {
     return res.status(400).json({ error: "Cannot demote yourself from admin" });
@@ -985,11 +930,6 @@ app.put("/api/admin/users/:userId/admin", ensureAdmin, (req, res) => {
 // Delete user endpoint (admin only)
 app.delete("/api/admin/users/:userId", ensureAdmin, (req, res) => {
   const { userId } = req.params;
-
-  // Can't delete the hardcoded admin
-  if (userId === "0") {
-    return res.status(403).json({ success: false, message: "Cannot delete system administrator" });
-  }
 
   // Can't delete yourself
   if (req.session.user && req.session.user.id === userId) {
@@ -1022,7 +962,7 @@ app.get("/api/admin/users/:userId/comments", ensureAdmin, (req, res) => {
   const { userId } = req.params;
   
   // Find user to validate they exist
-  const user = users.find(u => u.id === userId) || (userId === "0" ? ADMIN_PROFILE : null);
+  const user = users.find(u => u.id === userId);
   if (!user) {
     return res.status(404).json({ error: "User not found" });
   }
@@ -1058,13 +998,14 @@ app.get("/api/admin/users/:userId/comments", ensureAdmin, (req, res) => {
 
 // Data export endpoints (admin only)
 
-// Export site data (users, comments, activity)
+// Export site data (users, comments, activity, playlists)
 app.get("/api/admin/export/site-data", ensureAdmin, (req, res) => {
   try {
     const exportData = {
       users: users,
       comments: commentsByTrack,
       activity: userActivity,
+      playlists: playlists,
       exportDate: new Date().toISOString(),
       version: "1.0"
     };
@@ -1115,6 +1056,7 @@ app.post("/api/admin/import/site-data", ensureAdmin, upload.single("dataFile"), 
       users: users,
       comments: commentsByTrack,
       activity: userActivity,
+      playlists: playlists,
       backupDate: new Date().toISOString()
     };
     
@@ -1125,11 +1067,13 @@ app.post("/api/admin/import/site-data", ensureAdmin, upload.single("dataFile"), 
     users = importData.users;
     commentsByTrack = importData.comments;
     userActivity = importData.activity;
+    playlists = importData.playlists || []; // Handle older backups without playlists
 
     // Save to files
     saveUsers();
     saveComments();
     saveActivity();
+    savePlaylists();
 
     // Clean up uploaded file
     fs.unlinkSync(req.file.path);
@@ -1152,11 +1096,18 @@ app.post("/api/admin/import/tracks", ensureAdmin, upload.single("dataFile"), (re
       return res.status(400).json({ success: false, error: 'No file uploaded' });
     }
 
-    const importData = JSON.parse(fs.readFileSync(req.file.path, 'utf-8'));
+    let importData = JSON.parse(fs.readFileSync(req.file.path, 'utf-8'));
     
-    // Validate import data structure
-    if (!importData.tracks || !Array.isArray(importData.tracks)) {
-      return res.status(400).json({ success: false, error: 'Invalid tracks data format' });
+    // Handle both formats: direct array and { tracks: [...] } object
+    let tracksToImport;
+    if (Array.isArray(importData)) {
+      // Direct array format from /api/tracks export
+      tracksToImport = importData;
+    } else if (importData.tracks && Array.isArray(importData.tracks)) {
+      // Object format with tracks property
+      tracksToImport = importData.tracks;
+    } else {
+      return res.status(400).json({ success: false, error: 'Invalid tracks data format - expected array or {tracks: [...]}' });
     }
 
     // Backup current tracks
@@ -1164,7 +1115,7 @@ app.post("/api/admin/import/tracks", ensureAdmin, upload.single("dataFile"), (re
     fs.writeFileSync(backupPath, JSON.stringify(tracks, null, 2));
 
     // Import new tracks
-    tracks = importData.tracks;
+    tracks = tracksToImport;
 
     // Save to file
     fs.writeFileSync(tracksFile, JSON.stringify(tracks, null, 2));
@@ -1190,16 +1141,13 @@ app.post("/api/admin/import/tracks", ensureAdmin, upload.single("dataFile"), (re
 app.post("/api/activity/play", (req, res) => {
   const { artistSlug, songSlug } = req.body;
   
-  // Require authentication (user or admin)
-  if (!req.session.isLoggedIn && !req.session.isAdmin) {
+  // Require authentication
+  if (!req.session.user) {
     return res.status(401).json({ success: false, error: 'Authentication required' });
   }
 
   // Get user ID
-  let userId = '0'; // admin
-  if (req.session.user) {
-    userId = req.session.user.id;
-  }
+  const userId = req.session.user.id;
 
   // Validate track exists
   const track = tracks.find(t => 
@@ -1257,7 +1205,7 @@ app.get("/api/activity/:userId", (req, res) => {
   const { userId } = req.params;
   
   // Check if user exists
-  const user = users.find(u => u.id === userId) || (userId === "0" ? ADMIN_PROFILE : null);
+  const user = users.find(u => u.id === userId);
   if (!user) {
     return res.status(404).json({ success: false, error: "User not found" });
   }
@@ -1299,19 +1247,14 @@ app.get("/api/activity/:userId", (req, res) => {
 // Update activity visibility
 app.put("/api/activity/visibility", (req, res) => {
   const { visible } = req.body;
-  
-  // Require authentication (user or admin)
-  if (!req.session.isLoggedIn && !req.session.isAdmin) {
+
+  // Require authentication
+  if (!req.session.user) {
     return res.status(401).json({ success: false, error: 'Authentication required' });
   }
 
   // Get user ID
-  let userId = '0'; // admin
-  if (req.session.user) {
-    userId = req.session.user.id;
-  }
-
-  // Initialize user activity if not exists
+  const userId = req.session.user.id;  // Initialize user activity if not exists
   if (!userActivity[userId]) {
     userActivity[userId] = {
       plays: {},
@@ -1327,16 +1270,13 @@ app.put("/api/activity/visibility", (req, res) => {
 
 // Reset user activity data
 app.delete("/api/activity/reset", (req, res) => {
-  // Require authentication (user or admin)
-  if (!req.session.isLoggedIn && !req.session.isAdmin) {
+  // Require authentication
+  if (!req.session.user) {
     return res.status(401).json({ success: false, error: 'Authentication required' });
   }
 
   // Get user ID
-  let userId = '0'; // admin
-  if (req.session.user) {
-    userId = req.session.user.id;
-  }
+  const userId = req.session.user.id;
 
   // Reset user's activity data
   userActivity[userId] = {
@@ -1346,6 +1286,236 @@ app.delete("/api/activity/reset", (req, res) => {
 
   saveActivity();
   res.json({ success: true, message: "Activity data has been reset successfully" });
+});
+
+// --- Playlist endpoints ---
+
+// Get all playlists for a user
+app.get("/api/playlists/user/:userId", (req, res) => {
+  const { userId } = req.params;
+  const userPlaylists = playlists.filter(p => p.userId === userId);
+  res.json({ success: true, playlists: userPlaylists });
+});
+
+// Get a specific playlist
+app.get("/api/playlists/:playlistId", (req, res) => {
+  const { playlistId } = req.params;
+  const playlist = playlists.find(p => p.id === playlistId);
+  
+  if (!playlist) {
+    return res.status(404).json({ success: false, error: "Playlist not found" });
+  }
+  
+  res.json({ success: true, playlist });
+});
+
+// Create a new playlist
+app.post("/api/playlists", (req, res) => {
+  // Require authentication
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, error: 'Authentication required' });
+  }
+
+  const { name, description } = req.body;
+  
+  if (!name || !name.trim()) {
+    return res.status(400).json({ success: false, error: "Playlist name is required" });
+  }
+
+  // Get user ID
+  const userId = req.session.user.id;
+
+  const newPlaylist = {
+    id: Date.now().toString(),
+    userId,
+    name: name.trim(),
+    description: description ? description.trim() : '',
+    songs: [], // Array of {artistSlug, songSlug, title, artist}
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  playlists.push(newPlaylist);
+  savePlaylists();
+  
+  res.json({ success: true, playlist: newPlaylist });
+});
+
+// Update playlist details (name, description)
+app.put("/api/playlists/:playlistId", (req, res) => {
+  const { playlistId } = req.params;
+  const { name, description } = req.body;
+  
+  // Require authentication
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, error: 'Authentication required' });
+  }
+
+  const playlist = playlists.find(p => p.id === playlistId);
+  
+  if (!playlist) {
+    return res.status(404).json({ success: false, error: "Playlist not found" });
+  }
+
+  // Get user ID
+  const userId = req.session.user.id;
+
+  // Check ownership
+  if (playlist.userId !== userId) {
+    return res.status(403).json({ success: false, error: "You don't own this playlist" });
+  }
+
+  if (name !== undefined) playlist.name = name.trim();
+  if (description !== undefined) playlist.description = description.trim();
+  playlist.updatedAt = new Date().toISOString();
+
+  savePlaylists();
+  res.json({ success: true, playlist });
+});
+
+// Add song to playlist
+app.post("/api/playlists/:playlistId/songs", (req, res) => {
+  const { playlistId } = req.params;
+  const { artistSlug, songSlug, title, artist } = req.body;
+  
+  // Require authentication
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, error: 'Authentication required' });
+  }
+
+  const playlist = playlists.find(p => p.id === playlistId);
+  
+  if (!playlist) {
+    return res.status(404).json({ success: false, error: "Playlist not found" });
+  }
+
+  // Get user ID
+  const userId = req.session.user.id;
+
+  // Check ownership
+  if (playlist.userId !== userId) {
+    return res.status(403).json({ success: false, error: "You don't own this playlist" });
+  }
+
+  // Check if song already exists in playlist
+  const exists = playlist.songs.some(s => 
+    s.artistSlug === artistSlug && s.songSlug === songSlug
+  );
+
+  if (exists) {
+    return res.status(400).json({ success: false, error: "Song already in playlist" });
+  }
+
+  playlist.songs.push({ artistSlug, songSlug, title, artist });
+  playlist.updatedAt = new Date().toISOString();
+
+  savePlaylists();
+  res.json({ success: true, playlist });
+});
+
+// Remove song from playlist
+app.delete("/api/playlists/:playlistId/songs", (req, res) => {
+  const { playlistId } = req.params;
+  const { artistSlug, songSlug } = req.body;
+  
+  // Require authentication
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, error: 'Authentication required' });
+  }
+
+  const playlist = playlists.find(p => p.id === playlistId);
+  
+  if (!playlist) {
+    return res.status(404).json({ success: false, error: "Playlist not found" });
+  }
+
+  // Get user ID
+  const userId = req.session.user.id;
+
+  // Check ownership
+  if (playlist.userId !== userId) {
+    return res.status(403).json({ success: false, error: "You don't own this playlist" });
+  }
+
+  const originalLength = playlist.songs.length;
+  playlist.songs = playlist.songs.filter(s => 
+    !(s.artistSlug === artistSlug && s.songSlug === songSlug)
+  );
+
+  if (playlist.songs.length === originalLength) {
+    return res.status(404).json({ success: false, error: "Song not found in playlist" });
+  }
+
+  playlist.updatedAt = new Date().toISOString();
+
+  savePlaylists();
+  res.json({ success: true, playlist });
+});
+
+// Reorder songs in playlist
+app.put("/api/playlists/:playlistId/reorder", (req, res) => {
+  const { playlistId } = req.params;
+  const { songs } = req.body; // New order of songs array
+  
+  // Require authentication
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, error: 'Authentication required' });
+  }
+
+  const playlist = playlists.find(p => p.id === playlistId);
+  
+  if (!playlist) {
+    return res.status(404).json({ success: false, error: "Playlist not found" });
+  }
+
+  // Get user ID
+  const userId = req.session.user.id;
+
+  // Check ownership
+  if (playlist.userId !== userId) {
+    return res.status(403).json({ success: false, error: "You don't own this playlist" });
+  }
+
+  if (!Array.isArray(songs)) {
+    return res.status(400).json({ success: false, error: "Invalid songs array" });
+  }
+
+  playlist.songs = songs;
+  playlist.updatedAt = new Date().toISOString();
+
+  savePlaylists();
+  res.json({ success: true, playlist });
+});
+
+// Delete a playlist
+app.delete("/api/playlists/:playlistId", (req, res) => {
+  const { playlistId } = req.params;
+  
+  // Require authentication
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, error: 'Authentication required' });
+  }
+
+  const playlistIndex = playlists.findIndex(p => p.id === playlistId);
+  
+  if (playlistIndex === -1) {
+    return res.status(404).json({ success: false, error: "Playlist not found" });
+  }
+
+  const playlist = playlists[playlistIndex];
+
+  // Get user ID
+  const userId = req.session.user.id;
+
+  // Check ownership
+  if (playlist.userId !== userId) {
+    return res.status(403).json({ success: false, error: "You don't own this playlist" });
+  }
+
+  playlists.splice(playlistIndex, 1);
+  savePlaylists();
+  
+  res.json({ success: true, message: "Playlist deleted successfully" });
 });
 
 app.post("/api/upload-song", upload.single("audioFile"), (req, res) => {
