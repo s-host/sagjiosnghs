@@ -3143,7 +3143,7 @@ body.theme-lavender-dreams .activity-error {
   border-radius: 0.5rem;
   padding: 1rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
+  z-index: 9999;
   min-width: 200px;
   grid-template-columns: repeat(4, 1fr);
   gap: 0.75rem;
