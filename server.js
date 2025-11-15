@@ -550,6 +550,44 @@ app.put('/api/tracks/:artistSlug/:songSlug/file', ensureAdmin, upload.single("au
   }
 });
 
+// Update track audio file path (admin only - just updates the path, doesn't upload file)
+app.patch('/api/tracks/:artistSlug/:songSlug', ensureAdmin, (req, res) => {
+  try {
+    const { artistSlug, songSlug } = req.params;
+    const { file } = req.body;
+
+    if (!file) {
+      return res.status(400).json({ success: false, error: 'Audio file path is required' });
+    }
+
+    // Find the track
+    const trackIndex = tracks.findIndex(t => 
+      slugify(t.artist) === artistSlug && 
+      slugify(t.title) === songSlug
+    );
+
+    if (trackIndex === -1) {
+      return res.status(404).json({ success: false, error: 'Track not found' });
+    }
+
+    // Update the track's file path
+    tracks[trackIndex].file = file;
+
+    // Save tracks to file
+    fs.writeFileSync(tracksFile, JSON.stringify(tracks, null, 2));
+    reloadTracksFromFile();
+
+    res.json({ 
+      success: true, 
+      message: 'Track audio file path updated successfully',
+      track: tracks[trackIndex]
+    });
+  } catch (error) {
+    console.error('Track update failed:', error);
+    res.status(500).json({ success: false, error: 'Update failed: ' + error.message });
+  }
+});
+
 // load existing users data
 const usersFile = path.join(__dirname, "data", "users.json");
 let users = [];

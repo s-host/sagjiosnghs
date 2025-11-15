@@ -6,7 +6,7 @@
     "createdAt": "2025-10-17T04:22:48.352Z",
     "isAdmin": true,
     "bio": "ok im cool",
-    "selectedGradient": 3
+    "selectedGradient": 5
   },
   {
     "id": "2",
@@ -14,7 +14,7 @@
     "password": "$2b$10$fPqoydaNn4LsCZyr2q21L.ocYPkk/LtnQ1oXEyUqrCLhiYMwvqeWu",
     "createdAt": "2025-10-17T06:50:01.432Z",
     "isAdmin": false,
-    "bio": "second user ever?? extreme???",
+    "bio": "ive been workin",
     "muted": false,
     "selectedGradient": 5
   },

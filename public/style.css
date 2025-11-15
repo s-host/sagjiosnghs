@@ -3134,6 +3134,10 @@ body.theme-lavender-dreams .activity-error {
   display: inline-block;
 }
 
+.playlists {
+  z-index: -9999;
+}
+
 .gradient-dropdown {
   position: absolute;
   top: 100%;

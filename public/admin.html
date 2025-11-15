@@ -84,6 +84,53 @@
       </div>
     </div>
 
+    <!-- Missing Audio Files Section -->
+    <div class="mb-8">
+      <h2 class="text-3xl font-bold mb-4">Tracks Missing Audio Files</h2>
+      
+      <div id="missing-audio-loading" class="text-center p-4">
+        <p>Loading tracks...</p>
+      </div>
+
+      <div id="missing-audio-container" class="hidden">
+        <div class="mb-4 flex items-center justify-between">
+          <div id="missing-audio-stats" class="text-gray-400">
+            <!-- Stats will be inserted here -->
+          </div>
+          <button onclick="refreshMissingAudio()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded">
+            Refresh
+          </button>
+        </div>
+
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+          <table class="w-full">
+            <thead class="bg-gray-700">
+              <tr>
+                <th class="px-4 py-3 text-left">Title</th>
+                <th class="px-4 py-3 text-left">Artist</th>
+                <th class="px-4 py-3 text-left">Album</th>
+                <th class="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="missing-audio-table-body" class="divide-y divide-gray-700">
+              <!-- Tracks will be inserted here -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="no-missing-audio" class="hidden text-center p-8 bg-gray-800 rounded-lg mt-4">
+          <p class="text-green-400 text-lg">✓ All tracks have audio files!</p>
+        </div>
+      </div>
+
+      <div id="missing-audio-error" class="hidden text-center p-8">
+        <div class="bg-red-900 border border-red-600 rounded-lg p-6 max-w-md mx-auto">
+          <h3 class="text-xl font-bold mb-2">Error</h3>
+          <p id="missing-audio-error-message" class="text-red-200"></p>
+        </div>
+      </div>
+    </div>
+
     <h2 class="text-3xl font-bold mb-6">User Management</h2>
     
     <!-- Search and Stats Section -->
@@ -830,8 +877,144 @@
       document.getElementById('error-message').textContent = message;
     }
 
-    // Load users on page load
+    // Missing Audio Files Functions
+    let allTracks = [];
+    let missingAudioTracks = [];
+
+    async function loadMissingAudioTracks() {
+      const isAdmin = await checkAuth();
+      if (!isAdmin) return;
+
+      try {
+        const res = await fetch('/api/tracks');
+        if (!res.ok) {
+          throw new Error('Failed to fetch tracks');
+        }
+        
+        allTracks = await res.json();
+        missingAudioTracks = allTracks.filter(track => !track.file || track.file.trim() === '');
+        
+        document.getElementById('missing-audio-loading').classList.add('hidden');
+        document.getElementById('missing-audio-container').classList.remove('hidden');
+        
+        updateMissingAudioStats();
+        renderMissingAudioTracks();
+      } catch (error) {
+        console.error('Error loading tracks:', error);
+        showMissingAudioError('Failed to load tracks');
+      }
+    }
+
+    function updateMissingAudioStats() {
+      const statsElement = document.getElementById('missing-audio-stats');
+      const total = allTracks.length;
+      const missing = missingAudioTracks.length;
+      const withAudio = total - missing;
+      
+      statsElement.innerHTML = `
+        Total Tracks: ${total} | 
+        With Audio: ${withAudio} | 
+        Missing Audio: <span class="${missing > 0 ? 'text-red-400' : 'text-green-400'}">${missing}</span>
+      `;
+    }
+
+    function renderMissingAudioTracks() {
+      const tbody = document.getElementById('missing-audio-table-body');
+      tbody.innerHTML = '';
+
+      if (missingAudioTracks.length === 0) {
+        document.querySelector('#missing-audio-container table').classList.add('hidden');
+        document.getElementById('no-missing-audio').classList.remove('hidden');
+        return;
+      }
+
+      document.querySelector('#missing-audio-container table').classList.remove('hidden');
+      document.getElementById('no-missing-audio').classList.add('hidden');
+
+      missingAudioTracks.forEach(track => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-700 transition';
+        
+        const artistSlug = slugifyText(track.artist);
+        const titleSlug = slugifyText(track.title);
+        
+        tr.innerHTML = `
+          <td class="px-4 py-3">
+            <a href="/${artistSlug}/${titleSlug}" target="_blank" class="hover:underline text-blue-400">${escapeHtml(track.title)}</a>
+          </td>
+          <td class="px-4 py-3">${escapeHtml(track.artist)}</td>
+          <td class="px-4 py-3">${escapeHtml(track.album || 'N/A')}</td>
+          <td class="px-4 py-3 text-right">
+            <button onclick="addAudioFileToTrack('${artistSlug}', '${titleSlug}', '${escapeHtml(track.title)}', '${escapeHtml(track.artist)}')" 
+                    class="px-3 py-1 rounded text-sm bg-green-600 hover:bg-green-700 text-white">
+              Add Audio File
+            </button>
+          </td>
+        `;
+        
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function addAudioFileToTrack(artistSlug, titleSlug, title, artist) {
+      const audioPath = prompt(`Enter the audio file path for "${title}" by ${artist}:\n\nExample: /audio/song-name.mp3`);
+      
+      if (!audioPath) {
+        return; // User cancelled
+      }
+
+      if (!audioPath.trim()) {
+        alert('Audio file path cannot be empty');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/tracks/${artistSlug}/${titleSlug}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file: audioPath.trim() })
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Failed to update track');
+        }
+
+        const result = await res.json();
+        
+        if (result.success) {
+          showImportSuccess(`Audio file added to "${title}"`);
+          
+          // Refresh the list
+          await loadMissingAudioTracks();
+        } else {
+          throw new Error(result.error || 'Update failed');
+        }
+      } catch (error) {
+        console.error('Error adding audio file:', error);
+        showImportError('Failed to add audio file: ' + error.message);
+      }
+    }
+
+    function refreshMissingAudio() {
+      document.getElementById('missing-audio-loading').classList.remove('hidden');
+      document.getElementById('missing-audio-container').classList.add('hidden');
+      loadMissingAudioTracks();
+    }
+
+    function showMissingAudioError(message) {
+      document.getElementById('missing-audio-loading').classList.add('hidden');
+      document.getElementById('missing-audio-error').classList.remove('hidden');
+      document.getElementById('missing-audio-error-message').textContent = message;
+    }
+
+    function slugifyText(str) {
+      return str.toLowerCase().replace(/[^\w]+/g, "-");
+    }
+
+    // Load users and missing audio tracks on page load
     loadUsers();
+    loadMissingAudioTracks();
   </script>
 </body>
 </html>

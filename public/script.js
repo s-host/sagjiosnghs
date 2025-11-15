@@ -594,6 +594,33 @@ function renderArtist(artistSlug) {
 
   const artistName = artistTracks[0].artist;
 
+  // Group tracks by year
+  const tracksByYear = {};
+  artistTracks.forEach(track => {
+    const year = track.createdAt ? new Date(track.createdAt).getFullYear() : 'Unknown';
+    if (!tracksByYear[year]) {
+      tracksByYear[year] = [];
+    }
+    tracksByYear[year].push(track);
+  });
+
+  // Sort years in descending order (newest first)
+  const sortedYears = Object.keys(tracksByYear).sort((a, b) => {
+    if (a === 'Unknown') return 1;
+    if (b === 'Unknown') return -1;
+    return b - a;
+  });
+
+  // Generate tracks HTML grouped by year
+  const tracksHTML = sortedYears.map(year => `
+    <div class="mb-8">
+      <h3 class="text-3xl font-bold mb-4 text-gray-300">${year}</h3>
+      <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        ${tracksByYear[year].map(renderTrackCard).join("")}
+      </div>
+    </div>
+  `).join("");
+
   const albumMap = new Map();
   for (const track of artistTracks) {
     const albumSlug = slugify(track.album || "Unknown Album");
@@ -604,10 +631,8 @@ function renderArtist(artistSlug) {
 
   getApp().innerHTML = `
     <h2 class="text-2xl mb-4 font-bold">🎤 ${artistName}</h2>
-    <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mb-10">
-      ${artistTracks.map(renderTrackCard).join("")}
-    </div>
-    <h3 class="text-xl font-semibold mb-2">📀 Albums featuring ${artistName}</h3>
+    ${tracksHTML}
+    <h3 class="text-xl font-semibold mb-2 mt-10">📀 Albums featuring ${artistName}</h3>
     <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       ${[...albumMap.entries()].map(([slug, albumTrack]) => `
         <div class="bg-gray-800 rounded-lg shadow p-4 hover:bg-gray-700 transition duration-200 albumlink">
@@ -1476,7 +1501,7 @@ async function renderProfile(userId) {
         </div>
 
         <!-- Playlists Section -->
-        <div class="bg-gray-800 rounded-lg shadow-lg p-6 mt-6 track">
+        <div class="playlists bg-gray-800 rounded-lg shadow-lg p-6 mt-6 track">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-bold">Playlists</h2>
             ${isOwnProfile ? `

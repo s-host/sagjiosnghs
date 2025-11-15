@@ -1,1 +1,84 @@
-[]
+[
+  {
+    "id": "1762643544710",
+    "userId": "2",
+    "name": "best of leroy",
+    "description": "",
+    "songs": [
+      {
+        "artistSlug": "leroy",
+        "songSlug": "ricky-bobby",
+        "title": "ricky bobby",
+        "artist": "leroy"
+      },
+      {
+        "artistSlug": "leroy",
+        "songSlug": "parental-rift",
+        "title": "parental rift",
+        "artist": "leroy"
+      },
+      {
+        "artistSlug": "leroy",
+        "songSlug": "theyfriend",
+        "title": "theyfriend",
+        "artist": "leroy"
+      },
+      {
+        "artistSlug": "leroy",
+        "songSlug": "2008",
+        "title": "2008",
+        "artist": "leroy"
+      },
+      {
+        "artistSlug": "leroy",
+        "songSlug": "will-work-for-food",
+        "title": "will work for food",
+        "artist": "leroy"
+      },
+      {
+        "artistSlug": "leroy",
+        "songSlug": "turmoiled",
+        "title": "turmoiled",
+        "artist": "leroy"
+      },
+      {
+        "artistSlug": "leroy",
+        "songSlug": "dessert",
+        "title": "dessert",
+        "artist": "leroy"
+      },
+      {
+        "artistSlug": "leroy",
+        "songSlug": "during-pride-month",
+        "title": "...during pride month?",
+        "artist": "leroy"
+      },
+      {
+        "artistSlug": "leroy",
+        "songSlug": "wants-mom-to-know-she-looks-cool-and-doesnt-plan-on-changing",
+        "title": "wants mom to know she looks cool and doesnt plan on changing",
+        "artist": "leroy"
+      },
+      {
+        "artistSlug": "leroy",
+        "songSlug": "the-dariacore-to-ytp-pipeline",
+        "title": "the dariacore to YTP pipeline",
+        "artist": "leroy"
+      },
+      {
+        "artistSlug": "leroy",
+        "songSlug": "we-love-your-vibe",
+        "title": "we love your vibe",
+        "artist": "leroy"
+      },
+      {
+        "artistSlug": "leroy",
+        "songSlug": "the-joke-is-on-you",
+        "title": "the joke is on you",
+        "artist": "leroy"
+      }
+    ],
+    "createdAt": "2025-11-08T23:12:24.710Z",
+    "updatedAt": "2025-11-08T23:18:14.914Z"
+  }
+]
