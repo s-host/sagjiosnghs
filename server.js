@@ -3,6 +3,8 @@ const session = require("express-session");
 const fs = require("fs");
 const path = require("path");
 const bcrypt = require("bcrypt");
+const archiver = require("archiver");
+const extract = require("extract-zip");
 const app = express();
 const PORT = 3000;
 const multer = require("multer");
@@ -197,21 +199,26 @@ commentsRouter.get('/:artistSlug/:songSlug', (req, res) => {
   const key = trackKeyFromSlugs(artistSlug, songSlug);
   const list = commentsByTrack[key] || [];
   
-  // Enhance comments with current gradient information
+  // Enhance comments with current user information (gradient and profile picture)
   const enhancedComments = list.map(comment => {
     let currentGradient = 1; // default
+    let profilePicture = null;
     
     if (comment.userId === '0') {
       // Admin comment - check session if available, otherwise use default
       currentGradient = (req.session.admin && req.session.admin.selectedGradient) || 1;
+      profilePicture = (req.session.admin && req.session.admin.profilePicture) || null;
     } else {
-      // Regular user comment - look up current gradient in users
+      // Regular user comment - look up current user info
       const user = users.find(u => u.id === comment.userId);
-      currentGradient = user ? (user.selectedGradient || 1) : 1;
+      if (user) {
+        currentGradient = user.selectedGradient || 1;
+        profilePicture = user.profilePicture || null;
+      }
     }
     
-    // Always use current gradient, not stored gradient
-    return { ...comment, selectedGradient: currentGradient };
+    // Always use current user info, not stored info
+    return { ...comment, selectedGradient: currentGradient, profilePicture };
   });
   
   res.json({ success: true, comments: enhancedComments });
@@ -676,7 +683,9 @@ app.post("/api/register", async (req, res) => {
       password: hashedPassword,
       createdAt: new Date().toISOString(),
       isAdmin: false,
-      bio: bio || ""
+      bio: bio || "",
+      selectedGradient: 1,
+      profilePicture: null
     };
 
     users.push(newUser);
@@ -889,6 +898,111 @@ app.put("/api/profile/:userId/gradient", async (req, res) => {
   res.json({ success: true, message: "Gradient updated successfully" });
 });
 
+// Profile picture upload storage configuration
+const profilePictureStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, "public", "profile-pictures"));
+  },
+  filename: (req, file, cb) => {
+    const userId = req.params.userId;
+    const extension = path.extname(file.originalname);
+    cb(null, `${userId}_${Date.now()}${extension}`);
+  }
+});
+
+const profilePictureUpload = multer({ 
+  storage: profilePictureStorage,
+  fileFilter: (req, file, cb) => {
+    // Allow only image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'), false);
+    }
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
+
+// Upload profile picture endpoint
+app.post("/api/profile/:userId/picture", profilePictureUpload.single("profilePicture"), async (req, res) => {
+  const { userId } = req.params;
+
+  // Check authentication
+  if (!req.session.isLoggedIn && !req.session.isAdmin) {
+    return res.status(401).json({ success: false, message: "Not authenticated" });
+  }
+
+  // Check if user can change this profile picture (must be own account)
+  if (!req.session.isAdmin && (!req.session.user || req.session.user.id !== userId)) {
+    return res.status(403).json({ success: false, message: "Access denied" });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: "No file uploaded" });
+  }
+
+  // Find user
+  const userIndex = users.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    return res.status(404).json({ success: false, message: "User not found" });
+  }
+
+  // Delete old profile picture if it exists
+  const oldProfilePicture = users[userIndex].profilePicture;
+  if (oldProfilePicture) {
+    const oldPicturePath = path.join(__dirname, "public", oldProfilePicture);
+    if (fs.existsSync(oldPicturePath)) {
+      fs.unlinkSync(oldPicturePath);
+    }
+  }
+
+  // Update user with new profile picture path
+  users[userIndex].profilePicture = `/profile-pictures/${req.file.filename}`;
+  saveUsers();
+
+  res.json({ 
+    success: true, 
+    message: "Profile picture updated successfully",
+    profilePicture: users[userIndex].profilePicture
+  });
+});
+
+// Delete profile picture endpoint
+app.delete("/api/profile/:userId/picture", async (req, res) => {
+  const { userId } = req.params;
+
+  // Check authentication
+  if (!req.session.isLoggedIn && !req.session.isAdmin) {
+    return res.status(401).json({ success: false, message: "Not authenticated" });
+  }
+
+  // Check if user can delete this profile picture (must be own account)
+  if (!req.session.isAdmin && (!req.session.user || req.session.user.id !== userId)) {
+    return res.status(403).json({ success: false, message: "Access denied" });
+  }
+
+  // Find user
+  const userIndex = users.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    return res.status(404).json({ success: false, message: "User not found" });
+  }
+
+  // Delete profile picture file if it exists
+  const profilePicture = users[userIndex].profilePicture;
+  if (profilePicture) {
+    const picturePath = path.join(__dirname, "public", profilePicture);
+    if (fs.existsSync(picturePath)) {
+      fs.unlinkSync(picturePath);
+    }
+    users[userIndex].profilePicture = null;
+    saveUsers();
+  }
+
+  res.json({ success: true, message: "Profile picture deleted successfully" });
+});
+
 // Ban/Unban user endpoint (admin only)
 app.put("/api/admin/users/:userId/ban", ensureAdmin, (req, res) => {
   const { userId } = req.params;
@@ -1036,7 +1150,7 @@ app.get("/api/admin/users/:userId/comments", ensureAdmin, (req, res) => {
 
 // Data export endpoints (admin only)
 
-// Export site data (users, comments, activity, playlists)
+// Export site data (users, comments, activity, playlists, profile pictures)
 app.get("/api/admin/export/site-data", ensureAdmin, (req, res) => {
   try {
     const exportData = {
@@ -1045,12 +1159,33 @@ app.get("/api/admin/export/site-data", ensureAdmin, (req, res) => {
       activity: userActivity,
       playlists: playlists,
       exportDate: new Date().toISOString(),
-      version: "1.0"
+      version: "2.0"
     };
 
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', `attachment; filename="hypertunes-site-data-${new Date().toISOString().split('T')[0]}.json"`);
-    res.json(exportData);
+    // Create a zip archive
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    const dateStr = new Date().toISOString().split('T')[0];
+    
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="hypertunes-site-data-${dateStr}.zip"`);
+    
+    archive.on('error', (err) => {
+      console.error('Archive error:', err);
+      res.status(500).json({ success: false, error: 'Export failed' });
+    });
+    
+    archive.pipe(res);
+    
+    // Add JSON data
+    archive.append(JSON.stringify(exportData, null, 2), { name: 'data.json' });
+    
+    // Add profile pictures directory
+    const profilePicturesDir = path.join(__dirname, 'public', 'profile-pictures');
+    if (fs.existsSync(profilePicturesDir)) {
+      archive.directory(profilePicturesDir, 'profile-pictures');
+    }
+    
+    archive.finalize();
   } catch (error) {
     console.error('Site data export failed:', error);
     res.status(500).json({ success: false, error: 'Export failed' });
@@ -1076,20 +1211,45 @@ app.get("/api/admin/export/tracks", ensureAdmin, (req, res) => {
 });
 
 // Import site data (admin only)
-app.post("/api/admin/import/site-data", ensureAdmin, upload.single("dataFile"), (req, res) => {
+app.post("/api/admin/import/site-data", ensureAdmin, upload.single("dataFile"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'No file uploaded' });
     }
 
-    const importData = JSON.parse(fs.readFileSync(req.file.path, 'utf-8'));
+    const uploadedFilePath = req.file.path;
+    const isZipFile = req.file.originalname.endsWith('.zip');
+    let importData;
+    let extractedDir;
+
+    if (isZipFile) {
+      // Handle zip file with profile pictures
+      extractedDir = path.join(__dirname, 'temp-import-' + Date.now());
+      
+      // Extract zip file
+      await extract(uploadedFilePath, { dir: extractedDir });
+      
+      // Read JSON data from extracted files
+      const dataJsonPath = path.join(extractedDir, 'data.json');
+      if (!fs.existsSync(dataJsonPath)) {
+        throw new Error('data.json not found in zip file');
+      }
+      
+      importData = JSON.parse(fs.readFileSync(dataJsonPath, 'utf-8'));
+    } else {
+      // Handle plain JSON file (backward compatibility)
+      importData = JSON.parse(fs.readFileSync(uploadedFilePath, 'utf-8'));
+    }
     
     // Validate import data structure
     if (!importData.users || !importData.comments || !importData.activity) {
+      if (extractedDir && fs.existsSync(extractedDir)) {
+        fs.rmSync(extractedDir, { recursive: true, force: true });
+      }
       return res.status(400).json({ success: false, error: 'Invalid data format' });
     }
 
-    // Backup current data
+    // Backup current data and profile pictures
     const backupData = {
       users: users,
       comments: commentsByTrack,
@@ -1113,8 +1273,32 @@ app.post("/api/admin/import/site-data", ensureAdmin, upload.single("dataFile"), 
     saveActivity();
     savePlaylists();
 
+    // Import profile pictures if they exist in the zip
+    if (isZipFile && extractedDir) {
+      const extractedProfilePicsDir = path.join(extractedDir, 'profile-pictures');
+      const targetProfilePicsDir = path.join(__dirname, 'public', 'profile-pictures');
+      
+      if (fs.existsSync(extractedProfilePicsDir)) {
+        // Ensure target directory exists
+        if (!fs.existsSync(targetProfilePicsDir)) {
+          fs.mkdirSync(targetProfilePicsDir, { recursive: true });
+        }
+        
+        // Copy all profile pictures
+        const files = fs.readdirSync(extractedProfilePicsDir);
+        files.forEach(file => {
+          const sourcePath = path.join(extractedProfilePicsDir, file);
+          const targetPath = path.join(targetProfilePicsDir, file);
+          fs.copyFileSync(sourcePath, targetPath);
+        });
+      }
+      
+      // Clean up extracted directory
+      fs.rmSync(extractedDir, { recursive: true, force: true });
+    }
+
     // Clean up uploaded file
-    fs.unlinkSync(req.file.path);
+    fs.unlinkSync(uploadedFilePath);
 
     res.json({ 
       success: true, 
@@ -1368,6 +1552,7 @@ app.post("/api/playlists", (req, res) => {
     userId,
     name: name.trim(),
     description: description ? description.trim() : '',
+    collaborators: [], // Array of user IDs who can edit the playlist
     songs: [], // Array of {artistSlug, songSlug, title, artist}
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -1398,9 +1583,9 @@ app.put("/api/playlists/:playlistId", (req, res) => {
   // Get user ID
   const userId = req.session.user.id;
 
-  // Check ownership
+  // Only owners can modify playlist details (name, description)
   if (playlist.userId !== userId) {
-    return res.status(403).json({ success: false, error: "You don't own this playlist" });
+    return res.status(403).json({ success: false, error: "Only the playlist owner can modify playlist details" });
   }
 
   if (name !== undefined) playlist.name = name.trim();
@@ -1430,9 +1615,12 @@ app.post("/api/playlists/:playlistId/songs", (req, res) => {
   // Get user ID
   const userId = req.session.user.id;
 
-  // Check ownership
-  if (playlist.userId !== userId) {
-    return res.status(403).json({ success: false, error: "You don't own this playlist" });
+  // Check ownership or collaboration permission
+  const isOwner = playlist.userId === userId;
+  const isCollaborator = playlist.collaborators && playlist.collaborators.includes(userId);
+  
+  if (!isOwner && !isCollaborator) {
+    return res.status(403).json({ success: false, error: "You don't have permission to add songs to this playlist" });
   }
 
   // Check if song already exists in playlist
@@ -1470,9 +1658,12 @@ app.delete("/api/playlists/:playlistId/songs", (req, res) => {
   // Get user ID
   const userId = req.session.user.id;
 
-  // Check ownership
-  if (playlist.userId !== userId) {
-    return res.status(403).json({ success: false, error: "You don't own this playlist" });
+  // Check ownership or collaboration permission
+  const isOwner = playlist.userId === userId;
+  const isCollaborator = playlist.collaborators && playlist.collaborators.includes(userId);
+  
+  if (!isOwner && !isCollaborator) {
+    return res.status(403).json({ success: false, error: "You don't have permission to remove songs from this playlist" });
   }
 
   const originalLength = playlist.songs.length;
@@ -1509,9 +1700,12 @@ app.put("/api/playlists/:playlistId/reorder", (req, res) => {
   // Get user ID
   const userId = req.session.user.id;
 
-  // Check ownership
-  if (playlist.userId !== userId) {
-    return res.status(403).json({ success: false, error: "You don't own this playlist" });
+  // Check ownership or collaboration permission
+  const isOwner = playlist.userId === userId;
+  const isCollaborator = playlist.collaborators && playlist.collaborators.includes(userId);
+  
+  if (!isOwner && !isCollaborator) {
+    return res.status(403).json({ success: false, error: "You don't have permission to reorder songs in this playlist" });
   }
 
   if (!Array.isArray(songs)) {
@@ -1554,6 +1748,123 @@ app.delete("/api/playlists/:playlistId", (req, res) => {
   savePlaylists();
   
   res.json({ success: true, message: "Playlist deleted successfully" });
+});
+
+// Add collaborator to playlist
+app.post("/api/playlists/:playlistId/collaborators", (req, res) => {
+  const { playlistId } = req.params;
+  const { username } = req.body;
+  
+  // Require authentication
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, error: 'Authentication required' });
+  }
+
+  const playlist = playlists.find(p => p.id === playlistId);
+  
+  if (!playlist) {
+    return res.status(404).json({ success: false, error: "Playlist not found" });
+  }
+
+  // Get user ID
+  const userId = req.session.user.id;
+
+  // Only owner can add collaborators
+  if (playlist.userId !== userId) {
+    return res.status(403).json({ success: false, error: "Only the playlist owner can add collaborators" });
+  }
+
+  // Find user by username
+  const collaboratorUser = users.find(u => u.username === username);
+  if (!collaboratorUser) {
+    return res.status(404).json({ success: false, error: "User not found" });
+  }
+
+  // Can't add yourself as collaborator
+  if (collaboratorUser.id === userId) {
+    return res.status(400).json({ success: false, error: "You can't add yourself as a collaborator" });
+  }
+
+  // Initialize collaborators array if it doesn't exist
+  if (!playlist.collaborators) {
+    playlist.collaborators = [];
+  }
+
+  // Check if user is already a collaborator
+  if (playlist.collaborators.includes(collaboratorUser.id)) {
+    return res.status(400).json({ success: false, error: "User is already a collaborator" });
+  }
+
+  playlist.collaborators.push(collaboratorUser.id);
+  playlist.updatedAt = new Date().toISOString();
+
+  savePlaylists();
+  res.json({ success: true, playlist, collaborator: { id: collaboratorUser.id, username: collaboratorUser.username } });
+});
+
+// Remove collaborator from playlist
+app.delete("/api/playlists/:playlistId/collaborators/:collaboratorId", (req, res) => {
+  const { playlistId, collaboratorId } = req.params;
+  
+  // Require authentication
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, error: 'Authentication required' });
+  }
+
+  const playlist = playlists.find(p => p.id === playlistId);
+  
+  if (!playlist) {
+    return res.status(404).json({ success: false, error: "Playlist not found" });
+  }
+
+  // Get user ID
+  const userId = req.session.user.id;
+
+  // Only owner can remove collaborators
+  if (playlist.userId !== userId) {
+    return res.status(403).json({ success: false, error: "Only the playlist owner can remove collaborators" });
+  }
+
+  // Initialize collaborators array if it doesn't exist
+  if (!playlist.collaborators) {
+    playlist.collaborators = [];
+  }
+
+  const originalLength = playlist.collaborators.length;
+  playlist.collaborators = playlist.collaborators.filter(id => id !== collaboratorId);
+
+  if (playlist.collaborators.length === originalLength) {
+    return res.status(404).json({ success: false, error: "Collaborator not found" });
+  }
+
+  playlist.updatedAt = new Date().toISOString();
+
+  savePlaylists();
+  res.json({ success: true, playlist });
+});
+
+// Get playlist collaborators with user details
+app.get("/api/playlists/:playlistId/collaborators", (req, res) => {
+  const { playlistId } = req.params;
+  
+  const playlist = playlists.find(p => p.id === playlistId);
+  
+  if (!playlist) {
+    return res.status(404).json({ success: false, error: "Playlist not found" });
+  }
+
+  // Get collaborator user details
+  const collaborators = (playlist.collaborators || []).map(collaboratorId => {
+    const user = users.find(u => u.id === collaboratorId);
+    return user ? { 
+      id: user.id, 
+      username: user.username,
+      profilePicture: user.profilePicture,
+      selectedGradient: user.selectedGradient
+    } : null;
+  }).filter(Boolean);
+
+  res.json({ success: true, collaborators });
 });
 
 app.post("/api/upload-song", upload.single("audioFile"), (req, res) => {

@@ -667,14 +667,6 @@ function renderAlbum(albumSlug) {
   const sorted = matchingTracks.sort((a, b) => parseInt(a.albumNumber || 9999) - parseInt(b.albumNumber || 9999));
   const albumTitle = sorted[0].album;
 
-  sorted.forEach(track => {
-    const audio = new Audio(track.file);
-    audio.addEventListener("loadedmetadata", () => {
-      trackDurationMap[track.title] = formatTime(audio.duration);
-      if (isOnAlbumPage()) renderAlbum(albumPlayer.albumSlug || albumSlug); // force update
-    });
-  });
-
 
   const artistCount = {};
   sorted.forEach(t => {
@@ -689,22 +681,47 @@ function renderAlbum(albumSlug) {
         <span class="text-sm text-gray-400 block mt-1 artistPointer">
           by ${sortedArtists.map(([name]) => `<span class="hover:underline cursor-pointer" onclick="navigateTo('/${slugify(name)}')">${name}</span>`).join(', ')}
         </span>
+        <span id="album-total-time" class="text-xs text-gray-500 block mt-1">
+          ${sorted.length} track${sorted.length !== 1 ? 's' : ''} • <span id="album-duration-text">Loading...</span>
+        </span>
       </h2>
       <button class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-white" onclick="playAlbumTracks('${albumSlug}')">▶ Play All</button>
       <div class="flex flex-col divide-y-4 divide-transparent mt-4">
         ${sorted.map((track, idx) => `
           <div class="p-4 flex justify-between items-center albumtrack">
-            <div>
+            <div class="flex-1">
               <div class="text-lg font-semibold hover:underline cursor-pointer" onclick="playAlbumTrack('${albumSlug}', ${idx})">${track.title}</div>
               <div class="text-gray-400 text-sm albumtracktext hover:underline cursor-pointer" onclick="navigateTo('/${slugify(track.artist)}/${slugify(track.title)}')">
                 #${track.albumNumber || '?'} <span class="text-xs text-gray-500 albumtracktext">(Track ${idx + 1})</span>
               </div>
+            </div>
+            <div class="text-gray-500 text-sm ml-4" data-track-title="${track.title.replace(/"/g, '&quot;')}">
+              ${trackDurationMap[track.title] || '<span class="animate-pulse">--:--</span>'}
             </div>
           </div>
         `).join('')}
       </div>
     </div>
   `;
+
+  // Preload all track durations in parallel
+  preloadTrackDurations(
+    sorted,
+    (track, duration, index) => {
+      // Update individual track duration display
+      const durationElement = document.querySelector(`[data-track-title="${track.title.replace(/"/g, '&quot;')}"]`);
+      if (durationElement) {
+        durationElement.textContent = duration;
+      }
+    },
+    (totalSeconds) => {
+      // Update total album duration
+      const totalElement = document.getElementById('album-duration-text');
+      if (totalElement) {
+        totalElement.textContent = formatTime(totalSeconds);
+      }
+    }
+  );
 }
 
 async function renderPlaylist(playlistId) {
@@ -718,7 +735,7 @@ async function renderPlaylist(playlistId) {
 
     const playlist = data.playlist;
 
-    // Get auth status to check if user owns this playlist
+    // Get auth status to check if user owns this playlist or is a collaborator
     const authResponse = await fetch('/api/auth-status');
     const authData = await authResponse.json();
     let userId = null;
@@ -726,11 +743,23 @@ async function renderPlaylist(playlistId) {
       userId = authData.user?.id;
     }
     const isOwner = userId === playlist.userId;
+    const isCollaborator = playlist.collaborators && playlist.collaborators.includes(userId);
+    const canEdit = isOwner || isCollaborator;
 
     // Get playlist owner info
     const ownerResponse = await fetch(`/api/profile/${playlist.userId}`);
     const ownerData = await ownerResponse.json();
     const ownerUsername = ownerData.success ? ownerData.user.username : 'Unknown User';
+
+    // Get collaborator info if there are collaborators
+    let collaborators = [];
+    if (playlist.collaborators && playlist.collaborators.length > 0) {
+      const collaboratorResponse = await fetch(`/api/playlists/${playlistId}/collaborators`);
+      const collaboratorData = await collaboratorResponse.json();
+      if (collaboratorData.success) {
+        collaborators = collaboratorData.collaborators;
+      }
+    }
 
     // Resolve full track details for songs in playlist
     const playlistTracks = playlist.songs.map(song => {
@@ -761,7 +790,29 @@ async function renderPlaylist(playlistId) {
           ` : ''}
         </h2>
         ${playlist.description ? `<p class="text-gray-400 mb-4">${escapeHtml(playlist.description)}</p>` : ''}
-        <p class="text-sm text-gray-500 mb-4">${playlist.songs.length} song${playlist.songs.length !== 1 ? 's' : ''}</p>
+        
+        ${collaborators.length > 0 ? `
+          <div class="mb-4">
+            <h3 class="text-sm font-semibold mb-2 text-gray-300">Collaborators:</h3>
+            <div class="flex flex-wrap gap-2">
+              ${collaborators.map(collab => {
+                const profilePic = collab.profilePicture ? 
+                  `<div class="w-6 h-6 rounded-full" style="background-image: url('${collab.profilePicture}'); background-size: cover; background-position: center;"></div>` :
+                  `<div class="w-6 h-6 rounded-full profile-gradient-${collab.selectedGradient || 1} flex items-center justify-center text-xs font-bold text-white">${(collab.username || '').substring(0,1).toUpperCase()}</div>`;
+                
+                return `
+                  <div class="track flex items-center gap-2 bg-gray-700 rounded px-2 py-1">
+                    ${profilePic}
+                    <span class="text-sm hover:underline cursor-pointer" onclick="navigateTo('/profile/${collab.id}')">${escapeHtml(collab.username)}</span>
+                    ${isOwner ? `<button onclick="removeCollaborator('${playlist.id}', '${collab.id}')" class="text-red-400 hover:text-red-300 ml-1 text-xs">×</button>` : ''}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        ` : ''}
+        
+        <p class="text-sm text-gray-500 mb-4">${playlist.songs.length} song${playlist.songs.length !== 1 ? 's' : ''} • <span id="playlist-duration-text">Loading...</span></p>
         
         <div class="flex gap-2">
           ${playlistTracks.length > 0 ? `
@@ -773,6 +824,14 @@ async function renderPlaylist(playlistId) {
             <button onclick="editPlaylistDetails('${playlist.id}')" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white text-sm">
               Edit Details
             </button>
+            <button onclick="showCollaboratorModal('${playlist.id}')" class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded text-white text-sm">
+              Manage Collaborators
+            </button>
+          ` : ''}
+          ${canEdit && !isOwner ? `
+            <span class="text-sm text-yellow-400 bg-yellow-900 px-2 py-1 rounded">
+              ✏️ Collaborator
+            </span>
           ` : ''}
         </div>
 
@@ -781,9 +840,9 @@ async function renderPlaylist(playlistId) {
         ` : `
           <div id="playlist-tracks" class="flex flex-col divide-y-4 divide-transparent mt-4">
             ${playlistTracks.map((track, idx) => `
-              <div class="p-4 flex justify-between items-center albumtrack playlist-track-item" data-index="${idx}" draggable="${isOwner}">
+              <div class="p-4 flex justify-between items-center albumtrack playlist-track-item" data-index="${idx}" draggable="${canEdit}">
                 <div class="flex items-center gap-3 flex-1">
-                  ${isOwner ? `
+                  ${canEdit ? `
                     <div class="drag-handle cursor-move text-gray-500 hover:text-gray-300">
                       ⋮⋮
                     </div>
@@ -798,7 +857,10 @@ async function renderPlaylist(playlistId) {
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
-                  ${isOwner ? `
+                  <span class="text-gray-500 text-sm mr-2" data-playlist-track-title="${track.title.replace(/"/g, '&quot;')}">
+                    ${trackDurationMap[track.title] || '--:--'}
+                  </span>
+                  ${canEdit ? `
                     <button onclick="removeSongFromPlaylist('${playlist.id}', '${slugify(track.artist)}', '${slugify(track.title)}')" 
                             class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
                       Remove
@@ -812,10 +874,29 @@ async function renderPlaylist(playlistId) {
       </div>
     `;
 
-    // Setup drag and drop if owner
-    if (isOwner && playlistTracks.length > 0) {
+    // Setup drag and drop if user can edit
+    if (canEdit && playlistTracks.length > 0) {
       setupPlaylistDragAndDrop(playlist.id);
     }
+
+    // Preload all track durations in parallel
+    preloadTrackDurations(
+      playlistTracks,
+      (track, duration, index) => {
+        // Update individual track duration display
+        const durationElement = document.querySelector(`[data-playlist-track-title="${track.title.replace(/"/g, '&quot;')}"]`);
+        if (durationElement) {
+          durationElement.textContent = duration;
+        }
+      },
+      (totalSeconds) => {
+        // Update total playlist duration
+        const totalElement = document.getElementById('playlist-duration-text');
+        if (totalElement) {
+          totalElement.textContent = formatTime(totalSeconds);
+        }
+      }
+    );
   } catch (error) {
     console.error('Error rendering playlist:', error);
     renderNotFound();
@@ -886,6 +967,9 @@ async function playPlaylist(playlistId) {
     albumPlayer.albumSlug = `playlist-${playlistId}`;
     albumPlayer.currentIndex = 0;
     albumPlayer.loopMode = 0;
+    
+    // Add playlist tracks to queue
+    addTracksToQueue(playlistTracks, true);
     
     // Start playing the first track without calling playAlbumTracks (which would reset tracks)
     startAlbumAudio();
@@ -1017,6 +1101,309 @@ function getDragAfterElement(container, y) {
   }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
+// =================== QUEUE SYSTEM ===================
+let songQueue = [];
+let queueIndex = -1; // Current position in the queue (-1 means not playing from queue)
+
+// Load queue from localStorage on startup
+function loadQueueFromStorage() {
+  try {
+    const saved = localStorage.getItem('htn_song_queue');
+    if (saved) {
+      const data = JSON.parse(saved);
+      songQueue = data.queue || [];
+      queueIndex = data.index !== undefined ? data.index : -1;
+    }
+  } catch (e) {
+    console.error('Failed to load queue from storage:', e);
+    songQueue = [];
+    queueIndex = -1;
+  }
+}
+
+// Save queue to localStorage
+function saveQueueToStorage() {
+  try {
+    localStorage.setItem('htn_song_queue', JSON.stringify({
+      queue: songQueue,
+      index: queueIndex
+    }));
+  } catch (e) {
+    console.error('Failed to save queue to storage:', e);
+  }
+}
+
+// Add track to end of queue
+function addToQueue(artistSlug, songSlug, title, artist, file, cover, album) {
+  const track = { artistSlug, songSlug, title, artist, file, cover, album };
+  songQueue.push(track);
+  saveQueueToStorage();
+  showTempMessage(`"${title}" added to queue`, 'success');
+  updateQueueButton();
+}
+
+// Add track to play next (after current track in queue)
+function playNext(artistSlug, songSlug, title, artist, file, cover, album) {
+  const track = { artistSlug, songSlug, title, artist, file, cover, album };
+  // Insert after current position
+  const insertPos = queueIndex >= 0 ? queueIndex + 1 : 0;
+  songQueue.splice(insertPos, 0, track);
+  saveQueueToStorage();
+  showTempMessage(`"${title}" will play next`, 'success');
+  updateQueueButton();
+}
+
+// Add multiple tracks to queue (for albums/playlists)
+function addTracksToQueue(tracksToAdd, clearExisting = true) {
+  if (clearExisting) {
+    songQueue = [];
+    queueIndex = 0;
+  }
+  
+  tracksToAdd.forEach(track => {
+    songQueue.push({
+      artistSlug: slugify(track.artist),
+      songSlug: slugify(track.title),
+      title: track.title,
+      artist: track.artist,
+      file: track.file,
+      cover: track.cover,
+      album: track.album
+    });
+  });
+  
+  saveQueueToStorage();
+  updateQueueButton();
+}
+
+// Remove track from queue by index
+function removeFromQueue(index) {
+  if (index >= 0 && index < songQueue.length) {
+    const removed = songQueue.splice(index, 1)[0];
+    
+    // Adjust queueIndex if needed
+    if (index < queueIndex) {
+      queueIndex--;
+    } else if (index === queueIndex) {
+      // If we removed the current track, stay at same index (next track slides in)
+      // But if we removed the last track, go back one
+      if (queueIndex >= songQueue.length) {
+        queueIndex = songQueue.length - 1;
+      }
+    }
+    
+    saveQueueToStorage();
+    renderQueueModal();
+    updateQueueButton();
+    showTempMessage(`"${removed.title}" removed from queue`, 'success');
+  }
+}
+
+// Clear entire queue
+function clearQueue() {
+  songQueue = [];
+  queueIndex = -1;
+  saveQueueToStorage();
+  renderQueueModal();
+  updateQueueButton();
+  showTempMessage('Queue cleared', 'success');
+}
+
+// Move to next track in queue
+function queueNextTrack() {
+  if (queueIndex < songQueue.length - 1) {
+    queueIndex++;
+    saveQueueToStorage();
+    return songQueue[queueIndex];
+  }
+  return null;
+}
+
+// Move to previous track in queue
+function queuePrevTrack() {
+  if (queueIndex > 0) {
+    queueIndex--;
+    saveQueueToStorage();
+    return songQueue[queueIndex];
+  }
+  return null;
+}
+
+// Get current queue track
+function getCurrentQueueTrack() {
+  if (queueIndex >= 0 && queueIndex < songQueue.length) {
+    return songQueue[queueIndex];
+  }
+  return null;
+}
+
+// Check if queue has more tracks after current
+function hasNextInQueue() {
+  return queueIndex < songQueue.length - 1;
+}
+
+// Check if queue has tracks before current
+function hasPrevInQueue() {
+  return queueIndex > 0;
+}
+
+// Check if we're currently playing from queue
+function isPlayingFromQueue() {
+  return queueIndex >= 0 && songQueue.length > 0;
+}
+
+// Update queue button badge
+function updateQueueButton() {
+  const queueBtn = document.getElementById('queueBtn');
+  if (queueBtn) {
+    const badge = queueBtn.querySelector('.queue-badge');
+    if (badge) {
+      if (songQueue.length > 0) {
+        badge.textContent = songQueue.length;
+        badge.style.display = 'flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  }
+}
+
+// Show queue modal
+function showQueueModal() {
+  let modal = document.getElementById('queue-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'queue-modal';
+    modal.className = 'queue-modal-overlay';
+    document.body.appendChild(modal);
+  }
+  renderQueueModal();
+  modal.style.display = 'flex';
+}
+
+// Hide queue modal
+function hideQueueModal() {
+  const modal = document.getElementById('queue-modal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+// Render queue modal content
+function renderQueueModal() {
+  const modal = document.getElementById('queue-modal');
+  if (!modal) return;
+
+  const queueItems = songQueue.map((track, index) => {
+    const isCurrentTrack = index === queueIndex;
+    return `
+    <div class="queue-track-item ${isCurrentTrack ? 'queue-track-current' : ''}" data-index="${index}">
+      <div class="queue-track-index">${isCurrentTrack ? '▶' : index + 1}</div>
+      <img src="${track.cover || '/default-cover.png'}" alt="${track.album || 'Album'}" class="queue-track-cover" />
+      <div class="queue-track-info">
+        <div class="queue-track-title">${escapeHtml(track.title)}</div>
+        <div class="queue-track-artist">${escapeHtml(track.artist)}</div>
+      </div>
+      <button class="queue-track-play" onclick="playFromQueue(${index})" title="Play now">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+      </button>
+      <button class="queue-track-remove" onclick="removeFromQueue(${index})" title="Remove from queue">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  `;
+  }).join('');
+
+  modal.innerHTML = `
+    <div class="queue-modal-content">
+      <div class="queue-modal-header">
+        <h2>Queue</h2>
+        <div class="queue-modal-actions">
+          ${songQueue.length > 0 ? '<button class="queue-clear-btn" onclick="clearQueue()">Clear All</button>' : ''}
+          <button class="queue-close-btn" onclick="hideQueueModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="queue-track-list">
+        ${songQueue.length > 0 ? queueItems : '<div class="queue-empty">Your queue is empty. Add songs using the menu on any track, or play an album/playlist.</div>'}
+      </div>
+      <div class="queue-modal-footer">
+        <span class="queue-count">${songQueue.length} ${songQueue.length === 1 ? 'track' : 'tracks'} in queue${queueIndex >= 0 ? ` • Playing ${queueIndex + 1} of ${songQueue.length}` : ''}</span>
+      </div>
+    </div>
+  `;
+
+  // Close when clicking overlay
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      hideQueueModal();
+    }
+  });
+  
+  // Scroll current track into view
+  setTimeout(() => {
+    const currentItem = modal.querySelector('.queue-track-current');
+    if (currentItem) {
+      currentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 100);
+}
+
+// Play a track from the queue at specific index
+function playFromQueue(index) {
+  if (index >= 0 && index < songQueue.length) {
+    queueIndex = index;
+    saveQueueToStorage();
+    
+    const track = songQueue[index];
+    playQueueTrackAtIndex(track);
+    
+    renderQueueModal();
+  }
+}
+
+// Play a track from queue (used internally)
+function playQueueTrackAtIndex(track) {
+  // Stop current audio
+  if (albumPlayer.audio) {
+    albumPlayer.audio.pause();
+    albumPlayer.audio = null;
+  }
+
+  // Set up album player with queue track
+  albumPlayer.tracks = [{
+    title: track.title,
+    artist: track.artist,
+    file: track.file,
+    cover: track.cover,
+    album: track.album || 'Queue',
+    slug: track.songSlug
+  }];
+  albumPlayer.currentIndex = 0;
+  albumPlayer.albumSlug = 'queue';
+  albumPlayer.paused = false;
+
+  // Show persistent bar
+  const bar = document.getElementById("persistent-album-bar");
+  if (bar) bar.classList.remove("hide");
+
+  startAlbumAudio();
+  saveAlbumPlayerState();
+  updateQueueButton();
+}
+
+// Initialize queue on load
+loadQueueFromStorage();
+
+// =================== END QUEUE SYSTEM ===================
+
 // Playlist menu functions
 let currentPlaylistMenu = null;
 
@@ -1028,27 +1415,47 @@ async function togglePlaylistMenu(button, artistSlug, songSlug, title, artist) {
     return;
   }
 
-  // Check if user is logged in
+  // Get track info for queue functionality
+  const trackInfo = tracks.find(t => slugify(t.artist) === artistSlug && slugify(t.title) === songSlug);
+  const file = trackInfo ? trackInfo.file : '';
+  const cover = trackInfo ? trackInfo.cover : '';
+  const album = trackInfo ? trackInfo.album : '';
+
+  // Check if user is logged in (for playlist features)
   const authResponse = await fetch('/api/auth-status');
   const authData = await authResponse.json();
 
-  if (!authData.isLoggedIn) {
-    showAuthPopup('Log in or register to create playlists!');
-    return;
+  let playlistMenuItems = '';
+  if (authData.isLoggedIn) {
+    const userId = authData.isAdmin ? '0' : authData.user?.id;
+
+    // Fetch user's playlists
+    const playlistsResponse = await fetch(`/api/playlists/user/${userId}`);
+    const playlistsData = await playlistsResponse.json();
+
+    if (playlistsData.success) {
+      const playlists = playlistsData.playlists;
+      if (playlists.length === 0) {
+        playlistMenuItems = `
+          <div class="playlist-menu-divider"></div>
+          <div class="playlist-menu-header">Add to Playlist:</div>
+          <div class="playlist-menu-item disabled">No playlists available</div>
+          <div class="playlist-menu-item" onclick="createPlaylistFromTrackMenu('${artistSlug}', '${songSlug}', '${escapeForAttribute(title)}', '${escapeForAttribute(artist)}')">+ New Playlist</div>
+        `;
+      } else {
+        playlistMenuItems = `
+          <div class="playlist-menu-divider"></div>
+          <div class="playlist-menu-header">Add to Playlist:</div>
+          ${playlists.map(playlist => `
+            <div class="playlist-menu-item" onclick="addSongToPlaylistFromMenu('${playlist.id}', '${artistSlug}', '${songSlug}', '${escapeForAttribute(title)}', '${escapeForAttribute(artist)}')">
+              ${escapeHtml(playlist.name)}
+            </div>
+          `).join('')}
+          <div class="playlist-menu-item" onclick="createPlaylistFromTrackMenu('${artistSlug}', '${songSlug}', '${escapeForAttribute(title)}', '${escapeForAttribute(artist)}')">+ New Playlist</div>
+        `;
+      }
+    }
   }
-
-  const userId = authData.isAdmin ? '0' : authData.user?.id;
-
-  // Fetch user's playlists
-  const playlistsResponse = await fetch(`/api/playlists/user/${userId}`);
-  const playlistsData = await playlistsResponse.json();
-
-  if (!playlistsData.success) {
-    alert('Failed to load playlists');
-    return;
-  }
-
-  const playlists = playlistsData.playlists;
 
   // Create dropdown menu
   const menu = document.createElement('div');
@@ -1057,31 +1464,63 @@ async function togglePlaylistMenu(button, artistSlug, songSlug, title, artist) {
   menu.style.zIndex = '1000';
   
   const buttonRect = button.getBoundingClientRect();
-  menu.style.top = `${buttonRect.bottom + window.scrollY}px`;
-  menu.style.left = `${buttonRect.left + window.scrollX}px`;
-
-  if (playlists.length === 0) {
-    menu.innerHTML = `
-      <div class="playlist-menu-header">Add Song To:</div>
-      <div class="playlist-menu-item disabled">No playlists available</div>
-      <div class="playlist-menu-divider"></div>
-      <div class="playlist-menu-item" onclick="createPlaylistFromTrackMenu('${artistSlug}', '${songSlug}', '${escapeForAttribute(title)}', '${escapeForAttribute(artist)}')">Create Playlist</div>
-    `;
-  } else {
-    menu.innerHTML = `
-      <div class="playlist-menu-header">Add Song To:</div>
-      ${playlists.map(playlist => `
-        <div class="playlist-menu-item" onclick="addSongToPlaylistFromMenu('${playlist.id}', '${artistSlug}', '${songSlug}', '${escapeForAttribute(title)}', '${escapeForAttribute(artist)}')">
-          ${escapeHtml(playlist.name)}
-        </div>
-      `).join('')}
-      <div class="playlist-menu-divider"></div>
-      <div class="playlist-menu-item" onclick="createPlaylistFromTrackMenu('${artistSlug}', '${songSlug}', '${escapeForAttribute(title)}', '${escapeForAttribute(artist)}')">+ New Playlist</div>
-    `;
-  }
+  
+  menu.innerHTML = `
+    <div class="playlist-menu-header">Queue Options:</div>
+    <div class="playlist-menu-item queue-menu-item" onclick="addToQueueFromMenu('${artistSlug}', '${songSlug}', '${escapeForAttribute(title)}', '${escapeForAttribute(artist)}', '${escapeForAttribute(file)}', '${escapeForAttribute(cover)}', '${escapeForAttribute(album)}')">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add to Queue
+    </div>
+    <div class="playlist-menu-item queue-menu-item" onclick="playNextFromMenu('${artistSlug}', '${songSlug}', '${escapeForAttribute(title)}', '${escapeForAttribute(artist)}', '${escapeForAttribute(file)}', '${escapeForAttribute(cover)}', '${escapeForAttribute(album)}')">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Play Next
+    </div>
+    ${playlistMenuItems}
+  `;
 
   document.body.appendChild(menu);
   currentPlaylistMenu = menu;
+
+  // Position the menu, adjusting if it would overflow edges
+  // Use requestAnimationFrame to ensure the menu is rendered before measuring
+  requestAnimationFrame(() => {
+    const menuRect = menu.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const padding = 12; // Padding from viewport edges
+    
+    let leftPos = buttonRect.left + window.scrollX;
+    let topPos = buttonRect.bottom + window.scrollY + 4; // 4px gap below button
+    
+    // Check if menu overflows right edge
+    if (leftPos + menuRect.width > viewportWidth - padding) {
+      // Align menu to the right, relative to the button
+      leftPos = buttonRect.right + window.scrollX - menuRect.width;
+      
+      // If still overflows right, align to viewport right edge
+      if (leftPos + menuRect.width > viewportWidth - padding) {
+        leftPos = viewportWidth - menuRect.width - padding;
+      }
+      
+      // Ensure it doesn't go off the left edge
+      if (leftPos < padding) {
+        leftPos = padding;
+      }
+    }
+    
+    // Check if menu overflows bottom edge
+    if (topPos + menuRect.height > viewportHeight + window.scrollY - padding) {
+      // Position above the button instead
+      topPos = buttonRect.top + window.scrollY - menuRect.height - 4;
+      // Ensure it doesn't go off the top edge
+      if (topPos < window.scrollY + padding) {
+        topPos = window.scrollY + padding;
+      }
+    }
+    
+    menu.style.top = `${topPos}px`;
+    menu.style.left = `${leftPos}px`;
+  });
 
   // Close menu when clicking outside
   setTimeout(() => {
@@ -1091,6 +1530,27 @@ async function togglePlaylistMenu(button, artistSlug, songSlug, title, artist) {
 
 function closePlaylistMenu(e) {
   if (currentPlaylistMenu && !currentPlaylistMenu.contains(e.target)) {
+    currentPlaylistMenu.remove();
+    currentPlaylistMenu = null;
+    document.removeEventListener('click', closePlaylistMenu);
+  }
+}
+
+// Queue menu helper functions
+function addToQueueFromMenu(artistSlug, songSlug, title, artist, file, cover, album) {
+  addToQueue(artistSlug, songSlug, title, artist, file, cover, album);
+  // Close the menu
+  if (currentPlaylistMenu) {
+    currentPlaylistMenu.remove();
+    currentPlaylistMenu = null;
+    document.removeEventListener('click', closePlaylistMenu);
+  }
+}
+
+function playNextFromMenu(artistSlug, songSlug, title, artist, file, cover, album) {
+  playNext(artistSlug, songSlug, title, artist, file, cover, album);
+  // Close the menu
+  if (currentPlaylistMenu) {
     currentPlaylistMenu.remove();
     currentPlaylistMenu = null;
     document.removeEventListener('click', closePlaylistMenu);
@@ -1412,8 +1872,8 @@ async function renderProfile(userId) {
       <div class="max-w-5xl mx-auto p-6">
         <div class="bg-gray-800 rounded-lg shadow-lg p-6 mb-6 track">
           <div class="flex items-center space-x-4">
-            <div id="profile-picture" class="w-20 h-20 ${getProfileGradientClass(user)} rounded-full flex items-center justify-center">
-              <span class="text-2xl font-bold text-white">${getInitials(user.username)}</span>
+            <div id="profile-picture" class="w-20 h-20 rounded-full flex items-center justify-center ${user.profilePicture ? '' : getProfileGradientClass(user)}" ${user.profilePicture ? `style="background-image: url('${user.profilePicture}'); background-size: cover; background-position: center;"` : ''}>
+              ${user.profilePicture ? '' : `<span class="text-2xl font-bold text-white">${getInitials(user.username)}</span>`}
             </div>
             <div>
               <h1 class="text-3xl font-bold">${escapeHtml(user.username)}</h1>
@@ -1457,24 +1917,14 @@ async function renderProfile(userId) {
                     🔒 Change Password
                   </button>
                 ` : ''}
-                <div class="gradient-selector">
-                  <button id="gradient-selector-btn" class="text-blue-400 hover:text-blue-300 text-sm hover:underline">
-                    🎨 Change Profile Picture
+                <div class="profile-picture-controls space-y-2">
+                  <input type="file" id="profile-picture-upload" accept="image/*" style="display: none;">
+                  <button id="upload-picture-btn" class="text-green-400 hover:text-green-300 text-sm hover:underline block">
+                    📷 Upload Profile Picture
                   </button>
-                  <div id="gradient-dropdown" class="gradient-dropdown">
-                    <div class="gradient-option profile-gradient-1" data-gradient="1" title="Purple Blue"></div>
-                    <div class="gradient-option profile-gradient-2" data-gradient="2" title="Pink Red"></div>
-                    <div class="gradient-option profile-gradient-3" data-gradient="3" title="Blue Cyan"></div>
-                    <div class="gradient-option profile-gradient-4" data-gradient="4" title="Green Cyan"></div>
-                    <div class="gradient-option profile-gradient-5" data-gradient="5" title="Pink Yellow"></div>
-                    <div class="gradient-option profile-gradient-6" data-gradient="6" title="Mint Pink"></div>
-                    <div class="gradient-option profile-gradient-7" data-gradient="7" title="Coral Pink"></div>
-                    <div class="gradient-option profile-gradient-8" data-gradient="8" title="Sky Blue"></div>
-                    <div class="gradient-option profile-gradient-9" data-gradient="9" title="Lavender Cream"></div>
-                    <div class="gradient-option profile-gradient-10" data-gradient="10" title="Ice Blue"></div>
-                    <div class="gradient-option profile-gradient-11" data-gradient="11" title="Sunset Ocean"></div>
-                    <div class="gradient-option profile-gradient-12" data-gradient="12" title="Rose Pink"></div>
-                  </div>
+                  ${user.profilePicture ? `<button id="delete-picture-btn" class="text-red-400 hover:text-red-300 text-sm hover:underline block">
+                    🗑️ Delete Profile Picture
+                  </button>` : ''}
                 </div>
               </div>
             ` : ''}
@@ -1516,7 +1966,6 @@ async function renderProfile(userId) {
         </div>
       </div>
     `;
-
     // Fill bio text
     const bioEl = document.getElementById('profile-bio');
     if (user.bio && user.bio.trim()) {
@@ -1588,6 +2037,100 @@ async function renderProfile(userId) {
       });
     }
 
+    // Wire profile picture upload
+    const uploadPictureBtn = document.getElementById('upload-picture-btn');
+    const profilePictureUpload = document.getElementById('profile-picture-upload');
+    const deletePictureBtn = document.getElementById('delete-picture-btn');
+
+    if (uploadPictureBtn && profilePictureUpload) {
+      uploadPictureBtn.addEventListener('click', () => {
+        profilePictureUpload.click();
+      });
+
+      profilePictureUpload.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file size (5MB limit)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('File size must be less than 5MB');
+          return;
+        }
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          alert('Please select an image file');
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('profilePicture', file);
+
+        try {
+          const response = await fetch(`/api/profile/${user.id}/picture`, {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Upload failed');
+          }
+
+          const result = await response.json();
+          if (result.success) {
+            // Update profile picture display
+            const profilePic = document.getElementById('profile-picture');
+            profilePic.style.backgroundImage = `url('${result.profilePicture}')`;
+            profilePic.style.backgroundSize = 'cover';
+            profilePic.style.backgroundPosition = 'center';
+            profilePic.className = 'w-20 h-20 rounded-full flex items-center justify-center';
+            profilePic.innerHTML = '';
+
+            // Update user object and refresh page to show delete button
+            user.profilePicture = result.profilePicture;
+            renderProfile(userId); // Refresh to show delete button
+          } else {
+            alert('Failed to upload profile picture: ' + result.message);
+          }
+        } catch (error) {
+          console.error('Upload error:', error);
+          alert('Failed to upload profile picture: ' + error.message);
+        }
+      });
+    }
+
+    if (deletePictureBtn) {
+      deletePictureBtn.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to delete your profile picture?')) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/profile/${user.id}/picture`, {
+            method: 'DELETE'
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Delete failed');
+          }
+
+          const result = await response.json();
+          if (result.success) {
+            // Update user object and refresh page
+            user.profilePicture = null;
+            renderProfile(userId); // Refresh to remove delete button and show gradient
+          } else {
+            alert('Failed to delete profile picture: ' + result.message);
+          }
+        } catch (error) {
+          console.error('Delete error:', error);
+          alert('Failed to delete profile picture: ' + error.message);
+        }
+      });
+    }
+
     // Wire gradient selector
     const gradientSelectorBtn = document.getElementById('gradient-selector-btn');
     const gradientDropdown = document.getElementById('gradient-dropdown');
@@ -1642,9 +2185,13 @@ async function renderProfile(userId) {
             
             const result = await response.json();
             if (result.success) {
-              // Update profile picture
+              // Update profile picture (only if no uploaded picture exists)
               const profilePic = document.getElementById('profile-picture');
-              profilePic.className = `w-20 h-20 profile-gradient-${selectedGradient} rounded-full flex items-center justify-center`;
+              if (!user.profilePicture) {
+                profilePic.className = `w-20 h-20 profile-gradient-${selectedGradient} rounded-full flex items-center justify-center`;
+                profilePic.style.backgroundImage = '';
+                profilePic.innerHTML = `<span class="text-2xl font-bold text-white">${getInitials(user.username)}</span>`;
+              }
               
               // Update selection indicators
               gradientDropdown.querySelectorAll('.gradient-option').forEach(opt => {
@@ -2286,8 +2833,8 @@ function restorePersistentPlayer() {
         audio.mozPreservesPitch = false;
         audio.webkitPreservesPitch = false;
         
-  // Set saved properties
-  audio.playbackRate = state.playbackRate || getSavedAlbumSpeed(albumPlayer.albumSlug) || 1.0;
+        // Set saved properties
+        audio.playbackRate = 1;
         audio.volume = state.volume || getSavedVolume();
         audio.src = currentTrack.file;
         
@@ -2451,6 +2998,9 @@ function playAlbumTracks(albumSlug) {
   albumPlayer.albumSlug = albumSlug;
   saveAlbumPlayerState();
 
+  // Add album tracks to queue
+  addTracksToQueue(albumPlayer.tracks, true);
+
   renderCurrentAlbumView();
   startAlbumAudio();
   updatePersistentPlayer();
@@ -2493,16 +3043,6 @@ function startAlbumAudio() {
   audio.preservesPitch = false;
   audio.mozPreservesPitch = false;
   audio.webkitPreservesPitch = false;
-  const albumSlug = albumPlayer.albumSlug;
-  const savedSpeed = getSavedAlbumSpeed(albumSlug);
-  albumPlayer.audio.playbackRate = savedSpeed;
-
-  const albumSpeedSlider = document.getElementById("albumSpeedSlider");
-  if (albumSpeedSlider) {
-    albumSpeedSlider.value = albumPlayer.audio.playbackRate;
-    const albumSpeedValue = document.getElementById("albumSpeedValue");
-    if (albumSpeedValue) albumSpeedValue.textContent = albumPlayer.audio.playbackRate.toFixed(3) + "x";
-  }
 
   audio.src = currentTrack.file;
   audio.load();
@@ -2564,17 +3104,37 @@ function startAlbumAudio() {
 
   audio.onended = () => {
     if (albumPlayer.loopMode === 2) {
+      // Loop single track
       audio.currentTime = 0;
       audio.play();
+    } else if (isPlayingFromQueue() && hasNextInQueue()) {
+      // Playing from queue - move to next track in queue
+      const nextTrack = queueNextTrack();
+      if (nextTrack) {
+        playQueueTrackAtIndex(nextTrack);
+        renderQueueModal();
+      }
     } else if (albumPlayer.currentIndex + 1 < albumPlayer.tracks.length) {
+      // Not playing from queue, advance in album/playlist
       albumPlayer.currentIndex++;
       if (isOnAlbumPage()) renderCurrentAlbumView();
       startAlbumAudio();
       saveAlbumPlayerState();
     } else if (albumPlayer.loopMode === 1) {
-      albumPlayer.currentIndex = 0;
-      startAlbumAudio();
-      saveAlbumPlayerState();
+      // Loop all - restart from beginning
+      if (isPlayingFromQueue()) {
+        queueIndex = 0;
+        saveQueueToStorage();
+        const track = songQueue[0];
+        if (track) {
+          playQueueTrackAtIndex(track);
+          renderQueueModal();
+        }
+      } else {
+        albumPlayer.currentIndex = 0;
+        startAlbumAudio();
+        saveAlbumPlayerState();
+      }
     }
   };
 
@@ -2731,6 +3291,10 @@ function updatePersistentPlayer() {
             class="absolute left-1/2 transform -translate-x-1/2 bottom-8 hidden group-hover:block"
             style="width: 100px;" />
         </div>
+        <button id="queueBtn" onclick="showQueueModal()" class="text-white queue-btn" title="View Queue">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          <span class="queue-badge" style="display: ${songQueue.length > 0 ? 'flex' : 'none'};">${songQueue.length}</span>
+        </button>
         <button id="persistentLoopBtn" onclick="cycleAlbumLoopMode()" class="btn-loop ${albumPlayer.loopMode > 0 ? 'active' : ''} text-white">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" 
                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2835,16 +3399,9 @@ function updatePersistentPlayer() {
     const albumSpeedValue = bar.querySelector("#albumSpeedValue");
 
     if (albumSpeedBtn && albumSpeedModal && albumSpeedSlider && albumSpeedValue) {
-      // Determine current speed preference: prefer live audio rate, fallback to saved album speed
-      const albumSlug = albumPlayer.albumSlug;
-      const audioSpeed = albumPlayer.audio ? albumPlayer.audio.playbackRate : NaN;
-      const savedSpeed = getSavedAlbumSpeed(albumSlug);
-      const currentSpeed = !isNaN(audioSpeed) && audioSpeed > 0 ? audioSpeed : savedSpeed;
-
-      // Initialize speed and UI to current value
-      if (albumPlayer.audio) albumPlayer.audio.playbackRate = currentSpeed;
-      albumSpeedSlider.value = currentSpeed;
-      albumSpeedValue.textContent = currentSpeed.toFixed(3) + "x";
+      // Initialize speed slider to default
+      albumSpeedSlider.value = 1;
+      albumSpeedValue.textContent = "1.000x";
       updateSpeedFill(albumSpeedSlider, albumSpeedValue);
 
       // Set up event listeners
@@ -2856,10 +3413,8 @@ function updatePersistentPlayer() {
       albumSpeedSlider.addEventListener("input", () => {
         const speed = parseFloat(albumSpeedSlider.value);
         albumPlayer.audio.playbackRate = speed;
-        saveAlbumSpeed(albumPlayer.albumSlug, speed);
         albumSpeedValue.textContent = speed.toFixed(3) + "x";
         updateSpeedFill(albumSpeedSlider, albumSpeedValue);
-        saveAlbumPlayerState(); // Save state when speed changes
       });
     }
 
@@ -3056,6 +3611,8 @@ function updatePersistentPlayer() {
     barMeta.appendChild(artistText);
   }
 
+  // Update queue button badge
+  updateQueueButton();
 }
 
 function toggleAlbumPlayPause(event) {
@@ -3097,33 +3654,127 @@ function cycleAlbumLoopMode() {
 
 function albumNextTrack(event) {
   if (event) event.stopPropagation();
+  
+  // Check if playing from queue and has next track
+  if (isPlayingFromQueue() && hasNextInQueue()) {
+    const nextTrack = queueNextTrack();
+    if (nextTrack) {
+      // Stop current audio and play next
+      if (albumPlayer.audio) {
+        albumPlayer.audio.pause();
+        albumPlayer.audio = null;
+      }
+      playQueueTrackAtIndex(nextTrack);
+      return;
+    }
+  }
+  
+  // Fallback to album/playlist navigation (syncs with queue)
   if (albumPlayer.currentIndex + 1 < albumPlayer.tracks.length) {
     albumPlayer.currentIndex++;
+    // Sync queue index if playing from queue
+    if (isPlayingFromQueue() && queueIndex < songQueue.length - 1) {
+      queueIndex++;
+      saveQueueToStorage();
+    }
     if (isOnAlbumPage()) renderCurrentAlbumView();
     startAlbumAudio();
     updatePersistentPlayer();
     saveAlbumPlayerState();
   }
-  const volume = parseFloat(volumeSlider.value);
-  audio.volume = volume;
-  updateVolumeFill();
 }
 
 function albumPrevTrack(event) {
   if (event) event.stopPropagation();
+  
+  // Check if playing from queue and has previous track
+  if (isPlayingFromQueue() && hasPrevInQueue()) {
+    const prevTrack = queuePrevTrack();
+    if (prevTrack) {
+      // Stop current audio and play previous
+      if (albumPlayer.audio) {
+        albumPlayer.audio.pause();
+        albumPlayer.audio = null;
+      }
+      playQueueTrackAtIndex(prevTrack);
+      return;
+    }
+  }
+  
+  // Fallback to album/playlist navigation (syncs with queue)
   if (albumPlayer.currentIndex > 0) {
     albumPlayer.currentIndex--;
+    // Sync queue index if playing from queue
+    if (isPlayingFromQueue() && queueIndex > 0) {
+      queueIndex--;
+      saveQueueToStorage();
+    }
     if (isOnAlbumPage()) renderCurrentAlbumView();
     startAlbumAudio();
     updatePersistentPlayer();
     saveAlbumPlayerState();
   }
-  const volume = parseFloat(volumeSlider.value);
-  audio.volume = volume;
-  updateVolumeFill();
 }
 
 const trackDurationMap = {};
+
+// Efficiently load all track durations in parallel
+function preloadTrackDurations(tracksToLoad, onProgress, onComplete) {
+  let loadedCount = 0;
+  let totalDuration = 0;
+  const totalTracks = tracksToLoad.length;
+  
+  if (totalTracks === 0) {
+    if (onComplete) onComplete(0);
+    return;
+  }
+  
+  const checkComplete = () => {
+    if (loadedCount === totalTracks && onComplete) {
+      onComplete(totalDuration);
+    }
+  };
+  
+  tracksToLoad.forEach((track, index) => {
+    // If already cached, use cached value
+    if (trackDurationMap[track.title]) {
+      const durationParts = trackDurationMap[track.title].split(':');
+      if (durationParts.length === 2) {
+        const seconds = parseInt(durationParts[0]) * 60 + parseInt(durationParts[1]);
+        if (!isNaN(seconds)) totalDuration += seconds;
+      }
+      loadedCount++;
+      if (onProgress) onProgress(track, trackDurationMap[track.title], index);
+      checkComplete();
+      return;
+    }
+    
+    const audio = new Audio();
+    audio.preload = 'metadata';
+    
+    const handleLoad = () => {
+      const duration = formatTime(audio.duration);
+      trackDurationMap[track.title] = duration;
+      totalDuration += audio.duration;
+      loadedCount++;
+      if (onProgress) onProgress(track, duration, index);
+      checkComplete();
+      audio.src = '';
+    };
+    
+    const handleError = () => {
+      trackDurationMap[track.title] = '--:--';
+      loadedCount++;
+      if (onProgress) onProgress(track, '--:--', index);
+      checkComplete();
+      audio.src = '';
+    };
+    
+    audio.addEventListener('loadedmetadata', handleLoad);
+    audio.addEventListener('error', handleError);
+    audio.src = track.file;
+  });
+}
 
 function setupAudioPlayer(track) {
   const audio = document.getElementById("audio");
@@ -3541,7 +4192,7 @@ function renderSearchResults(query) {
               </div>
               <div class="flex-1">
                 <div class="font-semibold cursor-pointer hover:underline" onclick="navigateTo('/profile/${user.id}')">${escapeHtml(user.username)}${adminBadge}</div>
-                ${user.bio ? `<div class="text-sm text-gray-400 mt-1 line-clamp-2">${escapeHtml(user.bio)}</div>` : ''}
+                ${user.bio ? `<div class="text-sm text-gray-400 mt-1 line-clamp-2 biotext">${escapeHtml(user.bio)}</div>` : ''}
               </div>
             </div>
           </div>`;
@@ -3999,13 +4650,15 @@ function buildCommentItem(c, currentUser) {
   const canEdit = !!(isOwner || isAdmin);
   const editedBadge = c.editedAt ? `<span class="ml-2 text-xs text-gray-400">(edited)</span>` : '';
   
-  // Use the user's selected gradient, defaulting to gradient 1
-  const gradientClass = `profile-gradient-${c.selectedGradient || 1}`;
+  // Use profile picture if available, otherwise use gradient
+  const profilePictureHtml = c.profilePicture ? 
+    `<div class="w-8 h-8 rounded-full" style="background-image: url('${c.profilePicture}'); background-size: cover; background-position: center;"></div>` :
+    `<div class="w-8 h-8 rounded-full profile-gradient-${c.selectedGradient || 1} flex items-center justify-center text-xs font-bold text-white">${initials}</div>`;
   
   return `
     <div class="track p-4 rounded" data-comment-id="${c.id}">
       <div class="flex items-center gap-3 mb-2">
-        <div class="w-8 h-8 rounded-full ${gradientClass} flex items-center justify-center text-xs font-bold text-white">${initials}</div>
+        ${profilePictureHtml}
         <div class="flex-1">
           <a class="hover:underline profilelink cursor-pointer" href="${profileHref}" onclick="navigateTo('${profileHref}'); return false;">${c.username}</a>
           <div class="text-xs text-gray-400">${date} ${editedBadge}</div>
@@ -4210,4 +4863,171 @@ async function initComments(track) {
     });
   }
   wireDeleteButtons();
+}
+
+// --- Collaborative Playlist Functions ---
+
+function showCollaboratorModal(playlistId) {
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+  modal.innerHTML = `
+    <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+      <h3 class="text-xl font-bold mb-4">Manage Collaborators</h3>
+      <div class="space-y-4">
+        <div>
+          <input type="text" id="collaborator-username" placeholder="Enter username..." 
+                 class="w-full p-2 bg-gray-700 rounded text-white">
+          <button onclick="addCollaborator('${playlistId}')" 
+                  class="mt-2 bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-white text-sm w-full">
+            Add Collaborator
+          </button>
+        </div>
+        <div id="collaborator-list" class="max-h-40 overflow-y-auto">
+          <!-- Collaborators will be loaded here -->
+        </div>
+        <div class="flex gap-2">
+          <button onclick="closeCollaboratorModal()" 
+                  class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded text-white text-sm">
+            Close
+          </button>
+        </div>
+      </div>
+      <div id="collaborator-error" class="text-red-400 text-sm mt-2 hidden"></div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  loadCollaboratorsList(playlistId);
+  
+  // Focus on input
+  setTimeout(() => {
+    document.getElementById('collaborator-username').focus();
+  }, 100);
+  
+  // Close modal when clicking outside
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      closeCollaboratorModal();
+    }
+  });
+  
+  // Handle Enter key in input
+  document.getElementById('collaborator-username').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      addCollaborator(playlistId);
+    }
+  });
+}
+
+function closeCollaboratorModal() {
+  const modal = document.querySelector('.fixed.inset-0');
+  if (modal) {
+    modal.remove();
+  }
+}
+
+async function loadCollaboratorsList(playlistId) {
+  try {
+    const response = await fetch(`/api/playlists/${playlistId}/collaborators`);
+    const data = await response.json();
+    
+    const listEl = document.getElementById('collaborator-list');
+    if (data.success && data.collaborators.length > 0) {
+      listEl.innerHTML = data.collaborators.map(collab => {
+        const profilePic = collab.profilePicture ? 
+          `<div class="w-8 h-8 rounded-full" style="background-image: url('${collab.profilePicture}'); background-size: cover; background-position: center;"></div>` :
+          `<div class="w-8 h-8 rounded-full profile-gradient-${collab.selectedGradient || 1} flex items-center justify-center text-xs font-bold text-white">${(collab.username || '').substring(0,1).toUpperCase()}</div>`;
+        
+        return `
+          <div class="flex items-center justify-between p-2 bg-gray-700 rounded">
+            <div class="flex items-center gap-2">
+              ${profilePic}
+              <span class="text-sm">${escapeHtml(collab.username)}</span>
+            </div>
+            <button onclick="removeCollaborator('${playlistId}', '${collab.id}')" 
+                    class="text-red-400 hover:text-red-300 text-sm px-2 py-1 rounded">
+              Remove
+            </button>
+          </div>
+        `;
+      }).join('');
+    } else {
+      listEl.innerHTML = '<p class="text-gray-400 text-sm text-center py-4">No collaborators yet</p>';
+    }
+  } catch (error) {
+    console.error('Error loading collaborators:', error);
+    document.getElementById('collaborator-list').innerHTML = '<p class="text-red-400 text-sm">Failed to load collaborators</p>';
+  }
+}
+
+async function addCollaborator(playlistId) {
+  const usernameInput = document.getElementById('collaborator-username');
+  const errorEl = document.getElementById('collaborator-error');
+  const username = usernameInput.value.trim();
+  
+  if (!username) {
+    showCollaboratorError('Please enter a username');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/api/playlists/${playlistId}/collaborators`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      usernameInput.value = '';
+      hideCollaboratorError();
+      loadCollaboratorsList(playlistId);
+    } else {
+      showCollaboratorError(data.error || 'Failed to add collaborator');
+    }
+  } catch (error) {
+    console.error('Error adding collaborator:', error);
+    showCollaboratorError('Failed to add collaborator. Please try again.');
+  }
+}
+
+async function removeCollaborator(playlistId, collaboratorId) {
+  if (!confirm('Remove this collaborator? They will lose edit access to this playlist.')) {
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/api/playlists/${playlistId}/collaborators/${collaboratorId}`, {
+      method: 'DELETE'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // If modal is open, refresh the list
+      const modal = document.querySelector('.fixed.inset-0');
+      if (modal) {
+        loadCollaboratorsList(playlistId);
+      }
+      // Refresh the playlist page to update the collaborators display
+      renderPlaylist(playlistId);
+    } else {
+      alert('Failed to remove collaborator: ' + (data.error || 'Unknown error'));
+    }
+  } catch (error) {
+    console.error('Error removing collaborator:', error);
+    alert('Failed to remove collaborator. Please try again.');
+  }
+}
+
+function showCollaboratorError(message) {
+  const errorEl = document.getElementById('collaborator-error');
+  errorEl.textContent = message;
+  errorEl.classList.remove('hidden');
+}
+
+function hideCollaboratorError() {
+  const errorEl = document.getElementById('collaborator-error');
+  errorEl.classList.add('hidden');
 }

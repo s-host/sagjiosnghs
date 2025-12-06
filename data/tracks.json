@@ -1,5 +1,57 @@
 [
   {
+    "title": "it gets lonely",
+    "artist": "xaev",
+    "album": "berdlycore chapter zero",
+    "cover": "https://i1.sndcdn.com/artworks-w2wQkNvWybVwK7Sr-ZGCglQ-t1080x1080.jpg",
+    "file": "/audio/it gets lonely.mp3",
+    "isNew": false,
+    "isPopular": false,
+    "isClean": false,
+    "isFeatured": false,
+    "createdAt": "2022-07-29T00:00:00.000Z",
+    "albumNumber": "1"
+  },
+  {
+    "title": "woodside gardens 16 december 2012",
+    "artist": "Jane Remover",
+    "album": "Teen Week",
+    "cover": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.scdn.co%2Fimage%2Fab67616d0000b2736015726ce1b03da1d9dfd6f1&f=1&nofb=1&ipt=40047ca5a197e2b25510da38c9c2ba4aa76a5a8c79cabd2b7846890ed5ab4360",
+    "file": "/audio/woodside gardens 16 december 2012.mp3",
+    "isNew": false,
+    "isPopular": false,
+    "isClean": false,
+    "isFeatured": false,
+    "createdAt": "2021-02-26T00:00:00.000Z",
+    "albumNumber": "7"
+  },
+  {
+    "title": "i like you OKAY god DAMN!!",
+    "artist": "xaev",
+    "album": "berdlycore chapter 1",
+    "cover": "https://i1.sndcdn.com/artworks-dsXPIuOfKdocKH8s-DiyHpA-t500x500.jpg",
+    "file": "/audio/i like you OKAY god DAMN!!.mp3",
+    "isNew": false,
+    "isPopular": false,
+    "isClean": true,
+    "isFeatured": false,
+    "createdAt": "2021-11-27T00:00:00.000Z",
+    "albumNumber": "4"
+  },
+  {
+    "title": "...i know what you are",
+    "artist": "xaev",
+    "album": "berdlycore chapter zero",
+    "cover": "https://i1.sndcdn.com/artworks-9pLmGbCsa7kNGaK7-HHvzlw-t1080x1080.jpg",
+    "file": "/audio/dpm.flac",
+    "isNew": false,
+    "isPopular": false,
+    "isClean": false,
+    "isFeatured": false,
+    "createdAt": "2022-04-06T00:00:00.000Z",
+    "albumNumber": "5"
+  },
+  {
     "title": "the internet shut down today so that we'd have to listen to berdlycore",
     "artist": "xaev",
     "album": "berdlycore chapter 2",

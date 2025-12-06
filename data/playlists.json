@@ -4,6 +4,7 @@
     "userId": "2",
     "name": "best of leroy",
     "description": "",
+    "collaborators": [],
     "songs": [
       {
         "artistSlug": "leroy",
@@ -80,5 +81,113 @@
     ],
     "createdAt": "2025-11-08T23:12:24.710Z",
     "updatedAt": "2025-11-08T23:18:14.914Z"
+  },
+  {
+    "id": "1763234731032",
+    "userId": "6",
+    "name": "Hyperpop",
+    "description": "Official Hyperpop Playlist",
+    "collaborators": [
+      "1"
+    ],
+    "songs": [
+      {
+        "artistSlug": "xaev",
+        "songSlug": "homosick",
+        "title": "homosick",
+        "artist": "xaev"
+      },
+      {
+        "artistSlug": "leroy",
+        "songSlug": "the-joke-is-on-you",
+        "title": "the joke is on you",
+        "artist": "leroy"
+      },
+      {
+        "artistSlug": "xaev",
+        "songSlug": "take-me-away-so-why-try-to-fight-it",
+        "title": "TAKE-ME-AWAY ~so why try to fight it?~",
+        "artist": "xaev"
+      },
+      {
+        "artistSlug": "gingus",
+        "songSlug": "catch",
+        "title": "catch!",
+        "artist": "gingus"
+      },
+      {
+        "artistSlug": "leroy",
+        "songSlug": "theyfriend",
+        "title": "theyfriend",
+        "artist": "leroy"
+      },
+      {
+        "artistSlug": "xaev",
+        "songSlug": "insane-anime-obsessed-boyfriend",
+        "title": "insane anime obsessed boyfriend",
+        "artist": "xaev"
+      },
+      {
+        "artistSlug": "leroy",
+        "songSlug": "we-love-your-vibe",
+        "title": "we love your vibe",
+        "artist": "leroy"
+      },
+      {
+        "artistSlug": "ta1lsd0ll",
+        "songSlug": "ta1lsd004",
+        "title": "ta1lsd004",
+        "artist": "ta1lsd0ll"
+      },
+      {
+        "artistSlug": "xaev",
+        "songSlug": "obby-soda",
+        "title": "obby soda",
+        "artist": "xaev"
+      },
+      {
+        "artistSlug": "xaev",
+        "songSlug": "the-elon-musk-soundcloud-acquisition",
+        "title": "the elon musk soundcloud acquisition",
+        "artist": "xaev"
+      },
+      {
+        "artistSlug": "xaev",
+        "songSlug": "cookie-of-a-lifetime",
+        "title": "cookie of a lifetime",
+        "artist": "xaev"
+      },
+      {
+        "artistSlug": "ta1lsd0ll",
+        "songSlug": "ta1lsd013",
+        "title": "ta1lsd013",
+        "artist": "ta1lsd0ll"
+      }
+    ],
+    "createdAt": "2025-11-15T19:25:31.032Z",
+    "updatedAt": "2025-11-29T18:05:42.785Z"
+  },
+  {
+    "id": "1765045750582",
+    "userId": "2",
+    "name": "Untitled Playlist",
+    "description": "",
+    "collaborators": [],
+    "songs": [
+      {
+        "artistSlug": "ta1lsd0ll",
+        "songSlug": "ta1lsd024",
+        "title": "ta1lsd024",
+        "artist": "ta1lsd0ll"
+      },
+      {
+        "artistSlug": "ta1lsd0ll",
+        "songSlug": "ta1lsd013",
+        "title": "ta1lsd013",
+        "artist": "ta1lsd0ll"
+      }
+    ],
+    "createdAt": "2025-12-06T18:29:10.582Z",
+    "updatedAt": "2025-12-06T18:29:56.536Z"
   }
 ]

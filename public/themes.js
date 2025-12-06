@@ -1,6 +1,9 @@
 const themeSelect = document.getElementById("theme-select");
 
 function updateSliderFills(color) {
+  // Check if we're using Aero Glass theme which has special progress bar handling
+  const isAeroGlass = document.body.classList.contains('theme-aero-glass');
+  
   // Update all sliders' fills based on their current values
   // Include volume, speed, and both progress bars (track and persistent album)
   const sliders = document.querySelectorAll('#volumeSlider, .speed-slider, #progressBar, #albumProgress');
@@ -10,7 +13,15 @@ function updateSliderFills(color) {
       const min = parseFloat(slider.min) || 0;
       const max = parseFloat(slider.max) || 1;
       const normalizedPercent = ((percent - min) / (max - min)) * 100;
-      // If the app exposes getProgressBarColor, use it to keep colors consistent
+      
+      // Special handling for Aero Glass progress bars (no background styling, use CSS variable)
+      if (isAeroGlass && (slider.id === 'progressBar' || slider.id === 'albumProgress')) {
+        slider.style.setProperty('--progress', `${normalizedPercent}%`);
+        // Don't override the CSS background for Aero Glass progress bars
+        return;
+      }
+      
+      // Standard background styling for other themes and volume slider
       const fillColor = (typeof window !== 'undefined' && typeof window.getProgressBarColor === 'function')
         ? window.getProgressBarColor()
         : color;
@@ -31,6 +42,7 @@ window.addEventListener("load", () => {
   if (savedTheme === 'ocean-breeze') color = '#20B2AA';
   if (savedTheme === 'sunset-glow') color = '#FF6347';
   if (savedTheme === 'lavender-dreams') color = '#9370DB';
+  if (savedTheme === 'aero-glass') color = '#4A90E2';
   updateSliderFills(color);
 });
 
@@ -52,5 +64,6 @@ themeSelect.addEventListener("change", (e) => {
   if (selectedTheme === 'ocean-breeze') color = '#20B2AA';
   if (selectedTheme === 'sunset-glow') color = '#FF6347';
   if (selectedTheme === 'lavender-dreams') color = '#9370DB';
+  if (selectedTheme === 'aero-glass') color = '#4A90E2';
   updateSliderFills(color);
 });
