@@ -1,5 +1,31 @@
 [
   {
+    "title": "its always a good time for complextro",
+    "artist": "xaev",
+    "album": "berdlycore chapter 2",
+    "cover": "https://f4.bcbits.com/img/a2892008372_10.jpg",
+    "file": "/audio/it's always a good time for complextro.mp3",
+    "isNew": false,
+    "isPopular": false,
+    "isClean": false,
+    "isFeatured": false,
+    "createdAt": "2022-04-05T00:00:00.000Z",
+    "albumNumber": "10"
+  },
+  {
+    "title": "deinvent yourself",
+    "artist": "bentoonie",
+    "album": "deinvent yourself",
+    "cover": "https://i1.sndcdn.com/artworks-5wTgMzNotgDHxLDZ-pHfnLw-t1080x1080.jpg",
+    "file": "/audio/deinvent yourself.mp3",
+    "isNew": false,
+    "isPopular": false,
+    "isClean": false,
+    "isFeatured": false,
+    "createdAt": "2024-02-21T00:00:00.000Z",
+    "albumNumber": "1"
+  },
+  {
     "title": "it gets lonely",
     "artist": "xaev",
     "album": "berdlycore chapter zero",

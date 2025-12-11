@@ -588,11 +588,25 @@ function editTrack(artistSlug, songSlug) {
   window.location.href = '/edit-song.html';
 }
 
-function renderArtist(artistSlug) {
+async function renderArtist(artistSlug) {
   const artistTracks = tracks.filter(t => slugify(t.artist) === artistSlug);
   if (!artistTracks.length) return renderNotFound();
 
   const artistName = artistTracks[0].artist;
+
+  // Check if user is following this artist
+  let isFollowing = false;
+  let followerCount = 0;
+  try {
+    const followRes = await fetch(`/api/follows/${artistSlug}`);
+    const followData = await followRes.json();
+    if (followData.success) {
+      isFollowing = followData.isFollowing;
+      followerCount = followData.followerCount;
+    }
+  } catch (e) {
+    console.error('Failed to check follow status:', e);
+  }
 
   // Group tracks by year
   const tracksByYear = {};
@@ -629,8 +643,25 @@ function renderArtist(artistSlug) {
     }
   }
 
+  const followButtonHtml = `
+    <button id="follow-btn" onclick="toggleFollow('${artistSlug}')" 
+            class="follow-btn ml-3 px-3 py-1 rounded text-sm flex items-center gap-2 ${isFollowing ? 'following' : ''}"
+            data-artist-slug="${artistSlug}">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" 
+           fill="${isFollowing ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" 
+           stroke-linecap="round" stroke-linejoin="round" class="feather feather-bell">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+      ${isFollowing ? 'Following' : 'Follow'}
+    </button>
+  `;
+
   getApp().innerHTML = `
-    <h2 class="text-2xl mb-4 font-bold">🎤 ${artistName}</h2>
+    <div class="flex items-center mb-4">
+      <h2 class="text-2xl font-bold">🎤 ${artistName}</h2>
+      ${followButtonHtml}
+    </div>
     ${tracksHTML}
     <h3 class="text-xl font-semibold mb-2 mt-10">📀 Albums featuring ${artistName}</h3>
     <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -647,7 +678,54 @@ function renderArtist(artistSlug) {
   setTimeout(adjustForPersistentBar, 0);
 }
 
+// Toggle follow/unfollow artist
+async function toggleFollow(artistSlug) {
+  const btn = document.getElementById('follow-btn');
+  if (!btn) return;
+  
+  const isCurrentlyFollowing = btn.classList.contains('following');
+  
+  try {
+    const method = isCurrentlyFollowing ? 'DELETE' : 'POST';
+    const res = await fetch(`/api/follows/${artistSlug}`, { method });
+    const data = await res.json();
+    
+    if (data.success) {
+      const bellIcon = btn.querySelector('svg');
+      if (data.isFollowing) {
+        btn.classList.add('following');
+        btn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" 
+               fill="currentColor" stroke="currentColor" stroke-width="2" 
+               stroke-linecap="round" stroke-linejoin="round" class="feather feather-bell">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          Following
+        `;
+      } else {
+        btn.classList.remove('following');
+        btn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" 
+               fill="none" stroke="currentColor" stroke-width="2" 
+               stroke-linecap="round" stroke-linejoin="round" class="feather feather-bell">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          Follow
+        `;
+      }
+    } else if (data.error === 'Authentication required') {
+      showAuthPopup('Please log in to follow artists');
+    }
+  } catch (e) {
+    console.error('Failed to toggle follow:', e);
+  }
+}
+
 function isOnAlbumPage() {
+  // Don't consider 'queue' as an album page
+  if (albumPlayer.albumSlug === 'queue') return false;
   return window.location.pathname === `/album/${albumPlayer.albumSlug}`;
 }
 
@@ -667,6 +745,11 @@ function renderAlbum(albumSlug) {
   const sorted = matchingTracks.sort((a, b) => parseInt(a.albumNumber || 9999) - parseInt(b.albumNumber || 9999));
   const albumTitle = sorted[0].album;
 
+  // Get currently playing track info (from queue or album player)
+  let currentlyPlayingTrack = null;
+  if (albumPlayer.tracks && albumPlayer.tracks.length > 0 && albumPlayer.currentIndex >= 0) {
+    currentlyPlayingTrack = albumPlayer.tracks[albumPlayer.currentIndex];
+  }
 
   const artistCount = {};
   sorted.forEach(t => {
@@ -687,19 +770,28 @@ function renderAlbum(albumSlug) {
       </h2>
       <button class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-white" onclick="playAlbumTracks('${albumSlug}')">▶ Play All</button>
       <div class="flex flex-col divide-y-4 divide-transparent mt-4">
-        ${sorted.map((track, idx) => `
-          <div class="p-4 flex justify-between items-center albumtrack">
+        ${sorted.map((track, idx) => {
+          // Check if this track is currently playing
+          const isPlaying = currentlyPlayingTrack && 
+            slugify(currentlyPlayingTrack.title) === slugify(track.title) && 
+            slugify(currentlyPlayingTrack.artist) === slugify(track.artist);
+          
+          return `
+          <div class="p-4 flex justify-between items-center albumtrack ${isPlaying ? 'bg-gray-700 currenttrack' : ''}">
             <div class="flex-1">
               <div class="text-lg font-semibold hover:underline cursor-pointer" onclick="playAlbumTrack('${albumSlug}', ${idx})">${track.title}</div>
               <div class="text-gray-400 text-sm albumtracktext hover:underline cursor-pointer" onclick="navigateTo('/${slugify(track.artist)}/${slugify(track.title)}')">
                 #${track.albumNumber || '?'} <span class="text-xs text-gray-500 albumtracktext">(Track ${idx + 1})</span>
               </div>
             </div>
-            <div class="text-gray-500 text-sm ml-4" data-track-title="${track.title.replace(/"/g, '&quot;')}">
-              ${trackDurationMap[track.title] || '<span class="animate-pulse">--:--</span>'}
+            <div class="flex items-center gap-2">
+              ${isPlaying ? '<span class="text-green-400 text-sm playingtext">Playing...</span>' : ''}
+              <div class="text-gray-500 text-sm" data-track-title="${track.title.replace(/"/g, '&quot;')}">
+                ${trackDurationMap[track.title] || '<span class="animate-pulse">--:--</span>'}
+              </div>
             </div>
           </div>
-        `).join('')}
+        `}).join('')}
       </div>
     </div>
   `;
@@ -1136,21 +1228,44 @@ function saveQueueToStorage() {
 // Add track to end of queue
 function addToQueue(artistSlug, songSlug, title, artist, file, cover, album) {
   const track = { artistSlug, songSlug, title, artist, file, cover, album };
+  const wasEmpty = songQueue.length === 0;
   songQueue.push(track);
   saveQueueToStorage();
   showTempMessage(`"${title}" added to queue`, 'success');
   updateQueueButton();
+  
+  // If queue was empty and no player is active, start playing this track
+  if (wasEmpty && !isPlayerActive()) {
+    queueIndex = 0;
+    saveQueueToStorage();
+    playQueueTracks(0);
+  }
+}
+
+// Check if player is currently active (has audio playing or paused AND bar is visible)
+function isPlayerActive() {
+  const bar = document.getElementById("persistent-album-bar");
+  const barVisible = bar && !bar.classList.contains('hide');
+  return barVisible && (albumPlayer.audio !== null || (albumPlayer.tracks && albumPlayer.tracks.length > 0));
 }
 
 // Add track to play next (after current track in queue)
 function playNext(artistSlug, songSlug, title, artist, file, cover, album) {
   const track = { artistSlug, songSlug, title, artist, file, cover, album };
+  const wasEmpty = songQueue.length === 0;
   // Insert after current position
   const insertPos = queueIndex >= 0 ? queueIndex + 1 : 0;
   songQueue.splice(insertPos, 0, track);
   saveQueueToStorage();
   showTempMessage(`"${title}" will play next`, 'success');
   updateQueueButton();
+  
+  // If queue was empty and no player is active, start playing this track
+  if (wasEmpty && !isPlayerActive()) {
+    queueIndex = 0;
+    saveQueueToStorage();
+    playQueueTracks(0);
+  }
 }
 
 // Add multiple tracks to queue (for albums/playlists)
@@ -1362,38 +1477,37 @@ function playFromQueue(index) {
     queueIndex = index;
     saveQueueToStorage();
     
-    const track = songQueue[index];
-    playQueueTrackAtIndex(track);
+    // Set up album player with the FULL queue, not just the current track
+    playQueueTracks(index);
     
     renderQueueModal();
   }
 }
 
-// Play a track from queue (used internally)
-function playQueueTrackAtIndex(track) {
+// Play the queue starting from a specific index
+function playQueueTracks(startIndex) {
   // Stop current audio
   if (albumPlayer.audio) {
     albumPlayer.audio.pause();
     albumPlayer.audio = null;
   }
 
-  // Set up album player with queue track
-  albumPlayer.tracks = [{
+  // Convert queue to albumPlayer.tracks format
+  albumPlayer.tracks = songQueue.map(track => ({
     title: track.title,
     artist: track.artist,
     file: track.file,
     cover: track.cover,
     album: track.album || 'Queue',
     slug: track.songSlug
-  }];
-  albumPlayer.currentIndex = 0;
+  }));
+  albumPlayer.currentIndex = startIndex;
   albumPlayer.albumSlug = 'queue';
   albumPlayer.paused = false;
 
-  // Show persistent bar
-  const bar = document.getElementById("persistent-album-bar");
-  if (bar) bar.classList.remove("hide");
-
+  // Ensure persistent bar is created/visible
+  updatePersistentPlayer();
+  
   startAlbumAudio();
   saveAlbumPlayerState();
   updateQueueButton();
@@ -3107,11 +3221,25 @@ function startAlbumAudio() {
       // Loop single track
       audio.currentTime = 0;
       audio.play();
-    } else if (isPlayingFromQueue() && hasNextInQueue()) {
-      // Playing from queue - move to next track in queue
-      const nextTrack = queueNextTrack();
-      if (nextTrack) {
-        playQueueTrackAtIndex(nextTrack);
+    } else if (albumPlayer.albumSlug === 'queue') {
+      // Playing from queue
+      if (queueIndex < songQueue.length - 1) {
+        // Move to next track in queue
+        queueIndex++;
+        albumPlayer.currentIndex = queueIndex;
+        saveQueueToStorage();
+        startAlbumAudio();
+        updatePersistentPlayer();
+        saveAlbumPlayerState();
+        renderQueueModal();
+      } else if (albumPlayer.loopMode === 1) {
+        // Loop all - restart queue from beginning
+        queueIndex = 0;
+        albumPlayer.currentIndex = 0;
+        saveQueueToStorage();
+        startAlbumAudio();
+        updatePersistentPlayer();
+        saveAlbumPlayerState();
         renderQueueModal();
       }
     } else if (albumPlayer.currentIndex + 1 < albumPlayer.tracks.length) {
@@ -3122,19 +3250,9 @@ function startAlbumAudio() {
       saveAlbumPlayerState();
     } else if (albumPlayer.loopMode === 1) {
       // Loop all - restart from beginning
-      if (isPlayingFromQueue()) {
-        queueIndex = 0;
-        saveQueueToStorage();
-        const track = songQueue[0];
-        if (track) {
-          playQueueTrackAtIndex(track);
-          renderQueueModal();
-        }
-      } else {
-        albumPlayer.currentIndex = 0;
-        startAlbumAudio();
-        saveAlbumPlayerState();
-      }
+      albumPlayer.currentIndex = 0;
+      startAlbumAudio();
+      saveAlbumPlayerState();
     }
   };
 
@@ -3655,28 +3773,24 @@ function cycleAlbumLoopMode() {
 function albumNextTrack(event) {
   if (event) event.stopPropagation();
   
-  // Check if playing from queue and has next track
-  if (isPlayingFromQueue() && hasNextInQueue()) {
-    const nextTrack = queueNextTrack();
-    if (nextTrack) {
-      // Stop current audio and play next
-      if (albumPlayer.audio) {
-        albumPlayer.audio.pause();
-        albumPlayer.audio = null;
-      }
-      playQueueTrackAtIndex(nextTrack);
-      return;
+  // Check if playing from queue
+  if (albumPlayer.albumSlug === 'queue') {
+    // Move to next track in queue
+    if (queueIndex < songQueue.length - 1) {
+      queueIndex++;
+      albumPlayer.currentIndex = queueIndex;
+      saveQueueToStorage();
+      startAlbumAudio();
+      updatePersistentPlayer();
+      saveAlbumPlayerState();
+      renderQueueModal(); // Update the queue modal if open
     }
+    return;
   }
   
-  // Fallback to album/playlist navigation (syncs with queue)
+  // Album/playlist navigation
   if (albumPlayer.currentIndex + 1 < albumPlayer.tracks.length) {
     albumPlayer.currentIndex++;
-    // Sync queue index if playing from queue
-    if (isPlayingFromQueue() && queueIndex < songQueue.length - 1) {
-      queueIndex++;
-      saveQueueToStorage();
-    }
     if (isOnAlbumPage()) renderCurrentAlbumView();
     startAlbumAudio();
     updatePersistentPlayer();
@@ -3687,28 +3801,24 @@ function albumNextTrack(event) {
 function albumPrevTrack(event) {
   if (event) event.stopPropagation();
   
-  // Check if playing from queue and has previous track
-  if (isPlayingFromQueue() && hasPrevInQueue()) {
-    const prevTrack = queuePrevTrack();
-    if (prevTrack) {
-      // Stop current audio and play previous
-      if (albumPlayer.audio) {
-        albumPlayer.audio.pause();
-        albumPlayer.audio = null;
-      }
-      playQueueTrackAtIndex(prevTrack);
-      return;
+  // Check if playing from queue
+  if (albumPlayer.albumSlug === 'queue') {
+    // Move to previous track in queue
+    if (queueIndex > 0) {
+      queueIndex--;
+      albumPlayer.currentIndex = queueIndex;
+      saveQueueToStorage();
+      startAlbumAudio();
+      updatePersistentPlayer();
+      saveAlbumPlayerState();
+      renderQueueModal(); // Update the queue modal if open
     }
+    return;
   }
   
-  // Fallback to album/playlist navigation (syncs with queue)
+  // Album/playlist navigation
   if (albumPlayer.currentIndex > 0) {
     albumPlayer.currentIndex--;
-    // Sync queue index if playing from queue
-    if (isPlayingFromQueue() && queueIndex > 0) {
-      queueIndex--;
-      saveQueueToStorage();
-    }
     if (isOnAlbumPage()) renderCurrentAlbumView();
     startAlbumAudio();
     updatePersistentPlayer();
@@ -4185,11 +4295,12 @@ function renderSearchResults(query) {
         ${matchingUsers.map(user => {
           const gradientClass = `profile-gradient-${user.selectedGradient || 1}`;
           const adminBadge = user.isAdmin ? ' <span class="text-xs bg-red-500 text-white px-1 py-0.5 rounded ml-1">ADMIN</span>' : '';
+          const profilePicHtml = user.profilePicture 
+            ? `<div class="w-12 h-12 rounded-full" style="background-image: url('${user.profilePicture}'); background-size: cover; background-position: center;"></div>`
+            : `<div class="w-12 h-12 ${gradientClass} rounded-full flex items-center justify-center text-white font-bold text-lg">${user.username.charAt(0).toUpperCase()}</div>`;
           return `<div class="bg-gray-800 rounded-lg shadow p-4 hover:bg-gray-700 transition duration-200 track">
             <div class="flex items-center space-x-3">
-              <div class="w-12 h-12 ${gradientClass} rounded-full flex items-center justify-center text-white font-bold text-lg">
-                ${user.username.charAt(0).toUpperCase()}
-              </div>
+              ${profilePicHtml}
               <div class="flex-1">
                 <div class="font-semibold cursor-pointer hover:underline" onclick="navigateTo('/profile/${user.id}')">${escapeHtml(user.username)}${adminBadge}</div>
                 ${user.bio ? `<div class="text-sm text-gray-400 mt-1 line-clamp-2 biotext">${escapeHtml(user.bio)}</div>` : ''}
@@ -4368,6 +4479,16 @@ async function checkAdmin() {
     logoutButton.textContent = "Log Out";
   }
 
+  // Show/hide notification bell based on login status
+  const notificationBell = document.getElementById("notification-bell");
+  if (notificationBell) {
+    notificationBell.classList.toggle("hidden", !isLoggedIn);
+    // Update badge count when logged in
+    if (isLoggedIn) {
+      updateNotificationBadge();
+    }
+  }
+
   const addSongLink = document.getElementById("add-song-link");
   if (addSongLink) {
     addSongLink.style.display = isAdmin ? "inline-block" : "none";
@@ -4417,28 +4538,17 @@ function updateAdminPanelLink(isAdmin) {
 }
 
 function updateProfileLink(isLoggedIn, user) {
-  let profileLink = document.getElementById("profile-link");
+  const profileLink = document.getElementById("profile-link");
+  
+  if (!profileLink) return;
   
   if (isLoggedIn && user) {
-    if (!profileLink) {
-      // Create profile link if it doesn't exist
-      profileLink = document.createElement("button");
-      profileLink.id = "profile-link";
-      profileLink.className = "bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded navbutton";
-      
-      // Insert before add-song link (after admin panel)
-      const addSongLink = document.getElementById("add-song-link");
-      if (addSongLink && addSongLink.parentNode) {
-        addSongLink.parentNode.insertBefore(profileLink, addSongLink);
-      }
-    }
-    
     // Update text content to show username
     profileLink.textContent = user.username;
     profileLink.onclick = () => navigateTo(`/profile/${user.id}`);
-    profileLink.style.display = "inline-block";
-  } else if (profileLink) {
-    profileLink.style.display = "none";
+    profileLink.classList.remove("hidden");
+  } else {
+    profileLink.classList.add("hidden");
   }
 }
 
@@ -5030,4 +5140,191 @@ function showCollaboratorError(message) {
 function hideCollaboratorError() {
   const errorEl = document.getElementById('collaborator-error');
   errorEl.classList.add('hidden');
+}
+
+// ==================== NOTIFICATION SYSTEM ====================
+
+async function updateNotificationBadge() {
+  try {
+    const response = await fetch('/api/notifications');
+    const data = await response.json();
+    
+    const badge = document.getElementById('notification-badge');
+    const bellBtn = document.getElementById('notification-bell');
+    
+    if (!badge || !bellBtn) return;
+    
+    if (data.success && data.notifications && data.notifications.length > 0) {
+      const count = data.notifications.length;
+      badge.textContent = count > 9 ? '9+' : count;
+      badge.style.display = 'flex';
+      bellBtn.classList.add('has-notifications');
+    } else {
+      badge.style.display = 'none';
+      bellBtn.classList.remove('has-notifications');
+    }
+  } catch (error) {
+    console.error('Error updating notification badge:', error);
+  }
+}
+
+async function toggleNotificationModal() {
+  let overlay = document.getElementById('notification-modal-overlay');
+  
+  if (overlay) {
+    // Close modal and clear notifications
+    overlay.remove();
+    // Clear notifications when modal is closed (moves to history)
+    try {
+      await fetch('/api/notifications', { method: 'DELETE' });
+      updateNotificationBadge();
+    } catch (error) {
+      console.error('Error clearing notifications:', error);
+    }
+    return;
+  }
+  
+  // Open modal
+  overlay = document.createElement('div');
+  overlay.id = 'notification-modal-overlay';
+  overlay.className = 'notification-modal-overlay';
+  overlay.innerHTML = `
+    <div class="notification-modal-content">
+      <div class="notification-modal-header">
+        <h2>Notifications</h2>
+        <button class="close-notification-modal" onclick="toggleNotificationModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="notification-list">
+        <div class="notification-loading">Loading notifications...</div>
+      </div>
+      <div class="notification-modal-footer">
+        <button class="notification-history-btn" onclick="toggleNotificationHistory(this)">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          View History
+        </button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(overlay);
+  
+  // Close on overlay click
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      toggleNotificationModal();
+    }
+  });
+  
+  // Load notifications
+  await loadNotifications(overlay, false);
+}
+
+async function loadNotifications(overlay, showHistory) {
+  const notificationList = overlay.querySelector('.notification-list');
+  notificationList.innerHTML = '<div class="notification-loading">Loading...</div>';
+  
+  try {
+    const endpoint = showHistory ? '/api/notifications/history' : '/api/notifications';
+    const response = await fetch(endpoint);
+    const data = await response.json();
+    
+    const items = showHistory ? data.history : data.notifications;
+    
+    if (items && items.length > 0) {
+      notificationList.innerHTML = items.map(notif => `
+        <div class="notification-item" onclick="window.location.hash = '#album/${notif.artistSlug}/${notif.trackSlug}'; toggleNotificationModal();">
+          <div class="notification-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polygon points="10 8 16 12 10 16 10 8"></polygon>
+            </svg>
+          </div>
+          <div class="notification-content">
+            <div class="notification-title">${notif.artistName} released a new track</div>
+            <div class="notification-track">${notif.trackTitle}</div>
+            <div class="notification-time">${formatNotificationTime(notif.createdAt)}</div>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      const emptyMessage = showHistory 
+        ? 'No notification history yet'
+        : 'No new notifications';
+      const emptySubtext = showHistory
+        ? 'Your past notifications will appear here'
+        : 'Follow artists to get notified when they release new music';
+      
+      notificationList.innerHTML = `
+        <div class="notification-empty">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <p>${emptyMessage}</p>
+          <span>${emptySubtext}</span>
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('Error loading notifications:', error);
+    notificationList.innerHTML = '<div class="notification-empty"><p>Failed to load notifications</p></div>';
+  }
+}
+
+async function toggleNotificationHistory(btn) {
+  const overlay = document.getElementById('notification-modal-overlay');
+  if (!overlay) return;
+  
+  const isShowingHistory = btn.classList.contains('active');
+  
+  if (isShowingHistory) {
+    // Switch back to current notifications
+    btn.classList.remove('active');
+    btn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polyline points="12 6 12 12 16 14"></polyline>
+      </svg>
+      View History
+    `;
+    // Update header
+    overlay.querySelector('.notification-modal-header h2').textContent = 'Notifications';
+    await loadNotifications(overlay, false);
+  } else {
+    // Switch to history
+    btn.classList.add('active');
+    btn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+      </svg>
+      View New
+    `;
+    // Update header
+    overlay.querySelector('.notification-modal-header h2').textContent = 'Notification History';
+    await loadNotifications(overlay, true);
+  }
+}
+
+function formatNotificationTime(timestamp) {
+  const now = Date.now();
+  const diff = now - timestamp;
+  
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  
+  if (days > 0) return days === 1 ? '1 day ago' : `${days} days ago`;
+  if (hours > 0) return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
+  if (minutes > 0) return minutes === 1 ? '1 minute ago' : `${minutes} minutes ago`;
+  return 'Just now';
 }

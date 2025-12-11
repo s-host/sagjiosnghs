@@ -167,6 +167,81 @@ function savePlaylists() {
   }
 }
 
+// --- Follows storage ---
+const followsFile = path.join(dataDir, "follows.json");
+let follows = {}; // { artistSlug: [userId1, userId2, ...] }
+try {
+  if (!fs.existsSync(followsFile)) {
+    fs.writeFileSync(followsFile, "{}", "utf-8");
+  }
+  follows = JSON.parse(fs.readFileSync(followsFile, "utf-8"));
+} catch (e) {
+  console.error("Failed to read/initialize follows.json, starting fresh.", e);
+  follows = {};
+}
+function saveFollows() {
+  try {
+    fs.writeFileSync(followsFile, JSON.stringify(follows, null, 2));
+  } catch (e) {
+    console.error("Failed to write follows.json", e);
+  }
+}
+
+// --- Notifications storage ---
+const notificationsFile = path.join(dataDir, "notifications.json");
+// Structure: { userId: { unread: [...], history: [...] } }
+let notifications = {};
+try {
+  if (!fs.existsSync(notificationsFile)) {
+    fs.writeFileSync(notificationsFile, "{}", "utf-8");
+  }
+  const raw = JSON.parse(fs.readFileSync(notificationsFile, "utf-8"));
+  // Migrate old format if needed
+  Object.keys(raw).forEach(userId => {
+    if (Array.isArray(raw[userId])) {
+      // Old format - migrate to new
+      notifications[userId] = { unread: raw[userId], history: [] };
+    } else {
+      notifications[userId] = raw[userId];
+    }
+  });
+} catch (e) {
+  console.error("Failed to read/initialize notifications.json, starting fresh.", e);
+  notifications = {};
+}
+function saveNotifications() {
+  try {
+    fs.writeFileSync(notificationsFile, JSON.stringify(notifications, null, 2));
+  } catch (e) {
+    console.error("Failed to write notifications.json", e);
+  }
+}
+
+// Helper to notify followers when a new track is added
+function notifyFollowersOfNewTrack(artistSlug, artistName, trackTitle, trackSlug) {
+  const followers = follows[artistSlug] || [];
+  const now = Date.now();
+  
+  followers.forEach(userId => {
+    if (!notifications[userId]) {
+      notifications[userId] = { unread: [], history: [] };
+    }
+    notifications[userId].unread.unshift({
+      id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      type: 'new_release',
+      artistSlug,
+      artistName,
+      trackTitle,
+      trackSlug,
+      createdAt: now
+    });
+  });
+  
+  if (followers.length > 0) {
+    saveNotifications();
+  }
+}
+
 // basic profanity list; case-insensitive; replace with ***
 const PROFANITY = [
   'fuck','shit','bitch','asshole','bastard','dick','cunt','piss','slut','whore','fag','retard','nigger','motherfucker','bullshit','cock','prick','twat','wank','cum'
@@ -1533,8 +1608,8 @@ app.get("/api/playlists/:playlistId", (req, res) => {
 
 // Create a new playlist
 app.post("/api/playlists", (req, res) => {
-  // Require authentication
-  if (!req.session.user) {
+  // Require authentication (admin or user)
+  if (!req.session.user && !req.session.isAdmin) {
     return res.status(401).json({ success: false, error: 'Authentication required' });
   }
 
@@ -1544,8 +1619,8 @@ app.post("/api/playlists", (req, res) => {
     return res.status(400).json({ success: false, error: "Playlist name is required" });
   }
 
-  // Get user ID
-  const userId = req.session.user.id;
+  // Get user ID (use '0' for hardcoded admin)
+  const userId = req.session.isAdmin && !req.session.user ? '0' : req.session.user.id;
 
   const newPlaylist = {
     id: Date.now().toString(),
@@ -1569,8 +1644,8 @@ app.put("/api/playlists/:playlistId", (req, res) => {
   const { playlistId } = req.params;
   const { name, description } = req.body;
   
-  // Require authentication
-  if (!req.session.user) {
+  // Require authentication (admin or user)
+  if (!req.session.user && !req.session.isAdmin) {
     return res.status(401).json({ success: false, error: 'Authentication required' });
   }
 
@@ -1580,11 +1655,12 @@ app.put("/api/playlists/:playlistId", (req, res) => {
     return res.status(404).json({ success: false, error: "Playlist not found" });
   }
 
-  // Get user ID
-  const userId = req.session.user.id;
+  // Get user ID (use '0' for hardcoded admin)
+  const userId = req.session.isAdmin && !req.session.user ? '0' : req.session.user.id;
+  const isAdmin = !!req.session.isAdmin;
 
-  // Only owners can modify playlist details (name, description)
-  if (playlist.userId !== userId) {
+  // Only owners or admins can modify playlist details (name, description)
+  if (playlist.userId !== userId && !isAdmin) {
     return res.status(403).json({ success: false, error: "Only the playlist owner can modify playlist details" });
   }
 
@@ -1601,8 +1677,8 @@ app.post("/api/playlists/:playlistId/songs", (req, res) => {
   const { playlistId } = req.params;
   const { artistSlug, songSlug, title, artist } = req.body;
   
-  // Require authentication
-  if (!req.session.user) {
+  // Require authentication (admin or user)
+  if (!req.session.user && !req.session.isAdmin) {
     return res.status(401).json({ success: false, error: 'Authentication required' });
   }
 
@@ -1612,14 +1688,15 @@ app.post("/api/playlists/:playlistId/songs", (req, res) => {
     return res.status(404).json({ success: false, error: "Playlist not found" });
   }
 
-  // Get user ID
-  const userId = req.session.user.id;
+  // Get user ID (use '0' for hardcoded admin)
+  const userId = req.session.isAdmin && !req.session.user ? '0' : req.session.user.id;
+  const isAdmin = !!req.session.isAdmin;
 
-  // Check ownership or collaboration permission
+  // Check ownership, collaboration permission, or admin
   const isOwner = playlist.userId === userId;
   const isCollaborator = playlist.collaborators && playlist.collaborators.includes(userId);
   
-  if (!isOwner && !isCollaborator) {
+  if (!isOwner && !isCollaborator && !isAdmin) {
     return res.status(403).json({ success: false, error: "You don't have permission to add songs to this playlist" });
   }
 
@@ -1644,8 +1721,8 @@ app.delete("/api/playlists/:playlistId/songs", (req, res) => {
   const { playlistId } = req.params;
   const { artistSlug, songSlug } = req.body;
   
-  // Require authentication
-  if (!req.session.user) {
+  // Require authentication (admin or user)
+  if (!req.session.user && !req.session.isAdmin) {
     return res.status(401).json({ success: false, error: 'Authentication required' });
   }
 
@@ -1655,14 +1732,15 @@ app.delete("/api/playlists/:playlistId/songs", (req, res) => {
     return res.status(404).json({ success: false, error: "Playlist not found" });
   }
 
-  // Get user ID
-  const userId = req.session.user.id;
+  // Get user ID (use '0' for hardcoded admin)
+  const userId = req.session.isAdmin && !req.session.user ? '0' : req.session.user.id;
+  const isAdmin = !!req.session.isAdmin;
 
-  // Check ownership or collaboration permission
+  // Check ownership, collaboration permission, or admin
   const isOwner = playlist.userId === userId;
   const isCollaborator = playlist.collaborators && playlist.collaborators.includes(userId);
   
-  if (!isOwner && !isCollaborator) {
+  if (!isOwner && !isCollaborator && !isAdmin) {
     return res.status(403).json({ success: false, error: "You don't have permission to remove songs from this playlist" });
   }
 
@@ -1867,6 +1945,140 @@ app.get("/api/playlists/:playlistId/collaborators", (req, res) => {
   res.json({ success: true, collaborators });
 });
 
+// =================== FOLLOWS & NOTIFICATIONS API ===================
+
+// Check if current user follows an artist
+app.get("/api/follows/:artistSlug", (req, res) => {
+  const { artistSlug } = req.params;
+  
+  if (!req.session.user && !req.session.isAdmin) {
+    return res.json({ success: true, isFollowing: false, followerCount: (follows[artistSlug] || []).length });
+  }
+  
+  const userId = req.session.isAdmin && !req.session.user ? '0' : req.session.user?.id;
+  const artistFollowers = follows[artistSlug] || [];
+  const isFollowing = artistFollowers.includes(userId);
+  
+  res.json({ success: true, isFollowing, followerCount: artistFollowers.length });
+});
+
+// Follow an artist
+app.post("/api/follows/:artistSlug", (req, res) => {
+  const { artistSlug } = req.params;
+  
+  if (!req.session.user && !req.session.isAdmin) {
+    return res.status(401).json({ success: false, error: 'Authentication required' });
+  }
+  
+  const userId = req.session.isAdmin && !req.session.user ? '0' : req.session.user?.id;
+  
+  if (!follows[artistSlug]) {
+    follows[artistSlug] = [];
+  }
+  
+  if (!follows[artistSlug].includes(userId)) {
+    follows[artistSlug].push(userId);
+    saveFollows();
+  }
+  
+  res.json({ success: true, isFollowing: true, followerCount: follows[artistSlug].length });
+});
+
+// Unfollow an artist
+app.delete("/api/follows/:artistSlug", (req, res) => {
+  const { artistSlug } = req.params;
+  
+  if (!req.session.user && !req.session.isAdmin) {
+    return res.status(401).json({ success: false, error: 'Authentication required' });
+  }
+  
+  const userId = req.session.isAdmin && !req.session.user ? '0' : req.session.user?.id;
+  
+  if (follows[artistSlug]) {
+    follows[artistSlug] = follows[artistSlug].filter(id => id !== userId);
+    saveFollows();
+  }
+  
+  res.json({ success: true, isFollowing: false, followerCount: (follows[artistSlug] || []).length });
+});
+
+// Get user's notifications
+app.get("/api/notifications", (req, res) => {
+  if (!req.session.user && !req.session.isAdmin) {
+    return res.json({ success: true, notifications: [], unreadCount: 0 });
+  }
+  
+  const userId = req.session.isAdmin && !req.session.user ? '0' : req.session.user?.id;
+  const userData = notifications[userId] || { unread: [], history: [] };
+  
+  res.json({ success: true, notifications: userData.unread, unreadCount: userData.unread.length });
+});
+
+// Get notification history
+app.get("/api/notifications/history", (req, res) => {
+  if (!req.session.user && !req.session.isAdmin) {
+    return res.json({ success: true, history: [] });
+  }
+  
+  const userId = req.session.isAdmin && !req.session.user ? '0' : req.session.user?.id;
+  const userData = notifications[userId] || { unread: [], history: [] };
+  
+  // Return last 50 history items
+  res.json({ success: true, history: userData.history.slice(0, 50) });
+});
+
+// Mark all notifications as read (moves them to history)
+app.post("/api/notifications/mark-read", (req, res) => {
+  if (!req.session.user && !req.session.isAdmin) {
+    return res.status(401).json({ success: false, error: 'Authentication required' });
+  }
+  
+  const userId = req.session.isAdmin && !req.session.user ? '0' : req.session.user?.id;
+  
+  if (!notifications[userId]) {
+    notifications[userId] = { unread: [], history: [] };
+  }
+  
+  // Move unread to history
+  if (notifications[userId].unread && notifications[userId].unread.length > 0) {
+    notifications[userId].history = [
+      ...notifications[userId].unread,
+      ...notifications[userId].history
+    ].slice(0, 50); // Keep only last 50
+    notifications[userId].unread = [];
+    saveNotifications();
+  }
+  
+  res.json({ success: true });
+});
+
+// Clear unread notifications (moves them to history)
+app.delete("/api/notifications", (req, res) => {
+  if (!req.session.user && !req.session.isAdmin) {
+    return res.status(401).json({ success: false, error: 'Authentication required' });
+  }
+  
+  const userId = req.session.isAdmin && !req.session.user ? '0' : req.session.user?.id;
+  
+  if (!notifications[userId]) {
+    notifications[userId] = { unread: [], history: [] };
+  }
+  
+  // Move unread to history
+  if (notifications[userId].unread && notifications[userId].unread.length > 0) {
+    notifications[userId].history = [
+      ...notifications[userId].unread,
+      ...notifications[userId].history
+    ].slice(0, 50); // Keep only last 50
+    notifications[userId].unread = [];
+    saveNotifications();
+  }
+  
+  res.json({ success: true });
+});
+
+// =================== END FOLLOWS & NOTIFICATIONS API ===================
+
 app.post("/api/upload-song", upload.single("audioFile"), (req, res) => {
   if (!req.session.isAdmin) {
     return res.status(403).json({ error: "Only admin users can upload tracks" });
@@ -1901,6 +2113,12 @@ app.post("/api/upload-song", upload.single("audioFile"), (req, res) => {
       console.error("Error saving tracks.json:", err);
       return res.status(500).send("Error saving track data");
     }
+    
+    // Notify followers of the artist about the new release
+    const artistSlug = artist.toLowerCase().replace(/[^\w]+/g, "-");
+    const trackSlug = title.toLowerCase().replace(/[^\w]+/g, "-");
+    notifyFollowersOfNewTrack(artistSlug, artist, title, trackSlug);
+    
     res.status(200).send("Track uploaded and saved successfully");
   });
 });
