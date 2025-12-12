@@ -1587,10 +1587,15 @@ app.delete("/api/activity/reset", (req, res) => {
 
 // --- Playlist endpoints ---
 
-// Get all playlists for a user
+// Get all playlists for a user (owned or collaborator)
 app.get("/api/playlists/user/:userId", (req, res) => {
   const { userId } = req.params;
-  const userPlaylists = playlists.filter(p => p.userId === userId);
+  
+  // For all users (including admins), get playlists they own OR are a collaborator on
+  const userPlaylists = playlists.filter(p => 
+    p.userId === userId || 
+    (p.collaborators && p.collaborators.includes(userId))
+  );
   res.json({ success: true, playlists: userPlaylists });
 });
 
@@ -1657,10 +1662,9 @@ app.put("/api/playlists/:playlistId", (req, res) => {
 
   // Get user ID (use '0' for hardcoded admin)
   const userId = req.session.isAdmin && !req.session.user ? '0' : req.session.user.id;
-  const isAdmin = !!req.session.isAdmin;
 
-  // Only owners or admins can modify playlist details (name, description)
-  if (playlist.userId !== userId && !isAdmin) {
+  // Only owners can modify playlist details (name, description) - admins cannot edit others' playlists
+  if (playlist.userId !== userId) {
     return res.status(403).json({ success: false, error: "Only the playlist owner can modify playlist details" });
   }
 
@@ -1690,13 +1694,12 @@ app.post("/api/playlists/:playlistId/songs", (req, res) => {
 
   // Get user ID (use '0' for hardcoded admin)
   const userId = req.session.isAdmin && !req.session.user ? '0' : req.session.user.id;
-  const isAdmin = !!req.session.isAdmin;
 
-  // Check ownership, collaboration permission, or admin
+  // Check ownership or collaboration permission (admins can only add if they are collaborators)
   const isOwner = playlist.userId === userId;
   const isCollaborator = playlist.collaborators && playlist.collaborators.includes(userId);
   
-  if (!isOwner && !isCollaborator && !isAdmin) {
+  if (!isOwner && !isCollaborator) {
     return res.status(403).json({ success: false, error: "You don't have permission to add songs to this playlist" });
   }
 
@@ -1802,7 +1805,7 @@ app.delete("/api/playlists/:playlistId", (req, res) => {
   const { playlistId } = req.params;
   
   // Require authentication
-  if (!req.session.user) {
+  if (!req.session.user && !req.session.isAdmin) {
     return res.status(401).json({ success: false, error: 'Authentication required' });
   }
 
@@ -1814,11 +1817,12 @@ app.delete("/api/playlists/:playlistId", (req, res) => {
 
   const playlist = playlists[playlistIndex];
 
-  // Get user ID
-  const userId = req.session.user.id;
+  // Get user ID (use '0' for hardcoded admin)
+  const userId = req.session.isAdmin && !req.session.user ? '0' : req.session.user.id;
+  const isAdmin = !!req.session.isAdmin;
 
-  // Check ownership
-  if (playlist.userId !== userId) {
+  // Check ownership OR admin status (admins can delete any playlist for rule enforcement)
+  if (playlist.userId !== userId && !isAdmin) {
     return res.status(403).json({ success: false, error: "You don't own this playlist" });
   }
 
@@ -2146,10 +2150,130 @@ app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+// === Dynamic Track Categories (Popular & New) ===
+
+// Helper to slugify strings (same logic as client)
+function slugify(str) {
+  return str.toLowerCase().replace(/[^\w]+/g, "-");
+}
+
+// Aggregate play counts from all users' activity data
+function getTrackPlayCounts() {
+  const playCounts = {};
+  
+  for (const userId in userActivity) {
+    const userData = userActivity[userId];
+    if (userData.plays) {
+      for (const trackKey in userData.plays) {
+        const playData = userData.plays[trackKey];
+        if (!playCounts[trackKey]) {
+          playCounts[trackKey] = 0;
+        }
+        playCounts[trackKey] += playData.count || 0;
+      }
+    }
+  }
+  
+  return playCounts;
+}
+
+// Update isPopular flag based on total play counts
+function updatePopularTracks() {
+  const playCounts = getTrackPlayCounts();
+  
+  // Create array of [trackKey, count] and sort by count descending
+  const sortedTracks = Object.entries(playCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8); // Top 8 most played
+  
+  const topTrackKeys = new Set(sortedTracks.map(([key]) => key));
+  
+  // Update tracks
+  let changed = false;
+  tracks.forEach(track => {
+    const trackKey = `${slugify(track.artist)}/${slugify(track.title)}`;
+    const shouldBePopular = topTrackKeys.has(trackKey);
+    
+    if (track.isPopular !== shouldBePopular) {
+      track.isPopular = shouldBePopular;
+      changed = true;
+    }
+  });
+  
+  if (changed) {
+    fs.writeFileSync(tracksFile, JSON.stringify(tracks, null, 2));
+    console.log(`✅ Updated popular tracks (top 8 by plays)`);
+  }
+  
+  return sortedTracks.length;
+}
+
+// Update isNew flag based on createdAt date (latest 8 tracks)
+function updateNewTracks() {
+  // Sort tracks by createdAt date descending
+  const tracksWithDates = tracks
+    .map((track, index) => ({
+      track,
+      index,
+      date: track.createdAt ? new Date(track.createdAt) : new Date(0)
+    }))
+    .sort((a, b) => b.date - a.date);
+  
+  // Get indices of the 8 newest tracks
+  const newestIndices = new Set(
+    tracksWithDates.slice(0, 8).map(t => t.index)
+  );
+  
+  // Update tracks
+  let changed = false;
+  tracks.forEach((track, index) => {
+    const shouldBeNew = newestIndices.has(index);
+    
+    if (track.isNew !== shouldBeNew) {
+      track.isNew = shouldBeNew;
+      changed = true;
+    }
+  });
+  
+  if (changed) {
+    fs.writeFileSync(tracksFile, JSON.stringify(tracks, null, 2));
+    console.log(`✅ Updated new tracks (latest 8 by createdAt)`);
+  }
+}
+
+// Run both updates
+function updateDynamicCategories() {
+  console.log('📊 Updating dynamic track categories...');
+  updatePopularTracks();
+  updateNewTracks();
+}
+
+// Schedule daily update at midnight
+function scheduleDailyUpdate() {
+  const now = new Date();
+  const nextMidnight = new Date(now);
+  nextMidnight.setDate(nextMidnight.getDate() + 1);
+  nextMidnight.setHours(0, 0, 0, 0);
+  
+  const msUntilMidnight = nextMidnight.getTime() - now.getTime();
+  
+  // Schedule first run at midnight
+  setTimeout(() => {
+    updateDynamicCategories();
+    // Then run every 24 hours
+    setInterval(updateDynamicCategories, 24 * 60 * 60 * 1000);
+  }, msUntilMidnight);
+  
+  console.log(`📅 Daily category update scheduled (next run in ${Math.round(msUntilMidnight / 1000 / 60)} minutes)`);
+}
+
 // start server
 const server = app.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
-
+  
+  // Run category updates on startup and schedule daily updates
+  updateDynamicCategories();
+  scheduleDailyUpdate();
 });
 
 // Handle server errors

@@ -1,4 +1,56 @@
 {
-  "1": [],
-  "6": []
+  "1": {
+    "unread": [],
+    "history": [
+      {
+        "id": "1765561266129_fu7jg2",
+        "type": "new_release",
+        "artistSlug": "jane-remover",
+        "artistName": "Jane Remover",
+        "trackTitle": "52 blue mondays",
+        "trackSlug": "52-blue-mondays",
+        "createdAt": 1765561266128
+      },
+      {
+        "id": "1765560770915_by669z",
+        "type": "new_release",
+        "artistSlug": "jane-remover",
+        "artistName": "Jane Remover",
+        "trackTitle": "goldfish",
+        "trackSlug": "goldfish",
+        "createdAt": 1765560770915
+      },
+      {
+        "id": "1765560690068_vv18hs",
+        "type": "new_release",
+        "artistSlug": "jane-remover",
+        "artistName": "Jane Remover",
+        "trackTitle": "kodak moment",
+        "trackSlug": "kodak-moment",
+        "createdAt": 1765560690068
+      },
+      {
+        "id": "1765560625917_uy8pbp",
+        "type": "new_release",
+        "artistSlug": "jane-remover",
+        "artistName": "Jane Remover",
+        "trackTitle": "search party",
+        "trackSlug": "search-party",
+        "createdAt": 1765560625917
+      },
+      {
+        "id": "1765560578729_1omkfi",
+        "type": "new_release",
+        "artistSlug": "jane-remover",
+        "artistName": "Jane Remover",
+        "trackTitle": "champ",
+        "trackSlug": "champ",
+        "createdAt": 1765560578729
+      }
+    ]
+  },
+  "6": {
+    "unread": [],
+    "history": []
+  }
 }

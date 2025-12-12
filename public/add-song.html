@@ -7,16 +7,19 @@
   <link href="/style.css" rel="stylesheet">
   <link rel="icon" href="favicon.ico" type="image/x-icon">
   <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro' rel='stylesheet' type='text/css'>
+  <!-- jsmediatags for reading audio file metadata -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
 </head>
 <body class="bg-gray-900 text-white p-8">
   <h1 class="text-4xl mb-6">Add New Song</h1>
 
   <form id="add-song-form" class="flex flex-col max-w-md space-y-4" enctype="multipart/form-data">
-    <input name="title" placeholder="Song Title" required class="p-2 rounded text-black" />
-    <input name="artist" placeholder="Artist" required class="p-2 rounded text-black" />
-    <input name="album" placeholder="Album" class="p-2 rounded text-black" />
-    <input name="cover" placeholder="Cover URL" class="p-2 rounded text-black" />
-    <input name="audioFile" type="file" accept="audio/*" required class="text-white" />
+    <input name="title" id="title" placeholder="Song Title" required class="p-2 rounded text-black" />
+    <input name="artist" id="artist" placeholder="Artist" required class="p-2 rounded text-black" />
+    <input name="album" id="album" placeholder="Album" class="p-2 rounded text-black" />
+    <input name="cover" id="cover" placeholder="Cover URL" class="p-2 rounded text-black" />
+    <input name="audioFile" id="audioFile" type="file" accept="audio/*" required class="text-white" />
+    <div id="metadata-status" class="text-sm text-gray-400 hidden"></div>
     <label for="category" class="block text-sm font-medium text-gray-300">Category</label>
     <select id="category" name="category" class="mt-1 block w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2">
         <option value="">-- Select a category --</option>
@@ -31,11 +34,153 @@
     </select>
     <label for="releaseDate" class="block text-sm font-medium text-gray-300">Release Date</label>
   <input type="date" id="releaseDate" name="releaseDate" required class="mt-1 block w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2" />
-  <input name="albumNumber" type="number" placeholder="Track Number in Album" class="p-2 rounded text-black" />
+  <input name="albumNumber" id="albumNumber" type="number" placeholder="Track Number in Album" class="p-2 rounded text-black" />
     <button type="submit" class="bg-green-600 hover:bg-green-700 py-2 rounded font-bold">Upload & Add Song</button>
   </form>
 
+  <!-- Metadata confirmation modal -->
+  <div id="metadata-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+      <h3 class="text-xl font-bold mb-4">Audio Metadata Found</h3>
+      <p class="text-gray-300 mb-4">The audio file contains metadata. Would you like to use it to fill in the form fields?</p>
+      <div id="metadata-preview" class="bg-gray-700 rounded p-3 mb-4 text-sm">
+        <!-- Preview will be inserted here -->
+      </div>
+      <p class="text-yellow-400 text-sm mb-4">Note: This will overwrite any data you've already entered.</p>
+      <div class="flex gap-3 justify-end">
+        <button id="metadata-cancel" class="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded">Keep My Input</button>
+        <button id="metadata-apply" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded">Use Metadata</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // Store extracted metadata temporarily
+    let pendingMetadata = null;
+
+    // Check if any relevant form fields have user input
+    function hasExistingInput() {
+      const title = document.getElementById('title').value.trim();
+      const artist = document.getElementById('artist').value.trim();
+      const album = document.getElementById('album').value.trim();
+      const albumNumber = document.getElementById('albumNumber').value.trim();
+      return title || artist || album || albumNumber;
+    }
+
+    // Apply metadata to form fields
+    function applyMetadata(metadata) {
+      if (metadata.title) document.getElementById('title').value = metadata.title;
+      if (metadata.artist) document.getElementById('artist').value = metadata.artist;
+      if (metadata.album) document.getElementById('album').value = metadata.album;
+      if (metadata.track) document.getElementById('albumNumber').value = metadata.track;
+      if (metadata.year) {
+        // Try to set the release date from year
+        const dateInput = document.getElementById('releaseDate');
+        // Set to January 1st of that year as a default
+        dateInput.value = `${metadata.year}-01-01`;
+      }
+      
+      const statusEl = document.getElementById('metadata-status');
+      statusEl.textContent = '✓ Metadata applied from audio file';
+      statusEl.classList.remove('hidden');
+      statusEl.classList.remove('text-gray-400');
+      statusEl.classList.add('text-green-400');
+    }
+
+    // Show the metadata confirmation modal
+    function showMetadataModal(metadata) {
+      pendingMetadata = metadata;
+      
+      // Build preview HTML
+      let previewHtml = '<ul class="space-y-1">';
+      if (metadata.title) previewHtml += `<li><strong>Title:</strong> ${metadata.title}</li>`;
+      if (metadata.artist) previewHtml += `<li><strong>Artist:</strong> ${metadata.artist}</li>`;
+      if (metadata.album) previewHtml += `<li><strong>Album:</strong> ${metadata.album}</li>`;
+      if (metadata.track) previewHtml += `<li><strong>Track #:</strong> ${metadata.track}</li>`;
+      if (metadata.year) previewHtml += `<li><strong>Year:</strong> ${metadata.year}</li>`;
+      previewHtml += '</ul>';
+      
+      document.getElementById('metadata-preview').innerHTML = previewHtml;
+      
+      const modal = document.getElementById('metadata-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    // Hide the metadata modal
+    function hideMetadataModal() {
+      const modal = document.getElementById('metadata-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      pendingMetadata = null;
+    }
+
+    // Modal button handlers
+    document.getElementById('metadata-cancel').addEventListener('click', () => {
+      hideMetadataModal();
+      const statusEl = document.getElementById('metadata-status');
+      statusEl.textContent = 'Metadata skipped - using your input';
+      statusEl.classList.remove('hidden');
+    });
+
+    document.getElementById('metadata-apply').addEventListener('click', () => {
+      if (pendingMetadata) {
+        applyMetadata(pendingMetadata);
+      }
+      hideMetadataModal();
+    });
+
+    // Listen for audio file selection
+    document.getElementById('audioFile').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById('metadata-status');
+      statusEl.textContent = 'Reading metadata...';
+      statusEl.classList.remove('hidden');
+      statusEl.classList.remove('text-green-400');
+      statusEl.classList.add('text-gray-400');
+
+      // Use jsmediatags to read metadata
+      jsmediatags.read(file, {
+        onSuccess: function(tag) {
+          const tags = tag.tags;
+          
+          // Extract relevant metadata
+          const metadata = {};
+          if (tags.title) metadata.title = tags.title;
+          if (tags.artist) metadata.artist = tags.artist;
+          if (tags.album) metadata.album = tags.album;
+          if (tags.track) {
+            // Track can be "3" or "3/12" format
+            const trackNum = tags.track.toString().split('/')[0];
+            metadata.track = parseInt(trackNum) || null;
+          }
+          if (tags.year) metadata.year = tags.year;
+
+          // Check if we found any useful metadata
+          if (Object.keys(metadata).length === 0) {
+            statusEl.textContent = 'No metadata found in audio file';
+            return;
+          }
+
+          // If user has existing input, prompt them
+          if (hasExistingInput()) {
+            showMetadataModal(metadata);
+            statusEl.classList.add('hidden');
+          } else {
+            // No existing input, apply automatically
+            applyMetadata(metadata);
+          }
+        },
+        onError: function(error) {
+          console.log('Could not read metadata:', error);
+          statusEl.textContent = 'Could not read metadata from file';
+        }
+      });
+    });
+
+    // Form submission handler
     document.getElementById('add-song-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = e.target;

@@ -177,18 +177,18 @@
         "lastPlayed": "2025-12-06T18:35:44.623Z"
       },
       "notey/ddd": {
-        "count": 2,
+        "count": 3,
         "trackTitle": "DDD",
         "trackArtist": "notey",
         "trackCover": "https://i1.sndcdn.com/artworks-0RS3HQ26PgAQqUrj-f79knw-t500x500.png",
-        "lastPlayed": "2025-12-06T19:07:13.962Z"
+        "lastPlayed": "2025-12-12T17:27:43.309Z"
       },
       "ta1lsd0ll/ta1lsd022": {
-        "count": 3,
+        "count": 4,
         "trackTitle": "ta1lsd022",
         "trackArtist": "ta1lsd0ll",
         "trackCover": "https://i1.sndcdn.com/artworks-vX3QyEzxMV5hG8ti-Gh57Ow-t500x500.jpg",
-        "lastPlayed": "2025-12-11T20:24:13.354Z"
+        "lastPlayed": "2025-12-12T17:46:32.152Z"
       },
       "leroy/will-work-for-food": {
         "count": 1,
@@ -282,11 +282,11 @@
         "lastPlayed": "2025-12-11T20:26:35.422Z"
       },
       "jane-remover/woodside-gardens-16-december-2012": {
-        "count": 1,
+        "count": 2,
         "trackTitle": "woodside gardens 16 december 2012",
         "trackArtist": "Jane Remover",
         "trackCover": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.scdn.co%2Fimage%2Fab67616d0000b2736015726ce1b03da1d9dfd6f1&f=1&nofb=1&ipt=40047ca5a197e2b25510da38c9c2ba4aa76a5a8c79cabd2b7846890ed5ab4360",
-        "lastPlayed": "2025-11-29T06:04:09.962Z"
+        "lastPlayed": "2025-12-12T17:30:46.301Z"
       },
       "xaev/take-me-away-so-why-try-to-fight-it": {
         "count": 3,
@@ -345,11 +345,11 @@
         "lastPlayed": "2025-12-06T18:41:43.691Z"
       },
       "ta1lsd0ll/ta1lsd024": {
-        "count": 1,
+        "count": 3,
         "trackTitle": "ta1lsd024",
         "trackArtist": "ta1lsd0ll",
         "trackCover": "https://i1.sndcdn.com/artworks-Oq46huYBdV2Mdgyk-z5C8mw-t500x500.png",
-        "lastPlayed": "2025-12-06T19:02:05.013Z"
+        "lastPlayed": "2025-12-12T17:48:17.225Z"
       },
       "xaev/it-gets-lonely": {
         "count": 1,
@@ -357,6 +357,48 @@
         "trackArtist": "xaev",
         "trackCover": "https://i1.sndcdn.com/artworks-w2wQkNvWybVwK7Sr-ZGCglQ-t1080x1080.jpg",
         "lastPlayed": "2025-12-06T19:23:25.751Z"
+      },
+      "jane-remover/search-party": {
+        "count": 1,
+        "trackTitle": "search party",
+        "trackArtist": "Jane Remover",
+        "trackCover": "https://tse3.mm.bing.net/th/id/OIP.PX966YxN01zJcElSdwfcuQHaHa?cb=ucfimg2&ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
+        "lastPlayed": "2025-12-12T17:30:52.352Z"
+      },
+      "jane-remover/kodak-moment": {
+        "count": 1,
+        "trackTitle": "kodak moment",
+        "trackArtist": "Jane Remover",
+        "trackCover": "https://tse3.mm.bing.net/th/id/OIP.PX966YxN01zJcElSdwfcuQHaHa?cb=ucfimg2&ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
+        "lastPlayed": "2025-12-12T17:31:55.163Z"
+      },
+      "jane-remover/champ": {
+        "count": 1,
+        "trackTitle": "champ",
+        "trackArtist": "Jane Remover",
+        "trackCover": "https://tse3.mm.bing.net/th/id/OIP.PX966YxN01zJcElSdwfcuQHaHa?cb=ucfimg2&ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
+        "lastPlayed": "2025-12-12T17:32:01.307Z"
+      },
+      "jane-remover/52-blue-mondays": {
+        "count": 1,
+        "trackTitle": "52 blue mondays",
+        "trackArtist": "Jane Remover",
+        "trackCover": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQNeEkLeR4omaH36HgqHCA8mTg_KBtSjymnlg&s",
+        "lastPlayed": "2025-12-12T17:42:04.365Z"
+      },
+      "jane-remover/goldfish": {
+        "count": 1,
+        "trackTitle": "goldfish",
+        "trackArtist": "Jane Remover",
+        "trackCover": "https://tse3.mm.bing.net/th/id/OIP.PX966YxN01zJcElSdwfcuQHaHa?cb=ucfimg2&ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
+        "lastPlayed": "2025-12-12T17:44:22.946Z"
+      },
+      "ta1lsd0ll/ta1lsd003": {
+        "count": 1,
+        "trackTitle": "ta1lsd003",
+        "trackArtist": "ta1lsd0ll",
+        "trackCover": "https://i1.sndcdn.com/artworks-MTQcZ6DmlGzZzt1B-DwiknQ-t500x500.jpg",
+        "lastPlayed": "2025-12-12T17:50:54.398Z"
       }
     },
     "activityVisible": true

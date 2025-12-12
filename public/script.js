@@ -6,6 +6,34 @@ function slugify(str) {
   return str.toLowerCase().replace(/[^\w]+/g, "-");
 }
 
+// Multi-artist support: parse artists separated by semicolons
+function parseArtists(artistString) {
+  if (!artistString) return [];
+  return artistString.split(';').map(a => a.trim()).filter(a => a.length > 0);
+}
+
+// Check if a track has a specific artist (supports multi-artist tracks)
+function trackHasArtist(track, artistSlug) {
+  const artists = parseArtists(track.artist);
+  return artists.some(a => slugify(a) === artistSlug);
+}
+
+// Get the display name for an artist slug from a track
+function getArtistDisplayName(track, artistSlug) {
+  const artists = parseArtists(track.artist);
+  const match = artists.find(a => slugify(a) === artistSlug);
+  return match || artists[0] || track.artist;
+}
+
+// Render artists as clickable links
+function renderArtistLinks(artistString, separator = ', ') {
+  const artists = parseArtists(artistString);
+  if (artists.length === 0) return artistString;
+  return artists.map(artist => 
+    `<span class="hover:underline cursor-pointer" onclick="navigateTo('/${slugify(artist)}')">${artist}</span>`
+  ).join(separator);
+}
+
 function isSameTrack(a, b) {
   return slugify(a.artist) === slugify(b.artist) &&
          slugify(a.title) === slugify(b.title);
@@ -421,9 +449,12 @@ function truncateTitle(text, containerClass = 'track') {
 }
 
 function renderTrackCard(track) {
-  const artistSlug = slugify(track.artist);
+  const artistSlug = slugify(parseArtists(track.artist)[0] || track.artist);
   const songSlug = slugify(track.title);
   const truncatedTitle = truncateTitle(track.title);
+  
+  // Render all artists as clickable links
+  const artistLinks = renderArtistLinks(track.artist);
 
   return `
     <div class="bg-gray-800 rounded-lg overflow-hidden shadow-lg p-4 text-center track relative">
@@ -436,8 +467,8 @@ function renderTrackCard(track) {
       <h3 class="text-lg font-bold hover:underline cursor-pointer" onclick="navigateTo('/${artistSlug}/${songSlug}')" title="${track.title}">
         ${truncatedTitle}
       </h3>
-      <p class="text-sm text-gray-400 hover:underline cursor-pointer" onclick="navigateTo('/${artistSlug}')">
-        ${track.artist}
+      <p class="text-sm text-gray-400">
+        ${artistLinks}
       </p>
     </div>
   `;
@@ -453,37 +484,30 @@ function updateLoopButtonColor(btn, mode) {
 
 function renderSong(artistSlug, songSlug) {
   const track = tracks.find(
-    t => slugify(t.artist) === artistSlug && slugify(t.title) === songSlug
+    t => trackHasArtist(t, artistSlug) && slugify(t.title) === songSlug
   );
 
   if (!track) return renderNotFound();
 
-  // Check if audio file exists by trying to load it
-  const audioExists = track.file && track.file !== '';
+  // Initial render with loading state - we'll check audio validity after
+  const audioFileProvided = track.file && track.file !== '';
+  
+  // Render all artists as clickable links
+  const artistLinks = renderArtistLinks(track.artist);
   
   getApp().innerHTML = `
     <div class="max-w-xl mx-auto bg-gray-800 p-6 rounded-lg shadow-lg space-y-4 track">
       <img src="${track.cover}" alt="${track.album}" class="w-full h-full object-cover rounded"/>
       <h2 class="text-2xl font-bold">${track.title}</h2>
       <p class="text-gray-400 artistPointer">
-        by <span class="hover:underline cursor-pointer" onclick="navigateTo('/${slugify(track.artist)}')">${track.artist}</span>
+        by ${artistLinks}
       </p>
       <p class="italic text-gray-500 hover:underline cursor-pointer albumPointer" onclick="navigateTo('/album/${slugify(track.album)}')">${track.album}</p>
 
-      ${!audioExists ? `
-        <div class="bg-yellow-800 border border-yellow-600 text-yellow-200 px-4 py-3 rounded mb-4">
-          <div class="flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-            </svg>
-            <span class="font-medium">Audio file not found</span>
-          </div>
-          <p class="mt-1 text-sm">The audio file for this track is missing or the path is invalid.</p>
-        </div>
-      ` : ''}
+      <div id="audio-warning-container"></div>
 
       <div class="audio-player" style="display:flex; flex-direction:column; gap:12px; margin-top:1rem; color:#eee;">
-        ${audioExists ? `<audio id="audio" src="${track.file}"></audio>` : `<audio id="audio"></audio>`}
+        ${audioFileProvided ? `<audio id="audio" src="${track.file}"></audio>` : `<audio id="audio"></audio>`}
         
         <div style="display:flex; align-items:center; gap:12px;">
           <button id="btnPlayPause" title="Play/Pause" style="cursor:pointer; background:none; border:none; color:#aaa; width:32px; height:32px;">
@@ -589,10 +613,12 @@ function editTrack(artistSlug, songSlug) {
 }
 
 async function renderArtist(artistSlug) {
-  const artistTracks = tracks.filter(t => slugify(t.artist) === artistSlug);
+  // Find tracks where any of the artists match this slug (supports multi-artist tracks)
+  const artistTracks = tracks.filter(t => trackHasArtist(t, artistSlug));
   if (!artistTracks.length) return renderNotFound();
 
-  const artistName = artistTracks[0].artist;
+  // Get the display name for this specific artist
+  const artistName = getArtistDisplayName(artistTracks[0], artistSlug);
 
   // Check if user is following this artist
   let isFollowing = false;
@@ -643,7 +669,8 @@ async function renderArtist(artistSlug) {
     }
   }
 
-  const followButtonHtml = `
+  // Only show follow button if user is authenticated
+  const followButtonHtml = window.isLoggedIn ? `
     <button id="follow-btn" onclick="toggleFollow('${artistSlug}')" 
             class="follow-btn ml-3 px-3 py-1 rounded text-sm flex items-center gap-2 ${isFollowing ? 'following' : ''}"
             data-artist-slug="${artistSlug}">
@@ -655,7 +682,7 @@ async function renderArtist(artistSlug) {
       </svg>
       ${isFollowing ? 'Following' : 'Follow'}
     </button>
-  `;
+  ` : '';
 
   getApp().innerHTML = `
     <div class="flex items-center mb-4">
@@ -751,9 +778,13 @@ function renderAlbum(albumSlug) {
     currentlyPlayingTrack = albumPlayer.tracks[albumPlayer.currentIndex];
   }
 
+  // Count all artists (including from multi-artist tracks)
   const artistCount = {};
   sorted.forEach(t => {
-    artistCount[t.artist] = (artistCount[t.artist] || 0) + 1;
+    const artists = parseArtists(t.artist);
+    artists.forEach(artist => {
+      artistCount[artist] = (artistCount[artist] || 0) + 1;
+    });
   });
   const sortedArtists = Object.entries(artistCount).sort((a, b) => b[1] - a[1]);
 
@@ -771,24 +802,23 @@ function renderAlbum(albumSlug) {
       <button class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-white" onclick="playAlbumTracks('${albumSlug}')">▶ Play All</button>
       <div class="flex flex-col divide-y-4 divide-transparent mt-4">
         ${sorted.map((track, idx) => {
-          // Check if this track is currently playing
+          // Check if this track is currently playing (compare titles and first artist)
+          const trackFirstArtist = parseArtists(track.artist)[0] || track.artist;
+          const currentFirstArtist = currentlyPlayingTrack ? (parseArtists(currentlyPlayingTrack.artist)[0] || currentlyPlayingTrack.artist) : '';
           const isPlaying = currentlyPlayingTrack && 
             slugify(currentlyPlayingTrack.title) === slugify(track.title) && 
-            slugify(currentlyPlayingTrack.artist) === slugify(track.artist);
+            slugify(currentFirstArtist) === slugify(trackFirstArtist);
           
           return `
           <div class="p-4 flex justify-between items-center albumtrack ${isPlaying ? 'bg-gray-700 currenttrack' : ''}">
             <div class="flex-1">
               <div class="text-lg font-semibold hover:underline cursor-pointer" onclick="playAlbumTrack('${albumSlug}', ${idx})">${track.title}</div>
-              <div class="text-gray-400 text-sm albumtracktext hover:underline cursor-pointer" onclick="navigateTo('/${slugify(track.artist)}/${slugify(track.title)}')">
-                #${track.albumNumber || '?'} <span class="text-xs text-gray-500 albumtracktext">(Track ${idx + 1})</span>
+              <div class="text-gray-400 text-sm albumtracktext">
+                #${track.albumNumber || '?'} <span class="text-xs text-gray-500 albumtracktext">(Track ${idx + 1})</span> • <span class="text-gray-500" data-track-title="${track.title.replace(/"/g, '&quot;')}">${trackDurationMap[track.title] || '<span class="animate-pulse">--:--</span>'}</span>
               </div>
             </div>
             <div class="flex items-center gap-2">
               ${isPlaying ? '<span class="text-green-400 text-sm playingtext">Playing...</span>' : ''}
-              <div class="text-gray-500 text-sm" data-track-title="${track.title.replace(/"/g, '&quot;')}">
-                ${trackDurationMap[track.title] || '<span class="animate-pulse">--:--</span>'}
-              </div>
             </div>
           </div>
         `}).join('')}
@@ -861,10 +891,13 @@ async function renderPlaylist(playlistId) {
       return track ? { ...track, playlistEntry: song } : null;
     }).filter(Boolean);
 
-    // Get unique artists from the playlist
+    // Get unique artists from the playlist (including from multi-artist tracks)
     const artistCount = {};
     playlistTracks.forEach(t => {
-      artistCount[t.artist] = (artistCount[t.artist] || 0) + 1;
+      const artists = parseArtists(t.artist);
+      artists.forEach(artist => {
+        artistCount[artist] = (artistCount[artist] || 0) + 1;
+      });
     });
     const sortedArtists = Object.entries(artistCount).sort((a, b) => b[1] - a[1]);
 
@@ -940,11 +973,11 @@ async function renderPlaylist(playlistId) {
                     </div>
                   ` : ''}
                   <div class="flex-1">
-                    <div class="text-lg font-semibold hover:underline cursor-pointer" onclick="navigateTo('/${slugify(track.artist)}/${slugify(track.title)}')">
+                    <div class="text-lg font-semibold hover:underline cursor-pointer" onclick="navigateTo('/${slugify(parseArtists(track.artist)[0] || track.artist)}/${slugify(track.title)}')">
                       ${track.title}
                     </div>
-                    <div class="text-gray-400 text-sm albumtracktext hover:underline cursor-pointer" onclick="navigateTo('/${slugify(track.artist)}')">
-                      ${track.artist}
+                    <div class="text-gray-400 text-sm albumtracktext">
+                      ${renderArtistLinks(track.artist)}
                     </div>
                   </div>
                 </div>
@@ -953,7 +986,7 @@ async function renderPlaylist(playlistId) {
                     ${trackDurationMap[track.title] || '--:--'}
                   </span>
                   ${canEdit ? `
-                    <button onclick="removeSongFromPlaylist('${playlist.id}', '${slugify(track.artist)}', '${slugify(track.title)}')" 
+                    <button onclick="removeSongFromPlaylist('${playlist.id}', '${slugify(parseArtists(track.artist)[0] || track.artist)}', '${slugify(track.title)}')"
                             class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
                       Remove
                     </button>
@@ -1277,7 +1310,7 @@ function addTracksToQueue(tracksToAdd, clearExisting = true) {
   
   tracksToAdd.forEach(track => {
     songQueue.push({
-      artistSlug: slugify(track.artist),
+      artistSlug: slugify(parseArtists(track.artist)[0] || track.artist),
       songSlug: slugify(track.title),
       title: track.title,
       artist: track.artist,
@@ -1417,7 +1450,7 @@ function renderQueueModal() {
       <img src="${track.cover || '/default-cover.png'}" alt="${track.album || 'Album'}" class="queue-track-cover" />
       <div class="queue-track-info">
         <div class="queue-track-title">${escapeHtml(track.title)}</div>
-        <div class="queue-track-artist">${escapeHtml(track.artist)}</div>
+        <div class="queue-track-artist">${parseArtists(track.artist).map(a => escapeHtml(a)).join(', ')}</div>
       </div>
       <button class="queue-track-play" onclick="playFromQueue(${index})" title="Play now">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
@@ -2355,10 +2388,8 @@ async function loadUserPlaylists(userId, isOwnProfile) {
 
     if (data.playlists.length === 0) {
       container.innerHTML = '<p class="text-gray-400">No playlists yet.</p>';
-      return;
-    }
-
-    container.innerHTML = data.playlists.map(playlist => `
+    } else {
+      container.innerHTML = data.playlists.map(playlist => `
       <div class="bg-gray-700 p-4 rounded-lg mb-3 cursor-pointer transition track" onclick="navigateTo('/playlist/${playlist.id}')">
         <div class="flex items-center justify-between">
           <div>
@@ -2374,6 +2405,7 @@ async function loadUserPlaylists(userId, isOwnProfile) {
         </div>
       </div>
     `).join('');
+    }
 
     // Wire create playlist button
     const createBtn = document.getElementById('create-playlist-btn');
@@ -3151,7 +3183,9 @@ function startAlbumAudio() {
   if (bar) bar.classList.remove("hide");
   const currentTrack = albumPlayer.tracks[albumPlayer.currentIndex];
   currentlyPlayingSlug = slugify(currentTrack.title);
-  localStorage.setItem('lastListenedArtist', currentTrack.artist);
+  // Store first artist for "last listened" feature
+  const firstArtist = parseArtists(currentTrack.artist)[0] || currentTrack.artist;
+  localStorage.setItem('lastListenedArtist', firstArtist);
   const audio = new Audio();
   albumPlayer.audio = audio;
   audio.preservesPitch = false;
@@ -3176,8 +3210,8 @@ function startAlbumAudio() {
 
   audio.addEventListener("canplaythrough", () => {
     audio.play();
-    // Track the play for album track
-    trackPlay(slugify(currentTrack.artist), slugify(currentTrack.title));
+    // Track the play for album track (use first artist slug)
+    trackPlay(slugify(firstArtist), slugify(currentTrack.title));
   });
 
   audio.addEventListener("error", () => {
@@ -3722,11 +3756,14 @@ function updatePersistentPlayer() {
     };
 
     const separator = document.createTextNode(" • ");
-    const artistText = document.createTextNode(current.artist);
+    
+    // Create artist links element for multi-artist support
+    const artistEl = document.createElement('span');
+    artistEl.innerHTML = renderArtistLinks(current.artist);
 
     barMeta.appendChild(albumEl);
     barMeta.appendChild(separator);
-    barMeta.appendChild(artistText);
+    barMeta.appendChild(artistEl);
   }
 
   // Update queue button badge
@@ -3914,10 +3951,28 @@ function setupAudioPlayer(track) {
   audio.webkitPreservesPitch = false;   
 
   // Check if audio file exists
-  const audioExists = track.file && track.file !== '';
+  const audioFileProvided = track.file && track.file !== '';
   
-  // Disable player controls if no audio file
-  if (!audioExists) {
+  // Function to show the audio missing warning
+  function showAudioMissingWarning() {
+    const warningContainer = document.getElementById('audio-warning-container');
+    if (warningContainer) {
+      warningContainer.innerHTML = `
+        <div class="bg-yellow-800 border border-yellow-600 text-yellow-200 px-4 py-3 rounded mb-4">
+          <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="font-medium">Audio file not found</span>
+          </div>
+          <p class="mt-1 text-sm">The audio file for this track is missing, invalid, or too short (under 10 seconds).</p>
+        </div>
+      `;
+    }
+  }
+  
+  // Function to disable player controls
+  function disablePlayerControls() {
     playPause.disabled = true;
     playPause.style.opacity = '0.5';
     playPause.style.cursor = 'not-allowed';
@@ -3930,8 +3985,29 @@ function setupAudioPlayer(track) {
     volumeSlider.disabled = true;
     volumeSlider.style.opacity = '0.5';
     timestamp.textContent = 'No audio file';
+  }
+  
+  // Disable player controls if no audio file provided
+  if (!audioFileProvided) {
+    showAudioMissingWarning();
+    disablePlayerControls();
     return; // Exit early if no audio
   }
+  
+  // Check audio duration when metadata loads - if under 10 seconds, treat as missing
+  audio.addEventListener('loadedmetadata', function checkDuration() {
+    if (audio.duration < 10) {
+      showAudioMissingWarning();
+      disablePlayerControls();
+      audio.removeEventListener('loadedmetadata', checkDuration);
+    }
+  });
+  
+  // Also handle error loading audio file
+  audio.addEventListener('error', function() {
+    showAudioMissingWarning();
+    disablePlayerControls();
+  });
 
   function updateSpeedFill(slider, valueEl) {
     const min = parseFloat(slider.min) || 0.5;
