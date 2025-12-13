@@ -18,7 +18,14 @@
     "bio": "ive been workin",
     "muted": false,
     "selectedGradient": 2,
-    "profilePicture": null
+    "profilePicture": null,
+    "verificationPending": false,
+    "isVerified": true,
+    "verifiedAt": "2025-12-13T20:32:28.827Z",
+    "dailyUploads": {
+      "count": 2,
+      "date": "2025-12-13"
+    }
   },
   {
     "id": "3",
@@ -58,6 +65,13 @@
     "isAdmin": false,
     "bio": "The official account of HyperTunes. Hello!",
     "selectedGradient": 1,
-    "profilePicture": "/profile-pictures/6_1764439536995.jpg"
+    "profilePicture": "/profile-pictures/6_1764439536995.jpg",
+    "isVerified": true,
+    "verifiedAt": "2025-12-13T20:49:05.829Z",
+    "verificationPending": false,
+    "dailyUploads": {
+      "count": 0,
+      "date": "2025-12-13"
+    }
   }
 ]

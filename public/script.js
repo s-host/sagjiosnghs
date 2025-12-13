@@ -34,6 +34,17 @@ function renderArtistLinks(artistString, separator = ', ') {
   ).join(separator);
 }
 
+// Render verification badge HTML
+function renderVerifiedBadge(isVerified, small = false) {
+  if (!isVerified) return '';
+  const sizeClass = small ? 'verified-badge-small' : '';
+  return `<span class="verified-badge ${sizeClass}" title="Verified User">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+  </span>`;
+}
+
 function isSameTrack(a, b) {
   return slugify(a.artist) === slugify(b.artist) &&
          slugify(a.title) === slugify(b.title);
@@ -51,10 +62,10 @@ function navigateTo(path) {
   router();
 }
 
-function updateUIForAdmin(isAdmin) {
+function updateUIForAdmin(isAdmin, isVerified = false) {
   document.getElementById('login-button').style.display = isAdmin ? 'none' : 'inline-block';
   document.getElementById('logout-button').style.display = isAdmin ? 'inline-block' : 'none';
-  document.getElementById('add-song-link').style.display = isAdmin ? 'inline-block' : 'none';
+  document.getElementById('add-song-link').style.display = (isAdmin || isVerified) ? 'inline-block' : 'none';
   document.getElementById('login-box').style.display = 'none';
 }
 
@@ -489,6 +500,10 @@ function renderSong(artistSlug, songSlug) {
 
   if (!track) return renderNotFound();
 
+  // Add slug properties for edit functionality
+  track.slugArtist = artistSlug;
+  track.slugTitle = songSlug;
+
   // Initial render with loading state - we'll check audio validity after
   const audioFileProvided = track.file && track.file !== '';
   
@@ -580,7 +595,11 @@ function renderSong(artistSlug, songSlug) {
           <button onclick="deleteTrack('${track.slugArtist}', '${track.slugTitle}', '${track.file}')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">Delete Track</button>
           <button onclick="editTrack('${track.slugArtist}', '${track.slugTitle}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Edit Track</button>
         </div>
-      ` : ''}
+      ` : (window.currentUser && track.uploadedBy === window.currentUser.id ? `
+        <div class="flex gap-4 mt-4">
+          <button onclick="editTrack('${track.slugArtist}', '${track.slugTitle}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Edit Track</button>
+        </div>
+      ` : '')}
     </div>
 
     <!-- Comments Section -->
@@ -924,11 +943,12 @@ async function renderPlaylist(playlistId) {
                 const profilePic = collab.profilePicture ? 
                   `<div class="w-6 h-6 rounded-full" style="background-image: url('${collab.profilePicture}'); background-size: cover; background-position: center;"></div>` :
                   `<div class="w-6 h-6 rounded-full profile-gradient-${collab.selectedGradient || 1} flex items-center justify-center text-xs font-bold text-white">${(collab.username || '').substring(0,1).toUpperCase()}</div>`;
+                const verifiedBadge = renderVerifiedBadge(collab.isVerified, true);
                 
                 return `
                   <div class="track flex items-center gap-2 bg-gray-700 rounded px-2 py-1">
                     ${profilePic}
-                    <span class="text-sm hover:underline cursor-pointer" onclick="navigateTo('/profile/${collab.id}')">${escapeHtml(collab.username)}</span>
+                    <span class="text-sm hover:underline cursor-pointer flex items-center" onclick="navigateTo('/profile/${collab.id}')">${escapeHtml(collab.username)}${verifiedBadge}</span>
                     ${isOwner ? `<button onclick="removeCollaborator('${playlist.id}', '${collab.id}')" class="text-red-400 hover:text-red-300 ml-1 text-xs">×</button>` : ''}
                   </div>
                 `;
@@ -2023,9 +2043,14 @@ async function renderProfile(userId) {
               ${user.profilePicture ? '' : `<span class="text-2xl font-bold text-white">${getInitials(user.username)}</span>`}
             </div>
             <div>
-              <h1 class="text-3xl font-bold">${escapeHtml(user.username)}</h1>
+              <h1 class="text-3xl font-bold flex items-center">
+                ${escapeHtml(user.username)}${renderVerifiedBadge(user.isVerified)}
+              </h1>
               <p class="text-gray-400">Member since ${formatDate(user.createdAt)}</p>
-              ${user.isAdmin ? '<span class="bg-yellow-600 text-yellow-100 px-2 py-1 rounded text-xs font-semibold">ADMIN</span>' : ''}
+              <div class="flex gap-2 mt-1">
+                ${user.isAdmin ? '<span class="bg-yellow-600 text-yellow-100 px-2 py-1 rounded text-xs font-semibold">ADMIN</span>' : ''}
+                ${user.isVerified && !user.isAdmin ? '<span class="bg-blue-600 text-blue-100 px-2 py-1 rounded text-xs font-semibold">VERIFIED</span>' : ''}
+              </div>
             </div>
           </div>
 
@@ -2054,8 +2079,9 @@ async function renderProfile(userId) {
             <div class="space-y-3 text-gray-300">
               <div><span class="text-gray-400">User ID:</span> ${escapeHtml(user.id)}</div>
               <div><span class="text-gray-400">Username:</span> ${escapeHtml(user.username)}</div>
-              <div><span class="text-gray-400">Account Type:</span> ${user.isAdmin ? 'Administrator' : 'Standard User'}</div>
+              <div><span class="text-gray-400">Account Type:</span> ${user.isAdmin ? 'Administrator' : (user.isVerified ? 'Verified User' : 'Standard User')}</div>
               <div><span class="text-gray-400">Created:</span> ${formatDate(user.createdAt)}</div>
+              ${user.isVerified && user.verifiedAt ? `<div><span class="text-gray-400">Verified:</span> ${formatDate(user.verifiedAt)}</div>` : ''}
             </div>
             ${isOwnProfile ? `
               <div class="mt-4 pt-4 border-t border-gray-700 space-y-2">
@@ -2073,6 +2099,26 @@ async function renderProfile(userId) {
                     🗑️ Delete Profile Picture
                   </button>` : ''}
                 </div>
+                ${!user.isAdmin ? `
+                  <div class="verification-controls pt-2">
+                    ${user.isVerified ? `
+                      <div class="text-green-400 text-sm flex items-center gap-1">
+                        ✓ Your account is verified
+                      </div>
+                    ` : user.verificationPending ? `
+                      <div class="space-y-2">
+                        <div class="text-yellow-400 text-sm">⏳ Verification request pending...</div>
+                        <button id="cancel-verification-btn" class="text-red-400 hover:text-red-300 text-sm hover:underline block">
+                          ✕ Cancel Verification Request
+                        </button>
+                      </div>
+                    ` : `
+                      <button id="request-verification-btn" class="text-purple-400 hover:text-purple-300 text-sm hover:underline block">
+                        ✓ Request Verification
+                      </button>
+                    `}
+                  </div>
+                ` : ''}
               </div>
             ` : ''}
           </div>
@@ -2274,6 +2320,60 @@ async function renderProfile(userId) {
         } catch (error) {
           console.error('Delete error:', error);
           alert('Failed to delete profile picture: ' + error.message);
+        }
+      });
+    }
+
+    // Wire verification request button
+    const requestVerificationBtn = document.getElementById('request-verification-btn');
+    if (requestVerificationBtn) {
+      requestVerificationBtn.addEventListener('click', async () => {
+        if (!confirm('Request account verification? This will allow you to upload songs once approved (2 per day limit).')) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/profile/${user.id}/request-verification`, {
+            method: 'POST'
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            showSuccessMessage('Verification request submitted! An admin will review your request.');
+            renderProfile(userId); // Refresh to show pending state
+          } else {
+            alert('Failed to request verification: ' + result.message);
+          }
+        } catch (error) {
+          console.error('Verification request error:', error);
+          alert('Failed to request verification');
+        }
+      });
+    }
+
+    // Wire cancel verification button
+    const cancelVerificationBtn = document.getElementById('cancel-verification-btn');
+    if (cancelVerificationBtn) {
+      cancelVerificationBtn.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to cancel your verification request?')) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/profile/${user.id}/request-verification`, {
+            method: 'DELETE'
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            showSuccessMessage('Verification request cancelled.');
+            renderProfile(userId); // Refresh
+          } else {
+            alert('Failed to cancel verification request: ' + result.message);
+          }
+        } catch (error) {
+          console.error('Cancel verification error:', error);
+          alert('Failed to cancel verification request');
         }
       });
     }
@@ -4304,11 +4404,18 @@ function renderSearchResults(query) {
     }
   });
 
-  const artistSet = new Set(
-    tracks
-      .filter(t => t.artist.toLowerCase().includes(q))
-      .map(t => t.artist)
-  );
+  const artistSet = new Set();
+  tracks
+    .filter(t => t.artist.toLowerCase().includes(q))
+    .forEach(t => {
+      // Parse multi-artist tracks and add each individual artist
+      const artists = parseArtists(t.artist);
+      artists.forEach(artist => {
+        if (artist.toLowerCase().includes(q)) {
+          artistSet.add(artist);
+        }
+      });
+    });
 
   // Search for users and playlists
   Promise.all([
@@ -4371,6 +4478,7 @@ function renderSearchResults(query) {
         ${matchingUsers.map(user => {
           const gradientClass = `profile-gradient-${user.selectedGradient || 1}`;
           const adminBadge = user.isAdmin ? ' <span class="text-xs bg-red-500 text-white px-1 py-0.5 rounded ml-1">ADMIN</span>' : '';
+          const verifiedBadge = renderVerifiedBadge(user.isVerified, true);
           const profilePicHtml = user.profilePicture 
             ? `<div class="w-12 h-12 rounded-full" style="background-image: url('${user.profilePicture}'); background-size: cover; background-position: center;"></div>`
             : `<div class="w-12 h-12 ${gradientClass} rounded-full flex items-center justify-center text-white font-bold text-lg">${user.username.charAt(0).toUpperCase()}</div>`;
@@ -4378,7 +4486,7 @@ function renderSearchResults(query) {
             <div class="flex items-center space-x-3">
               ${profilePicHtml}
               <div class="flex-1">
-                <div class="font-semibold cursor-pointer hover:underline" onclick="navigateTo('/profile/${user.id}')">${escapeHtml(user.username)}${adminBadge}</div>
+                <div class="font-semibold cursor-pointer hover:underline flex items-center" onclick="navigateTo('/profile/${user.id}')">${escapeHtml(user.username)}${verifiedBadge}${adminBadge}</div>
                 ${user.bio ? `<div class="text-sm text-gray-400 mt-1 line-clamp-2 biotext">${escapeHtml(user.bio)}</div>` : ''}
               </div>
             </div>
@@ -4567,7 +4675,25 @@ async function checkAdmin() {
 
   const addSongLink = document.getElementById("add-song-link");
   if (addSongLink) {
-    addSongLink.style.display = isAdmin ? "inline-block" : "none";
+    // Show for admins immediately, check verified status for regular users
+    if (isAdmin) {
+      addSongLink.style.display = "inline-block";
+    } else if (isLoggedIn && user) {
+      // Fetch user profile to check verification status
+      try {
+        const profileRes = await fetch(`/api/profile/${user.id}`);
+        const profileData = await profileRes.json();
+        if (profileData.success && profileData.user.isVerified) {
+          addSongLink.style.display = "inline-block";
+        } else {
+          addSongLink.style.display = "none";
+        }
+      } catch (err) {
+        addSongLink.style.display = "none";
+      }
+    } else {
+      addSongLink.style.display = "none";
+    }
   }
 
   // Add admin panel link for admins
@@ -4835,6 +4961,8 @@ function buildCommentItem(c, currentUser) {
   const isAdmin = currentUser && currentUser.isAdmin;
   const canEdit = !!(isOwner || isAdmin);
   const editedBadge = c.editedAt ? `<span class="ml-2 text-xs text-gray-400">(edited)</span>` : '';
+  const verifiedBadge = renderVerifiedBadge(c.isVerified, true);
+  const adminBadge = c.isAdmin ? ' <span class="text-xs bg-yellow-600 text-yellow-100 px-1 py-0.5 rounded ml-1">ADMIN</span>' : '';
   
   // Use profile picture if available, otherwise use gradient
   const profilePictureHtml = c.profilePicture ? 
@@ -4846,7 +4974,9 @@ function buildCommentItem(c, currentUser) {
       <div class="flex items-center gap-3 mb-2">
         ${profilePictureHtml}
         <div class="flex-1">
-          <a class="hover:underline profilelink cursor-pointer" href="${profileHref}" onclick="navigateTo('${profileHref}'); return false;">${c.username}</a>
+          <span class="flex items-center">
+            <a class="hover:underline profilelink cursor-pointer" href="${profileHref}" onclick="navigateTo('${profileHref}'); return false;">${c.username}</a>${verifiedBadge}${adminBadge}
+          </span>
           <div class="text-xs text-gray-400">${date} ${editedBadge}</div>
         </div>
         ${canEdit ? `<div class="flex gap-2"> 

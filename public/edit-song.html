@@ -8,7 +8,21 @@
   <link href="/style.css" rel="stylesheet">
 </head>
 <body class="bg-gray-900 text-white">
-  <main class="p-6 max-w-xl mx-auto">
+  <div id="loading" class="text-center p-8">
+    <p>Checking access...</p>
+  </div>
+
+  <div id="access-denied" class="hidden text-center p-8">
+    <div class="bg-red-900 border border-red-600 rounded-lg p-6 max-w-md mx-auto">
+      <h2 class="text-xl font-bold mb-2">Access Denied</h2>
+      <p id="access-denied-message" class="text-red-200 mb-4">You don't have permission to edit this track.</p>
+      <button onclick="window.location.href='/'" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded">
+        Go to Home
+      </button>
+    </div>
+  </div>
+
+  <main id="main-content" class="hidden p-6 max-w-xl mx-auto">
     <h2 class="text-2xl font-bold mb-4">Edit Track</h2>
     <form id="editTrackForm" class="space-y-4">
       <input name="title" placeholder="Song Title" class="w-full p-2 rounded bg-gray-700" required />
@@ -28,10 +42,12 @@
         <input type="file" name="audioFile" accept=".mp3,.wav,.ogg,.m4a" class="w-full p-2 rounded bg-gray-700 text-white" />
       </div>
       
-      <div class="flex gap-4">
+      <div id="category-options" class="flex gap-4">
         <label><input type="checkbox" name="isNew" /> New</label>
         <label><input type="checkbox" name="isPopular" /> Popular</label>
         <label><input type="checkbox" name="isFeatured" /> Featured</label>
+      </div>
+      <div class="flex gap-4">
         <label><input type="checkbox" name="isClean" /> Clean</label>
       </div>
       <input name="albumNumber" placeholder="Track #" class="w-full p-2 rounded bg-gray-700" />
@@ -40,26 +56,96 @@
     </form>
   </main>
   <script>
-  // Load original track details
+  let isAdmin = false;
+  let isVerified = false;
+  let currentUserId = null;
+  let currentTrack = null;
+
+  // Check access and load track
+  async function checkAccessAndLoad() {
+    try {
+      const authRes = await fetch('/api/auth-status');
+      const authData = await authRes.json();
+      
+      if (authData.isAdmin) {
+        isAdmin = true;
+      }
+      
+      if (authData.isLoggedIn && authData.user) {
+        currentUserId = authData.user.id;
+        
+        // Fetch full user profile to check verified status
+        const profileRes = await fetch(`/api/profile/${authData.user.id}`);
+        const profileData = await profileRes.json();
+        
+        if (profileData.success && profileData.user.isAdmin) {
+          isAdmin = true;
+        }
+        if (profileData.success && profileData.user.isVerified) {
+          isVerified = true;
+        }
+      }
+
+      if (!isAdmin && !isVerified) {
+        showAccessDenied('Only administrators and verified users can edit tracks.');
+        return;
+      }
+
+      // Load the track
+      await loadEditTrack();
+    } catch (error) {
+      console.error('Access check failed:', error);
+      showAccessDenied('Failed to verify access.');
+    }
+  }
+
+  function showAccessDenied(message) {
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('access-denied').classList.remove('hidden');
+    document.getElementById('access-denied-message').textContent = message;
+  }
+
   async function loadEditTrack() {
     const artistSlug = localStorage.getItem('editTrackArtistSlug');
     const titleSlug = localStorage.getItem('editTrackTitleSlug');
     const res = await fetch("/api/tracks");
     let tracks = await res.json();
-    // Add slug fields:
+    
     function slugify(str) {
       return str.toLowerCase().replace(/'/g, '').replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '');
     }
-    // Add slugs to each track for lookup!
+    
     tracks = tracks.map(t => ({
       ...t,
       slugArtist: slugify(t.artist),
       slugTitle: slugify(t.title)
     }));
+    
     const track = tracks.find(
       t => t.slugArtist === artistSlug && t.slugTitle === titleSlug
     );
-    if (!track) { alert("Track not found!"); window.location.href = '/'; return; }
+    
+    if (!track) {
+      showAccessDenied('Track not found!');
+      return;
+    }
+
+    currentTrack = track;
+
+    // Check if verified user can edit this track (must be their upload)
+    if (!isAdmin && isVerified) {
+      if (track.uploadedBy !== currentUserId) {
+        showAccessDenied('You can only edit tracks you uploaded.');
+        return;
+      }
+      // Hide category options for verified users
+      document.getElementById('category-options').style.display = 'none';
+    }
+
+    // Show main content
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('main-content').classList.remove('hidden');
+
     // Fill form
     const form = document.getElementById("editTrackForm");
     form.title.value = track.title;
@@ -73,7 +159,8 @@
     form.isClean.checked = !!track.isClean;
     form.albumNumber.value = track.albumNumber || '';
   }
-  loadEditTrack();
+  
+  checkAccessAndLoad();
 
   // Add download button functionality
   document.getElementById("downloadAudio").addEventListener("click", async function() {
@@ -83,10 +170,9 @@
       return;
     }
     try {
-      // Create a temporary anchor to trigger download
       const a = document.createElement('a');
       a.href = fileUrl;
-      a.download = fileUrl.split('/').pop(); // Get filename from URL
+      a.download = fileUrl.split('/').pop();
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -107,7 +193,6 @@
       let newFilePath = form.file.value;
       
       if (audioFile) {
-        // Upload the new audio file first
         const fileFormData = new FormData();
         fileFormData.append('audioFile', audioFile);
         
@@ -122,7 +207,7 @@
           alert('Audio file uploaded successfully!');
         } else {
           const error = await fileUploadRes.json();
-          alert('File upload failed: ' + error.error);
+          alert('File upload failed: ' + (error.error || 'Unknown error'));
           return;
         }
       }
@@ -134,12 +219,16 @@
         album: form.album.value,
         cover: form.cover.value,
         file: newFilePath,
-        isNew: form.isNew.checked,
-        isPopular: form.isPopular.checked,
-        isFeatured: form.isFeatured.checked,
         isClean: form.isClean.checked,
         albumNumber: form.albumNumber.value
       };
+
+      // Only include category flags for admins
+      if (isAdmin) {
+        updatedTrack.isNew = form.isNew.checked;
+        updatedTrack.isPopular = form.isPopular.checked;
+        updatedTrack.isFeatured = form.isFeatured.checked;
+      }
       
       // Update track metadata
       const updateRes = await fetch(`/api/tracks/${artistSlug}/${titleSlug}`, {
@@ -152,8 +241,8 @@
         alert("Track updated successfully!");
         window.location.href = '/';
       } else {
-        const error = await updateRes.text();
-        alert("Update failed: " + error);
+        const error = await updateRes.json();
+        alert("Update failed: " + (error.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Update error:', error);

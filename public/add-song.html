@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Add New Song - HackTunes</title>
+  <title>Add New Song - HyperTunes</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link href="/style.css" rel="stylesheet">
   <link rel="icon" href="favicon.ico" type="image/x-icon">
@@ -11,32 +11,64 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
 </head>
 <body class="bg-gray-900 text-white p-8">
-  <h1 class="text-4xl mb-6">Add New Song</h1>
+  <div id="loading" class="text-center p-8">
+    <p>Checking access...</p>
+  </div>
 
-  <form id="add-song-form" class="flex flex-col max-w-md space-y-4" enctype="multipart/form-data">
-    <input name="title" id="title" placeholder="Song Title" required class="p-2 rounded text-black" />
-    <input name="artist" id="artist" placeholder="Artist" required class="p-2 rounded text-black" />
-    <input name="album" id="album" placeholder="Album" class="p-2 rounded text-black" />
-    <input name="cover" id="cover" placeholder="Cover URL" class="p-2 rounded text-black" />
-    <input name="audioFile" id="audioFile" type="file" accept="audio/*" required class="text-white" />
-    <div id="metadata-status" class="text-sm text-gray-400 hidden"></div>
-    <label for="category" class="block text-sm font-medium text-gray-300">Category</label>
-    <select id="category" name="category" class="mt-1 block w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2">
-        <option value="">-- Select a category --</option>
-        <option value="isPopular">Popular</option>
-        <option value="isNew">New</option>
-        <option value="isFeatured">Featured</option>
-    </select>
-    <select id="clean" name="clean" class="mt-1 block w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2">
-        <option value="">Clean?</option>
-        <option value="isClean">Yes</option>
-        <option value="">No</option>
-    </select>
-    <label for="releaseDate" class="block text-sm font-medium text-gray-300">Release Date</label>
-  <input type="date" id="releaseDate" name="releaseDate" required class="mt-1 block w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2" />
-  <input name="albumNumber" id="albumNumber" type="number" placeholder="Track Number in Album" class="p-2 rounded text-black" />
-    <button type="submit" class="bg-green-600 hover:bg-green-700 py-2 rounded font-bold">Upload & Add Song</button>
-  </form>
+  <div id="access-denied" class="hidden text-center p-8">
+    <div class="bg-red-900 border border-red-600 rounded-lg p-6 max-w-md mx-auto">
+      <h2 class="text-xl font-bold mb-2">Access Denied</h2>
+      <p class="text-red-200 mb-4">Only administrators and verified users can upload songs.</p>
+      <button onclick="window.location.href='/'" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded">
+        Go to Home
+      </button>
+    </div>
+  </div>
+
+  <div id="main-content" class="hidden">
+    <h1 class="text-4xl mb-4">Add New Song</h1>
+    
+    <div id="upload-info" class="hidden mb-6 p-4 rounded-lg bg-blue-900 border border-blue-600">
+      <div class="flex items-center gap-2">
+        <span class="verified-badge" style="width: 20px; height: 20px; background-color: #3b82f6; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </span>
+        <span class="font-semibold">Verified User</span>
+      </div>
+      <p id="upload-count" class="text-sm text-blue-200 mt-2">You can upload <span id="remaining-uploads">2</span> more song(s) today.</p>
+    </div>
+
+    <div id="limit-reached" class="hidden mb-6 p-4 rounded-lg bg-yellow-900 border border-yellow-600">
+      <h3 class="font-semibold text-yellow-200">Daily Limit Reached</h3>
+      <p class="text-sm text-yellow-200 mt-2">You've reached your daily upload limit of 2 songs. Please try again tomorrow.</p>
+    </div>
+
+    <form id="add-song-form" class="flex flex-col max-w-md space-y-4" enctype="multipart/form-data">
+      <input name="title" id="title" placeholder="Song Title" required class="p-2 rounded text-black" />
+      <input name="artist" id="artist" placeholder="Artist" required class="p-2 rounded text-black" />
+      <input name="album" id="album" placeholder="Album" class="p-2 rounded text-black" />
+      <input name="cover" id="cover" placeholder="Cover URL" class="p-2 rounded text-black" />
+      <input name="audioFile" id="audioFile" type="file" accept="audio/*" required class="text-white" />
+      <div id="metadata-status" class="text-sm text-gray-400 hidden"></div>
+      <label for="category" class="block text-sm font-medium text-gray-300">Category</label>
+      <select id="category" name="category" class="mt-1 block w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2">
+          <option value="">-- Select a category --</option>
+          <option value="isPopular">Popular</option>
+          <option value="isNew">New</option>
+          <option value="isFeatured">Featured</option>
+      </select>
+      <div class="flex items-center gap-2">
+        <input type="checkbox" id="clean" name="clean" value="isClean" class="w-4 h-4 rounded bg-gray-700 border-gray-600">
+        <label for="clean" class="text-sm text-gray-300">This song is clean (no explicit content)</label>
+      </div>
+      <label for="releaseDate" class="block text-sm font-medium text-gray-300">Release Date</label>
+      <input type="date" id="releaseDate" name="releaseDate" required class="mt-1 block w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2" />
+      <input name="albumNumber" id="albumNumber" type="number" placeholder="Track Number in Album" class="p-2 rounded text-black" />
+      <button type="submit" id="submit-btn" class="bg-green-600 hover:bg-green-700 py-2 rounded font-bold">Upload & Add Song</button>
+    </form>
+  </div>
 
   <!-- Metadata confirmation modal -->
   <div id="metadata-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
@@ -55,6 +87,73 @@
   </div>
 
   <script>
+    // Check access on page load
+    let isAdmin = false;
+    let isVerified = false;
+    let remainingUploads = 2;
+
+    async function checkAccess() {
+      try {
+        const response = await fetch('/api/auth-status');
+        const data = await response.json();
+        
+        if (data.isAdmin) {
+          isAdmin = true;
+          document.getElementById('loading').classList.add('hidden');
+          document.getElementById('main-content').classList.remove('hidden');
+          return;
+        }
+        
+        if (data.isLoggedIn && data.user) {
+          // Check if user is verified
+          const profileRes = await fetch(`/api/profile/${data.user.id}`);
+          const profileData = await profileRes.json();
+          
+          if (profileData.success && profileData.user.isVerified) {
+            isVerified = true;
+            
+            // Calculate remaining uploads
+            const today = new Date().toISOString().split('T')[0];
+            const dailyUploads = profileData.user.dailyUploads;
+            
+            if (dailyUploads && dailyUploads.date === today) {
+              remainingUploads = Math.max(0, 2 - dailyUploads.count);
+            } else {
+              remainingUploads = 2;
+            }
+            
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+            document.getElementById('upload-info').classList.remove('hidden');
+            document.getElementById('remaining-uploads').textContent = remainingUploads;
+            
+            // Hide category selection for verified users (only admins can set category)
+            const categoryLabel = document.querySelector('label[for="category"]');
+            const categorySelect = document.getElementById('category');
+            if (categoryLabel) categoryLabel.style.display = 'none';
+            if (categorySelect) categorySelect.style.display = 'none';
+            
+            if (remainingUploads === 0) {
+              document.getElementById('upload-info').classList.add('hidden');
+              document.getElementById('limit-reached').classList.remove('hidden');
+              document.getElementById('add-song-form').classList.add('hidden');
+            }
+            return;
+          }
+        }
+        
+        // Access denied
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('access-denied').classList.remove('hidden');
+      } catch (error) {
+        console.error('Error checking access:', error);
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('access-denied').classList.remove('hidden');
+      }
+    }
+
+    checkAccess();
+
     // Store extracted metadata temporarily
     let pendingMetadata = null;
 

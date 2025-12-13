@@ -3,6 +3,24 @@
     "unread": [],
     "history": [
       {
+        "id": "1765658110465_gukphq",
+        "type": "new_release",
+        "artistSlug": "jane-remover",
+        "artistName": "Jane Remover",
+        "trackTitle": "misplace",
+        "trackSlug": "misplace",
+        "createdAt": 1765658110465
+      },
+      {
+        "id": "1765658073071_74dp9u",
+        "type": "new_release",
+        "artistSlug": "jane-remover",
+        "artistName": "Jane Remover",
+        "trackTitle": "pretender",
+        "trackSlug": "pretender",
+        "createdAt": 1765658073071
+      },
+      {
         "id": "1765561266129_fu7jg2",
         "type": "new_release",
         "artistSlug": "jane-remover",

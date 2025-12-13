@@ -131,6 +131,61 @@
       </div>
     </div>
 
+    <!-- Verification Requests Section -->
+    <div class="mb-8">
+      <h2 class="text-3xl font-bold mb-4 flex items-center gap-2">
+        <span class="verified-badge" style="width: 24px; height: 24px;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </span>
+        Verification Requests
+      </h2>
+      
+      <div id="verification-loading" class="text-center p-4">
+        <p>Loading verification requests...</p>
+      </div>
+
+      <div id="verification-container" class="hidden">
+        <div id="verification-stats" class="text-gray-400 mb-4">
+          <!-- Stats will be inserted here -->
+        </div>
+
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+          <table class="w-full" id="verification-table">
+            <thead class="bg-gray-700">
+              <tr>
+                <th class="px-4 py-3 text-left">Username</th>
+                <th class="px-4 py-3 text-left">Member Since</th>
+                <th class="px-4 py-3 text-left">Requested</th>
+                <th class="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="verification-table-body" class="divide-y divide-gray-700">
+              <!-- Pending users will be inserted here -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Verification Pagination Controls -->
+        <div id="verification-pagination-container" class="mt-6 flex items-center justify-center">
+          <div class="flex items-center gap-2">
+            <button id="verification-prev-page" onclick="changeVerificationPage(-1)" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+              Previous
+            </button>
+            <span id="verification-page-info" class="text-gray-300 px-4">Page 1 of 1</span>
+            <button id="verification-next-page" onclick="changeVerificationPage(1)" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+              Next
+            </button>
+          </div>
+        </div>
+
+        <div id="no-verification-requests" class="hidden text-center p-8 bg-gray-800 rounded-lg mt-4">
+          <p class="text-green-400 text-lg">✓ No pending verification requests!</p>
+        </div>
+      </div>
+    </div>
+
     <h2 class="text-3xl font-bold mb-6">User Management</h2>
     
     <!-- Search and Stats Section -->
@@ -547,14 +602,28 @@
           ? '<span class="bg-orange-600 text-white px-2 py-1 rounded text-xs">Muted</span>'
           : '<span class="bg-green-600 text-white px-2 py-1 rounded text-xs">Active</span>';
         
+        const verifiedBadge = user.isVerified 
+          ? `<span class="verified-badge verified-badge-small" title="Verified User" style="display: inline-flex; width: 14px; height: 14px; background-color: #3b82f6; border-radius: 50%; margin-left: 4px; align-items: center; justify-content: center;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 10px; height: 10px;">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>`
+          : '';
+        
+        const pendingBadge = user.verificationPending 
+          ? '<span class="bg-purple-600 text-white px-2 py-1 rounded text-xs ml-1">Pending</span>'
+          : '';
+        
         const accountType = user.isAdmin 
           ? '<span class="bg-yellow-600 text-white px-2 py-1 rounded text-xs">Admin</span>'
-          : '<span class="bg-blue-600 text-white px-2 py-1 rounded text-xs">User</span>';
+          : user.isVerified
+          ? '<span class="bg-blue-600 text-white px-2 py-1 rounded text-xs">Verified</span>'
+          : '<span class="bg-gray-600 text-white px-2 py-1 rounded text-xs">User</span>';
 
         tr.innerHTML = `
           <td class="px-4 py-3">${escapeHtml(user.id)}</td>
           <td class="px-4 py-3">
-            <a href="/profile/${user.id}" class="hover:underline text-blue-400">${escapeHtml(user.username)}</a>
+            <a href="/profile/${user.id}" class="hover:underline text-blue-400">${escapeHtml(user.username)}</a>${verifiedBadge}${pendingBadge}
           </td>
           <td class="px-4 py-3">${accountType}</td>
           <td class="px-4 py-3">${statusBadge}</td>
@@ -566,6 +635,12 @@
                         class="px-2 py-1 rounded text-xs bg-purple-600 hover:bg-purple-700 text-white">
                   Comments
                 </button>
+                ${!user.isAdmin ? `
+                  <button onclick="toggleVerify('${user.id}', ${!user.isVerified})" 
+                          class="px-2 py-1 rounded text-xs ${user.isVerified ? 'bg-gray-600 hover:bg-gray-700' : 'bg-blue-600 hover:bg-blue-700'} text-white">
+                    ${user.isVerified ? 'Unverify' : 'Verify'}
+                  </button>
+                ` : ''}
                 <button onclick="toggleAdmin('${user.id}', ${!user.isAdmin})" 
                         class="px-2 py-1 rounded text-xs ${user.isAdmin ? 'bg-orange-600 hover:bg-orange-700' : 'bg-yellow-600 hover:bg-yellow-700'} text-white">
                   ${user.isAdmin ? 'Demote' : 'Promote'}
@@ -1012,9 +1087,246 @@
       return str.toLowerCase().replace(/[^\w]+/g, "-");
     }
 
-    // Load users and missing audio tracks on page load
+    // =================== VERIFICATION SYSTEM ===================
+    
+    let pendingVerifications = [];
+    let currentVerificationPage = 1;
+    const verificationsPerPage = 10;
+
+    async function loadVerificationRequests() {
+      const isAdmin = await checkAuth();
+      if (!isAdmin) return;
+
+      try {
+        const res = await fetch('/api/admin/verification-requests');
+        if (!res.ok) {
+          throw new Error('Failed to fetch verification requests');
+        }
+        
+        const data = await res.json();
+        pendingVerifications = data.users;
+        
+        document.getElementById('verification-loading').classList.add('hidden');
+        document.getElementById('verification-container').classList.remove('hidden');
+        
+        currentVerificationPage = 1;
+        renderVerificationRequests();
+      } catch (error) {
+        console.error('Error loading verification requests:', error);
+      }
+    }
+
+    function changeVerificationPage(direction) {
+      const totalPages = Math.ceil(pendingVerifications.length / verificationsPerPage);
+      const newPage = currentVerificationPage + direction;
+      
+      if (newPage >= 1 && newPage <= totalPages) {
+        currentVerificationPage = newPage;
+        renderVerificationRequests();
+      }
+    }
+
+    function renderVerificationRequests() {
+      const tbody = document.getElementById('verification-table-body');
+      const table = document.getElementById('verification-table');
+      const noRequests = document.getElementById('no-verification-requests');
+      const statsEl = document.getElementById('verification-stats');
+      const paginationContainer = document.getElementById('verification-pagination-container');
+      
+      statsEl.textContent = `${pendingVerifications.length} pending request${pendingVerifications.length !== 1 ? 's' : ''}`;
+      
+      if (pendingVerifications.length === 0) {
+        table.classList.add('hidden');
+        noRequests.classList.remove('hidden');
+        paginationContainer.classList.add('hidden');
+        return;
+      }
+      
+      table.classList.remove('hidden');
+      noRequests.classList.add('hidden');
+      paginationContainer.classList.remove('hidden');
+      tbody.innerHTML = '';
+
+      // Pagination logic
+      const totalPages = Math.ceil(pendingVerifications.length / verificationsPerPage);
+      const startIndex = (currentVerificationPage - 1) * verificationsPerPage;
+      const endIndex = startIndex + verificationsPerPage;
+      const verificationsToShow = pendingVerifications.slice(startIndex, endIndex);
+
+      verificationsToShow.forEach(user => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-700 transition';
+        
+        tr.innerHTML = `
+          <td class="px-4 py-3">
+            <a href="/profile/${user.id}" class="hover:underline text-blue-400">${escapeHtml(user.username)}</a>
+          </td>
+          <td class="px-4 py-3">${formatDate(user.createdAt)}</td>
+          <td class="px-4 py-3">${formatDate(user.verificationRequestedAt)}</td>
+          <td class="px-4 py-3 text-right">
+            <div class="flex justify-end gap-2">
+              <button onclick="approveVerification('${user.id}', '${escapeHtml(user.username)}')" 
+                      class="px-3 py-1 rounded text-sm bg-green-600 hover:bg-green-700 text-white">
+                Approve
+              </button>
+              <button onclick="denyVerification('${user.id}', '${escapeHtml(user.username)}')" 
+                      class="px-3 py-1 rounded text-sm bg-red-600 hover:bg-red-700 text-white">
+                Deny
+              </button>
+            </div>
+          </td>
+        `;
+        
+        tbody.appendChild(tr);
+      });
+
+      // Update pagination controls
+      updateVerificationPaginationControls(totalPages);
+    }
+
+    function updateVerificationPaginationControls(totalPages) {
+      const prevButton = document.getElementById('verification-prev-page');
+      const nextButton = document.getElementById('verification-next-page');
+      const pageInfo = document.getElementById('verification-page-info');
+      
+      if (!prevButton || !nextButton || !pageInfo) return;
+      
+      prevButton.disabled = currentVerificationPage === 1;
+      nextButton.disabled = currentVerificationPage === totalPages || totalPages === 0;
+      
+      if (totalPages === 0) {
+        pageInfo.textContent = 'No requests';
+      } else {
+        pageInfo.textContent = `Page ${currentVerificationPage} of ${totalPages}`;
+      }
+    }
+
+    async function approveVerification(userId, username) {
+      if (!confirm(`Approve verification for ${username}? They will be able to upload up to 2 songs per day.`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/admin/users/${userId}/verify`, {
+          method: 'PUT'
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to verify user');
+        }
+
+        const data = await res.json();
+        
+        // Update local data
+        const userIndex = allUsers.findIndex(u => u.id === userId);
+        if (userIndex !== -1) {
+          allUsers[userIndex] = data.user;
+          const filteredIndex = filteredUsers.findIndex(u => u.id === userId);
+          if (filteredIndex !== -1) {
+            filteredUsers[filteredIndex] = data.user;
+          }
+        }
+        
+        // Remove from pending list
+        pendingVerifications = pendingVerifications.filter(u => u.id !== userId);
+        
+        renderVerificationRequests();
+        renderUsers();
+        showImportSuccess(`${username} has been verified!`);
+      } catch (error) {
+        console.error('Error approving verification:', error);
+        alert('Failed to approve verification');
+      }
+    }
+
+    async function denyVerification(userId, username) {
+      if (!confirm(`Deny verification request from ${username}?`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/admin/users/${userId}/deny-verification`, {
+          method: 'PUT'
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to deny verification');
+        }
+
+        const data = await res.json();
+        
+        // Update local data
+        const userIndex = allUsers.findIndex(u => u.id === userId);
+        if (userIndex !== -1) {
+          allUsers[userIndex] = data.user;
+          const filteredIndex = filteredUsers.findIndex(u => u.id === userId);
+          if (filteredIndex !== -1) {
+            filteredUsers[filteredIndex] = data.user;
+          }
+        }
+        
+        // Remove from pending list
+        pendingVerifications = pendingVerifications.filter(u => u.id !== userId);
+        
+        renderVerificationRequests();
+        renderUsers();
+        showImportSuccess(`Verification request from ${username} has been denied.`);
+      } catch (error) {
+        console.error('Error denying verification:', error);
+        alert('Failed to deny verification request');
+      }
+    }
+
+    async function toggleVerify(userId, shouldVerify) {
+      const user = allUsers.find(u => u.id === userId);
+      if (!user) return;
+
+      const action = shouldVerify ? 'verify' : 'unverify';
+      const message = shouldVerify 
+        ? `Verify ${user.username}? They will be able to upload up to 2 songs per day.`
+        : `Remove verification from ${user.username}? They will no longer be able to upload songs.`;
+      
+      if (!confirm(message)) {
+        return;
+      }
+
+      try {
+        const endpoint = shouldVerify ? 'verify' : 'unverify';
+        const res = await fetch(`/api/admin/users/${userId}/${endpoint}`, {
+          method: 'PUT'
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to update verification status');
+        }
+
+        const data = await res.json();
+        
+        // Update local user data
+        const userIndex = allUsers.findIndex(u => u.id === userId);
+        if (userIndex !== -1) {
+          allUsers[userIndex] = data.user;
+          const filteredIndex = filteredUsers.findIndex(u => u.id === userId);
+          if (filteredIndex !== -1) {
+            filteredUsers[filteredIndex] = data.user;
+          }
+        }
+        
+        updateStats();
+        renderUsers();
+        showImportSuccess(`${user.username} has been ${shouldVerify ? 'verified' : 'unverified'} successfully`);
+      } catch (error) {
+        console.error('Error toggling verification:', error);
+        alert('Failed to update verification status');
+      }
+    }
+
+    // =================== END VERIFICATION SYSTEM ===================
+
+    // Load users, missing audio tracks, and verification requests on page load
     loadUsers();
     loadMissingAudioTracks();
+    loadVerificationRequests();
   </script>
 </body>
 </html>

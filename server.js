@@ -92,6 +92,29 @@ function ensureAdmin(req, res, next) {
   return res.status(403).json({ error: "Access denied. Admins only." });
 }
 
+// Middleware to allow admin or verified users (for song uploads)
+function ensureAdminOrVerified(req, res, next) {
+  // Check if user is logged in
+  if (!req.session || (!req.session.isLoggedIn && !req.session.isAdmin)) {
+    return res.status(403).json({ error: "Access denied. Admin or verified users only." });
+  }
+  
+  // Check if it's the hardcoded admin
+  if (req.session.isAdmin) {
+    return next();
+  }
+  
+  // Check if it's a user with admin or verified privileges
+  if (req.session.user && req.session.user.id) {
+    const user = users.find(u => u.id === req.session.user.id);
+    if (user && (user.isAdmin || user.isVerified)) {
+      return next();
+    }
+  }
+  
+  return res.status(403).json({ error: "Access denied. Admin or verified users only." });
+}
+
 // load existing track data
 const tracksFile = path.join(__dirname, "data", "tracks.json");
 let tracks = [];
@@ -292,8 +315,13 @@ commentsRouter.get('/:artistSlug/:songSlug', (req, res) => {
       }
     }
     
+    // Look up verification status
+    const commentUser = users.find(u => u.id === comment.userId);
+    const isVerified = commentUser ? !!commentUser.isVerified : false;
+    const isAdmin = commentUser ? !!commentUser.isAdmin : (comment.userId === '0');
+    
     // Always use current user info, not stored info
-    return { ...comment, selectedGradient: currentGradient, profilePicture };
+    return { ...comment, selectedGradient: currentGradient, profilePicture, isVerified, isAdmin };
   });
   
   res.json({ success: true, comments: enhancedComments });
@@ -555,8 +583,17 @@ app.delete('/api/tracks/:artistSlug/:songSlug', ensureAdmin, (req, res) => {
   });
 });
 
-// EDIT/UPDATE TRACK endpoint
-app.put('/api/tracks/:artistSlug/:songSlug', ensureAdmin, (req, res) => {
+// EDIT/UPDATE TRACK endpoint (admin or track owner for verified users)
+app.put('/api/tracks/:artistSlug/:songSlug', (req, res) => {
+  // Check authentication
+  if (!req.session || (!req.session.isLoggedIn && !req.session.isAdmin)) {
+    return res.status(403).json({ error: "Access denied. Not authenticated." });
+  }
+
+  const isAdmin = !!req.session.isAdmin || (req.session.user && users.find(u => u.id === req.session.user.id)?.isAdmin);
+  const currentUserId = req.session.user ? req.session.user.id : null;
+  const isVerified = currentUserId ? users.find(u => u.id === currentUserId)?.isVerified : false;
+
   fs.readFile(tracksFilePath, 'utf8', (err, data) => {
     if (err) {
       return res.status(500).send('Internal Server Error: reading file failed');
@@ -580,23 +617,68 @@ app.put('/api/tracks/:artistSlug/:songSlug', ensureAdmin, (req, res) => {
       return res.status(404).send('Track not found');
     }
 
-    // Overwrite track with new data from req.body
-    const updated = Object.assign({}, fileTracks[index], req.body);
+    const track = fileTracks[index];
+
+    // Check if user can edit this track
+    // Admins can edit any track, verified users can only edit their own uploads
+    if (!isAdmin) {
+      if (!isVerified) {
+        return res.status(403).json({ error: "Access denied. Only admins and verified users can edit tracks." });
+      }
+      if (track.uploadedBy !== currentUserId) {
+        return res.status(403).json({ error: "Access denied. You can only edit tracks you uploaded." });
+      }
+    }
+
+    // Build updated track - verified users can't change category flags
+    let updated;
+    if (isAdmin) {
+      // Admins can update everything
+      updated = Object.assign({}, fileTracks[index], req.body);
+    } else {
+      // Verified users can only update basic info, not category flags
+      const { title, artist, album, cover, file, albumNumber, isClean } = req.body;
+      updated = Object.assign({}, fileTracks[index], {
+        title: title !== undefined ? title : fileTracks[index].title,
+        artist: artist !== undefined ? artist : fileTracks[index].artist,
+        album: album !== undefined ? album : fileTracks[index].album,
+        cover: cover !== undefined ? cover : fileTracks[index].cover,
+        file: file !== undefined ? file : fileTracks[index].file,
+        albumNumber: albumNumber !== undefined ? albumNumber : fileTracks[index].albumNumber,
+        isClean: isClean !== undefined ? isClean : fileTracks[index].isClean,
+        // Keep original category flags - verified users can't change these
+        isNew: fileTracks[index].isNew,
+        isPopular: fileTracks[index].isPopular,
+        isFeatured: fileTracks[index].isFeatured,
+      });
+    }
+    
+    // Preserve uploadedBy
+    updated.uploadedBy = fileTracks[index].uploadedBy;
     fileTracks[index] = updated;
 
     fs.writeFile(tracksFilePath, JSON.stringify(fileTracks, null, 2), 'utf8', writeErr => {
       if (writeErr) {
         return res.status(500).send('Internal Server Error: writing file failed');
       }
-      reloadTracksFromFile(); // <--- Add this line
+      reloadTracksFromFile();
       res.json({ track: updated });
     });
   });
 });
 
-// Update track file endpoint (admin only)
-app.put('/api/tracks/:artistSlug/:songSlug/file', ensureAdmin, upload.single("audioFile"), (req, res) => {
+// Update track file endpoint (admin or verified track owner)
+app.put('/api/tracks/:artistSlug/:songSlug/file', upload.single("audioFile"), (req, res) => {
   try {
+    // Check authentication
+    if (!req.session || (!req.session.isLoggedIn && !req.session.isAdmin)) {
+      return res.status(403).json({ error: "Access denied. Not authenticated." });
+    }
+
+    const isAdmin = !!req.session.isAdmin || (req.session.user && users.find(u => u.id === req.session.user.id)?.isAdmin);
+    const currentUserId = req.session.user ? req.session.user.id : null;
+    const isVerified = currentUserId ? users.find(u => u.id === currentUserId)?.isVerified : false;
+
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'No audio file uploaded' });
     }
@@ -611,6 +693,18 @@ app.put('/api/tracks/:artistSlug/:songSlug/file', ensureAdmin, upload.single("au
 
     if (trackIndex === -1) {
       return res.status(404).json({ success: false, error: 'Track not found' });
+    }
+
+    const track = tracks[trackIndex];
+
+    // Check if user can edit this track
+    if (!isAdmin) {
+      if (!isVerified) {
+        return res.status(403).json({ error: "Access denied. Only admins and verified users can edit tracks." });
+      }
+      if (track.uploadedBy !== currentUserId) {
+        return res.status(403).json({ error: "Access denied. You can only edit tracks you uploaded." });
+      }
     }
 
     // Update the track's file path
@@ -1153,6 +1247,145 @@ app.put("/api/admin/users/:userId/admin", ensureAdmin, (req, res) => {
   const { password, ...userProfile } = users[userIndex];
   res.json({ success: true, user: userProfile });
 });
+
+// =================== VERIFICATION SYSTEM API ===================
+
+// Request verification (authenticated users only)
+app.post("/api/profile/:userId/request-verification", (req, res) => {
+  const { userId } = req.params;
+
+  // Check authentication
+  if (!req.session.isLoggedIn && !req.session.isAdmin) {
+    return res.status(401).json({ success: false, message: "Not authenticated" });
+  }
+
+  // Check if user can request verification for this account
+  if (!req.session.isAdmin && (!req.session.user || req.session.user.id !== userId)) {
+    return res.status(403).json({ success: false, message: "Access denied" });
+  }
+
+  const userIndex = users.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    return res.status(404).json({ success: false, message: "User not found" });
+  }
+
+  // Can't request if already verified
+  if (users[userIndex].isVerified) {
+    return res.status(400).json({ success: false, message: "Already verified" });
+  }
+
+  // Can't request if already pending
+  if (users[userIndex].verificationPending) {
+    return res.status(400).json({ success: false, message: "Verification request already pending" });
+  }
+
+  users[userIndex].verificationPending = true;
+  users[userIndex].verificationRequestedAt = new Date().toISOString();
+  saveUsers();
+
+  res.json({ success: true, message: "Verification request submitted" });
+});
+
+// Cancel verification request (authenticated users only)
+app.delete("/api/profile/:userId/request-verification", (req, res) => {
+  const { userId } = req.params;
+
+  // Check authentication
+  if (!req.session.isLoggedIn && !req.session.isAdmin) {
+    return res.status(401).json({ success: false, message: "Not authenticated" });
+  }
+
+  // Check if user can cancel verification for this account
+  if (!req.session.isAdmin && (!req.session.user || req.session.user.id !== userId)) {
+    return res.status(403).json({ success: false, message: "Access denied" });
+  }
+
+  const userIndex = users.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    return res.status(404).json({ success: false, message: "User not found" });
+  }
+
+  if (!users[userIndex].verificationPending) {
+    return res.status(400).json({ success: false, message: "No pending verification request" });
+  }
+
+  users[userIndex].verificationPending = false;
+  delete users[userIndex].verificationRequestedAt;
+  saveUsers();
+
+  res.json({ success: true, message: "Verification request cancelled" });
+});
+
+// Get users awaiting verification (admin only)
+app.get("/api/admin/verification-requests", ensureAdmin, (req, res) => {
+  const pendingUsers = users
+    .filter(u => u.verificationPending)
+    .map(u => {
+      const { password, ...userWithoutPassword } = u;
+      return userWithoutPassword;
+    })
+    .sort((a, b) => new Date(a.verificationRequestedAt) - new Date(b.verificationRequestedAt));
+
+  res.json({ success: true, users: pendingUsers });
+});
+
+// Approve verification (admin only)
+app.put("/api/admin/users/:userId/verify", ensureAdmin, (req, res) => {
+  const { userId } = req.params;
+
+  const userIndex = users.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  users[userIndex].isVerified = true;
+  users[userIndex].verifiedAt = new Date().toISOString();
+  users[userIndex].verificationPending = false;
+  delete users[userIndex].verificationRequestedAt;
+  // Initialize daily upload tracking
+  users[userIndex].dailyUploads = { count: 0, date: new Date().toISOString().split('T')[0] };
+  saveUsers();
+
+  const { password, ...userProfile } = users[userIndex];
+  res.json({ success: true, user: userProfile });
+});
+
+// Revoke verification (admin only)
+app.put("/api/admin/users/:userId/unverify", ensureAdmin, (req, res) => {
+  const { userId } = req.params;
+
+  const userIndex = users.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  users[userIndex].isVerified = false;
+  delete users[userIndex].verifiedAt;
+  delete users[userIndex].dailyUploads;
+  saveUsers();
+
+  const { password, ...userProfile } = users[userIndex];
+  res.json({ success: true, user: userProfile });
+});
+
+// Deny verification request (admin only)
+app.put("/api/admin/users/:userId/deny-verification", ensureAdmin, (req, res) => {
+  const { userId } = req.params;
+
+  const userIndex = users.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  users[userIndex].verificationPending = false;
+  delete users[userIndex].verificationRequestedAt;
+  saveUsers();
+
+  const { password, ...userProfile } = users[userIndex];
+  res.json({ success: true, user: userProfile });
+});
+
+// =================== END VERIFICATION SYSTEM API ===================
 
 // Delete user endpoint (admin only)
 app.delete("/api/admin/users/:userId", ensureAdmin, (req, res) => {
@@ -1942,7 +2175,9 @@ app.get("/api/playlists/:playlistId/collaborators", (req, res) => {
       id: user.id, 
       username: user.username,
       profilePicture: user.profilePicture,
-      selectedGradient: user.selectedGradient
+      selectedGradient: user.selectedGradient,
+      isVerified: !!user.isVerified,
+      isAdmin: !!user.isAdmin
     } : null;
   }).filter(Boolean);
 
@@ -2084,11 +2319,47 @@ app.delete("/api/notifications", (req, res) => {
 // =================== END FOLLOWS & NOTIFICATIONS API ===================
 
 app.post("/api/upload-song", upload.single("audioFile"), (req, res) => {
-  if (!req.session.isAdmin) {
-    return res.status(403).json({ error: "Only admin users can upload tracks" });
+  // Check if user is admin or verified
+  let isAdmin = !!req.session.isAdmin;
+  let isVerified = false;
+  let verifiedUser = null;
+  
+  if (req.session.user && req.session.user.id) {
+    const user = users.find(u => u.id === req.session.user.id);
+    if (user && user.isAdmin) {
+      isAdmin = true;
+    }
+    if (user && user.isVerified) {
+      isVerified = true;
+      verifiedUser = user;
+    }
+  }
+  
+  if (!isAdmin && !isVerified) {
+    return res.status(403).json({ error: "Only admin or verified users can upload tracks" });
+  }
+  
+  // Check daily upload limit for verified (non-admin) users
+  if (isVerified && !isAdmin) {
+    const today = new Date().toISOString().split('T')[0];
+    const userIndex = users.findIndex(u => u.id === req.session.user.id);
+    
+    if (userIndex !== -1) {
+      const user = users[userIndex];
+      
+      // Reset count if it's a new day
+      if (!user.dailyUploads || user.dailyUploads.date !== today) {
+        users[userIndex].dailyUploads = { count: 0, date: today };
+      }
+      
+      // Check if limit reached (2 per day for verified users)
+      if (users[userIndex].dailyUploads.count >= 2) {
+        return res.status(429).json({ error: "Daily upload limit reached (2 songs per day for verified users)" });
+      }
+    }
   }
 
-  const { title, artist, album, cover, category, releaseDate, albumNumber } = req.body;
+  const { title, artist, album, cover, category, clean, releaseDate, albumNumber } = req.body;
   const audioFile = req.file;
 
   if (!title || !artist || !audioFile) {
@@ -2104,10 +2375,11 @@ app.post("/api/upload-song", upload.single("audioFile"), (req, res) => {
     file: `/audio/${audioFile.filename}`,
     isNew: category === "isNew",
     isPopular: category === "isPopular",
-    isClean: category === "isClean",
+    isClean: clean === "isClean",
     isFeatured: category === "isFeatured",
     createdAt: releaseDate ? new Date(releaseDate).toISOString() : new Date().toISOString(),
     albumNumber,
+    uploadedBy: isVerified && !isAdmin ? req.session.user.id : (isAdmin && req.session.user ? req.session.user.id : null), // Track who uploaded
   };
 
   // add to tracks array & save
@@ -2116,6 +2388,19 @@ app.post("/api/upload-song", upload.single("audioFile"), (req, res) => {
     if (err) {
       console.error("Error saving tracks.json:", err);
       return res.status(500).send("Error saving track data");
+    }
+    
+    // Increment daily upload count for verified users
+    if (isVerified && !isAdmin) {
+      const userIndex = users.findIndex(u => u.id === req.session.user.id);
+      if (userIndex !== -1) {
+        const today = new Date().toISOString().split('T')[0];
+        if (!users[userIndex].dailyUploads || users[userIndex].dailyUploads.date !== today) {
+          users[userIndex].dailyUploads = { count: 0, date: today };
+        }
+        users[userIndex].dailyUploads.count++;
+        saveUsers();
+      }
     }
     
     // Notify followers of the artist about the new release

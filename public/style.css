@@ -3174,6 +3174,44 @@ body.theme-lavender-dreams .activity-error {
   background: linear-gradient(135deg, #ff7eb3 0%, #ff758c 100%);
 }
 
+/* Verification badge styles */
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background-color: #3b82f6;
+  border-radius: 50%;
+  margin-left: 6px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.verified-badge svg {
+  width: 12px;
+  height: 12px;
+  color: white;
+  stroke: white;
+  fill: none;
+}
+
+.verified-badge-small {
+  width: 14px;
+  height: 14px;
+  margin-left: 4px;
+}
+
+.verified-badge-small svg {
+  width: 10px;
+  height: 10px;
+}
+
+.verified-badge-inline {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
 /* Gradient selector dropdown */
 .gradient-selector {
   position: relative;

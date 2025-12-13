@@ -401,11 +401,25 @@
         "lastPlayed": "2025-12-12T17:50:54.398Z"
       },
       "kms_xp/future-funk-iii": {
-        "count": 1,
+        "count": 2,
         "trackTitle": "future funk iii",
         "trackArtist": "kms_xp",
         "trackCover": "https://i1.sndcdn.com/artworks-zlFg5yUj2gdlFNlT-4uWy5g-t1080x1080.png",
-        "lastPlayed": "2025-12-13T18:33:48.270Z"
+        "lastPlayed": "2025-12-13T18:51:27.253Z"
+      },
+      "bentoonie/deinvent-yourself": {
+        "count": 1,
+        "trackTitle": "deinvent yourself",
+        "trackArtist": "bentoonie",
+        "trackCover": "https://i1.sndcdn.com/artworks-5wTgMzNotgDHxLDZ-pHfnLw-t1080x1080.jpg",
+        "lastPlayed": "2025-12-13T18:48:04.837Z"
+      },
+      "jane-remover/misplace": {
+        "count": 1,
+        "trackTitle": "misplace",
+        "trackArtist": "Jane Remover",
+        "trackCover": "https://tse3.mm.bing.net/th/id/OIP.PX966YxN01zJcElSdwfcuQHaHa?cb=ucfimg2&ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
+        "lastPlayed": "2025-12-13T20:39:27.308Z"
       }
     },
     "activityVisible": true
