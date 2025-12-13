@@ -1,5 +1,18 @@
 [
   {
+    "title": "future funk iii",
+    "artist": "kms_xp",
+    "album": "psychcore: bronze",
+    "cover": "https://i1.sndcdn.com/artworks-zlFg5yUj2gdlFNlT-4uWy5g-t1080x1080.png",
+    "file": "/audio/future funk iii.flac",
+    "isNew": false,
+    "isPopular": false,
+    "isClean": false,
+    "isFeatured": false,
+    "createdAt": "2025-12-12T00:00:00.000Z",
+    "albumNumber": "4"
+  },
+  {
     "title": "ta1lsd003 (G2961 Remix)",
     "artist": "G2961;ta1lsd0ll",
     "album": "ta1lsd003 (G2961 Remix)",
@@ -85,7 +98,7 @@
     "file": "/audio/11 champ.flac",
     "isNew": false,
     "isPopular": false,
-    "isClean": false,
+    "isClean": true,
     "isFeatured": false,
     "createdAt": "2021-11-12T00:00:00.000Z",
     "albumNumber": "11"
@@ -384,7 +397,7 @@
     "file": "/audio/First Step.mp3",
     "isNew": false,
     "isPopular": false,
-    "isClean": false,
+    "isClean": true,
     "isFeatured": false,
     "createdAt": "2020-11-13T00:00:00.000Z",
     "albumNumber": "17"
@@ -397,7 +410,7 @@
     "file": "/audio/01 the joke is on you.mp3",
     "isNew": false,
     "isPopular": false,
-    "isClean": false,
+    "isClean": true,
     "isFeatured": true,
     "createdAt": "2023-05-23T00:00:00.000Z",
     "albumNumber": "1"

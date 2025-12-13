@@ -5316,7 +5316,7 @@ async function loadNotifications(overlay, showHistory) {
     
     if (items && items.length > 0) {
       notificationList.innerHTML = items.map(notif => `
-        <div class="notification-item" onclick="window.location.hash = '#album/${notif.artistSlug}/${notif.trackSlug}'; toggleNotificationModal();">
+        <div class="notification-item" onclick="window.location = '${notif.artistSlug}/${notif.trackSlug}'; toggleNotificationModal();">
           <div class="notification-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
@@ -5371,11 +5371,11 @@ async function toggleNotificationHistory(btn) {
       </svg>
       View History
     `;
-    // Update header
+    // update header
     overlay.querySelector('.notification-modal-header h2').textContent = 'Notifications';
     await loadNotifications(overlay, false);
   } else {
-    // Switch to history
+    // switch to history
     btn.classList.add('active');
     btn.innerHTML = `
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -5384,7 +5384,6 @@ async function toggleNotificationHistory(btn) {
       </svg>
       View New
     `;
-    // Update header
     overlay.querySelector('.notification-modal-header h2').textContent = 'Notification History';
     await loadNotifications(overlay, true);
   }
