@@ -640,6 +640,13 @@
                           class="px-2 py-1 rounded text-xs ${user.isVerified ? 'bg-gray-600 hover:bg-gray-700' : 'bg-blue-600 hover:bg-blue-700'} text-white">
                     ${user.isVerified ? 'Unverify' : 'Verify'}
                   </button>
+                  ${user.isVerified ? `
+                    <button onclick="resetDailyUploads('${user.id}', '${escapeHtml(user.username)}')" 
+                            class="px-2 py-1 rounded text-xs bg-cyan-600 hover:bg-cyan-700 text-white" 
+                            title="Reset daily upload limit to 0">
+                      Reset Uploads
+                    </button>
+                  ` : ''}
                 ` : ''}
                 <button onclick="toggleAdmin('${user.id}', ${!user.isAdmin})" 
                         class="px-2 py-1 rounded text-xs ${user.isAdmin ? 'bg-orange-600 hover:bg-orange-700' : 'bg-yellow-600 hover:bg-yellow-700'} text-white">
@@ -961,18 +968,20 @@
       if (!isAdmin) return;
 
       try {
-        const res = await fetch('/api/tracks');
+        // Use the server-side endpoint that checks if files actually exist
+        const res = await fetch('/api/admin/tracks/missing-audio');
         if (!res.ok) {
-          throw new Error('Failed to fetch tracks');
+          throw new Error('Failed to fetch missing audio tracks');
         }
         
-        allTracks = await res.json();
-        missingAudioTracks = allTracks.filter(track => !track.file || track.file.trim() === '');
+        const data = await res.json();
+        missingAudioTracks = data.tracks;
+        allTracks = { length: data.totalTracks }; // For stats display
         
         document.getElementById('missing-audio-loading').classList.add('hidden');
         document.getElementById('missing-audio-container').classList.remove('hidden');
         
-        updateMissingAudioStats();
+        updateMissingAudioStats(data.totalTracks, data.missingCount);
         renderMissingAudioTracks();
       } catch (error) {
         console.error('Error loading tracks:', error);
@@ -980,10 +989,8 @@
       }
     }
 
-    function updateMissingAudioStats() {
+    function updateMissingAudioStats(total, missing) {
       const statsElement = document.getElementById('missing-audio-stats');
-      const total = allTracks.length;
-      const missing = missingAudioTracks.length;
       const withAudio = total - missing;
       
       statsElement.innerHTML = `
@@ -1318,6 +1325,41 @@
       } catch (error) {
         console.error('Error toggling verification:', error);
         alert('Failed to update verification status');
+      }
+    }
+
+    async function resetDailyUploads(userId, username) {
+      if (!confirm(`Reset daily upload limit for ${username}? They will be able to upload 2 more songs today.`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/admin/users/${userId}/reset-uploads`, {
+          method: 'PUT'
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Failed to reset uploads');
+        }
+
+        const data = await res.json();
+        
+        // Update local user data
+        const userIndex = allUsers.findIndex(u => u.id === userId);
+        if (userIndex !== -1) {
+          allUsers[userIndex] = data.user;
+          const filteredIndex = filteredUsers.findIndex(u => u.id === userId);
+          if (filteredIndex !== -1) {
+            filteredUsers[filteredIndex] = data.user;
+          }
+        }
+        
+        renderUsers();
+        showImportSuccess(`Daily upload limit reset for ${username}`);
+      } catch (error) {
+        console.error('Error resetting uploads:', error);
+        alert('Failed to reset daily uploads: ' + error.message);
       }
     }
 

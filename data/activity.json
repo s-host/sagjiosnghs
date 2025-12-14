@@ -373,11 +373,11 @@
         "lastPlayed": "2025-12-12T17:31:55.163Z"
       },
       "jane-remover/champ": {
-        "count": 2,
+        "count": 3,
         "trackTitle": "champ",
         "trackArtist": "Jane Remover",
         "trackCover": "https://tse3.mm.bing.net/th/id/OIP.PX966YxN01zJcElSdwfcuQHaHa?cb=ucfimg2&ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
-        "lastPlayed": "2025-12-13T18:25:11.763Z"
+        "lastPlayed": "2025-12-13T23:37:49.824Z"
       },
       "jane-remover/52-blue-mondays": {
         "count": 2,
@@ -420,6 +420,20 @@
         "trackArtist": "Jane Remover",
         "trackCover": "https://tse3.mm.bing.net/th/id/OIP.PX966YxN01zJcElSdwfcuQHaHa?cb=ucfimg2&ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3",
         "lastPlayed": "2025-12-13T20:39:27.308Z"
+      },
+      "toby-fox/april-2012": {
+        "count": 1,
+        "trackTitle": "April 2012",
+        "trackArtist": "Toby Fox",
+        "trackCover": "https://i.scdn.co/image/ab67616d0000b27306f2539e9993e43ae9adcc69",
+        "lastPlayed": "2025-12-13T23:44:33.873Z"
+      },
+      "xaev/cowenjoyer-got-milk-2024": {
+        "count": 1,
+        "trackTitle": "CowEnjoyer-Got Milk?2024",
+        "trackArtist": "xaev",
+        "trackCover": "https://i.scdn.co/image/ab67616d0000b2735f1769bcc16cd7122cf66d6a",
+        "lastPlayed": "2025-12-14T01:25:39.710Z"
       }
     },
     "activityVisible": true
@@ -681,5 +695,28 @@
       }
     },
     "activityVisible": false
+  },
+  "9": {
+    "plays": {},
+    "activityVisible": false
+  },
+  "10": {
+    "plays": {
+      "toby-fox/april-2012": {
+        "count": 1,
+        "trackTitle": "April 2012",
+        "trackArtist": "Toby Fox",
+        "trackCover": "https://i.scdn.co/image/ab67616d0000b27306f2539e9993e43ae9adcc69",
+        "lastPlayed": "2025-12-13T23:41:57.526Z"
+      },
+      "xaev/toby-fox-discovers-the-hyperpop-soundfont": {
+        "count": 1,
+        "trackTitle": "toby fox discovers the hyperpop soundfont",
+        "trackArtist": "xaev",
+        "trackCover": "https://f4.bcbits.com/img/a1113075234_16.jpg",
+        "lastPlayed": "2025-12-13T23:46:33.097Z"
+      }
+    },
+    "activityVisible": true
   }
 }

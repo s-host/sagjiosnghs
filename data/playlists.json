@@ -189,5 +189,24 @@
     ],
     "createdAt": "2025-12-06T18:29:10.582Z",
     "updatedAt": "2025-12-06T18:29:56.536Z"
+  },
+  {
+    "id": "1765674404164",
+    "userId": "10",
+    "name": "test",
+    "description": "test",
+    "collaborators": [
+      "1"
+    ],
+    "songs": [
+      {
+        "artistSlug": "toby-fox",
+        "songSlug": "april-2012",
+        "title": "April 2012",
+        "artist": "Toby Fox"
+      }
+    ],
+    "createdAt": "2025-12-14T01:06:44.164Z",
+    "updatedAt": "2025-12-14T01:15:41.525Z"
   }
 ]

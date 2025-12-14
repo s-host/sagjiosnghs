@@ -73,5 +73,112 @@
       "count": 0,
       "date": "2025-12-13"
     }
+  },
+  {
+    "id": "7",
+    "username": "toolbox",
+    "password": "$2b$10$zQumoHkqfauZMMeH1KaCI.wa85CCWqyEkw57ejnmJU6Xm5riKOFxK",
+    "createdAt": "2025-12-13T20:57:14.913Z",
+    "isAdmin": false,
+    "bio": "im very useful",
+    "selectedGradient": 1,
+    "profilePicture": "/profile-pictures/7_1765659484997.jpg",
+    "verificationPending": false,
+    "isVerified": false
+  },
+  {
+    "id": "8",
+    "username": "abc",
+    "password": "$2b$10$2Q6bE1M9cvIz54TB1suu0uju8Z6IfAFZGZyCrI7N0qjtKM5pmzW1.",
+    "createdAt": "2025-12-13T21:49:38.307Z",
+    "isAdmin": false,
+    "bio": "",
+    "selectedGradient": 1,
+    "profilePicture": null
+  },
+  {
+    "id": "9",
+    "username": "sudo",
+    "password": "$2b$10$s/tXINT.6OA66GUvXPMgEeGzpkRsLiE4rnFsCQsGeIE/e2P4IMGgq",
+    "createdAt": "2025-12-13T22:35:37.303Z",
+    "isAdmin": false,
+    "bio": "ydkm",
+    "selectedGradient": 1,
+    "profilePicture": "/profile-pictures/9_1765665413987.png",
+    "verificationPending": false,
+    "isVerified": true,
+    "verifiedAt": "2025-12-13T23:13:27.363Z",
+    "dailyUploads": {
+      "count": 0,
+      "date": "2025-12-13"
+    }
+  },
+  {
+    "id": "10",
+    "username": "Passwordis123",
+    "password": "$2b$10$dHz4YpgJzUVJ/iOqiOLA0eVcrzgkNN5l6wECvBwwr5FS52kQ6wiOC",
+    "createdAt": "2025-12-13T23:29:47.930Z",
+    "isAdmin": false,
+    "bio": "yep that's my password",
+    "selectedGradient": 1,
+    "profilePicture": "/profile-pictures/10_1765668856831.jpg",
+    "verificationPending": false,
+    "isVerified": true,
+    "verifiedAt": "2025-12-13T23:33:53.735Z",
+    "dailyUploads": {
+      "count": 2,
+      "date": "2025-12-13"
+    },
+    "muted": false
+  },
+  {
+    "id": "11",
+    "username": "4khs",
+    "password": "$2b$10$ZlcajmaD1aJ4QeYi.6wMjOvb4kEnZ9hEt8MJ9LwRDpZLBHWasU5Qu",
+    "createdAt": "2025-12-14T00:07:14.329Z",
+    "isAdmin": false,
+    "bio": "",
+    "selectedGradient": 1,
+    "profilePicture": null
+  },
+  {
+    "id": "12",
+    "username": "eee",
+    "password": "$2b$10$5I/lCKl/CytRbJyDlUguPearSQRpMt7L901QJBgVc4nofMw.4tOB6",
+    "createdAt": "2025-12-14T00:08:12.506Z",
+    "isAdmin": false,
+    "bio": "6 7",
+    "selectedGradient": 1,
+    "profilePicture": null
+  },
+  {
+    "id": "13",
+    "username": "676767",
+    "password": "$2b$10$rShgs8/cZDjGbLnJQn9ThO.jXp7x73unBD0WSJMz8CLyrx238cv2y",
+    "createdAt": "2025-12-14T00:08:57.707Z",
+    "isAdmin": false,
+    "bio": "eee",
+    "selectedGradient": 1,
+    "profilePicture": null
+  },
+  {
+    "id": "14",
+    "username": "baller",
+    "password": "$2b$10$n4Pqex4IE6utlsUd0fztBOpoiDklicjQySILIK.E99ctAG3dLoGzO",
+    "createdAt": "2025-12-14T00:20:28.399Z",
+    "isAdmin": false,
+    "bio": "i d k",
+    "selectedGradient": 1,
+    "profilePicture": null
+  },
+  {
+    "id": "15",
+    "username": "0root",
+    "password": "$2b$10$2iFtjAaimPD3KlskwH32qug.3X1lD0nuPxmuaSJ5afV6JzW0mg9lS",
+    "createdAt": "2025-12-14T00:22:15.713Z",
+    "isAdmin": false,
+    "bio": "i d k",
+    "selectedGradient": 1,
+    "profilePicture": null
   }
 ]

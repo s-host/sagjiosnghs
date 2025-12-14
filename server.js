@@ -8,7 +8,9 @@ const extract = require("extract-zip");
 const app = express();
 const PORT = 3000;
 const multer = require("multer");
-const storage = multer.diskStorage({
+
+// Storage for audio files (song uploads)
+const audioStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, "audio"));
   },
@@ -18,7 +20,22 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage });
+// Storage for data imports (temp storage)
+const dataImportStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dataDir = path.join(__dirname, "data");
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    cb(null, dataDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, `import-${Date.now()}-${file.originalname}`);
+  }
+});
+
+const upload = multer({ storage: audioStorage });
+const dataImportUpload = multer({ storage: dataImportStorage });
 
 // middleware
 app.use(express.json());
@@ -1385,6 +1402,58 @@ app.put("/api/admin/users/:userId/deny-verification", ensureAdmin, (req, res) =>
   res.json({ success: true, user: userProfile });
 });
 
+// Reset daily upload limit for verified user (admin only)
+app.put("/api/admin/users/:userId/reset-uploads", ensureAdmin, (req, res) => {
+  const { userId } = req.params;
+
+  const userIndex = users.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  if (!users[userIndex].isVerified) {
+    return res.status(400).json({ error: "User is not verified" });
+  }
+
+  // Reset daily uploads to 0 for today
+  const today = new Date().toISOString().split('T')[0];
+  users[userIndex].dailyUploads = { count: 0, date: today };
+  saveUsers();
+
+  const { password, ...userProfile } = users[userIndex];
+  res.json({ success: true, user: userProfile, message: "Daily upload limit reset successfully" });
+});
+
+// Get tracks with missing audio files (admin only)
+app.get("/api/admin/tracks/missing-audio", ensureAdmin, (req, res) => {
+  const missingAudioTracks = tracks.filter(track => {
+    // Check if file field is empty
+    if (!track.file || track.file.trim() === '') {
+      return true;
+    }
+    
+    // Check if the audio file actually exists on disk
+    // Handle both /audio/filename.mp3 and direct paths
+    let audioPath = track.file;
+    if (audioPath.startsWith('/audio/')) {
+      audioPath = path.join(__dirname, 'audio', audioPath.replace('/audio/', ''));
+    } else if (audioPath.startsWith('/')) {
+      audioPath = path.join(__dirname, 'public', audioPath);
+    } else {
+      audioPath = path.join(__dirname, 'audio', audioPath);
+    }
+    
+    return !fs.existsSync(audioPath);
+  });
+
+  res.json({ 
+    success: true, 
+    tracks: missingAudioTracks,
+    totalTracks: tracks.length,
+    missingCount: missingAudioTracks.length
+  });
+});
+
 // =================== END VERIFICATION SYSTEM API ===================
 
 // Delete user endpoint (admin only)
@@ -1519,14 +1588,19 @@ app.get("/api/admin/export/tracks", ensureAdmin, (req, res) => {
 });
 
 // Import site data (admin only)
-app.post("/api/admin/import/site-data", ensureAdmin, upload.single("dataFile"), async (req, res) => {
+app.post("/api/admin/import/site-data", ensureAdmin, dataImportUpload.single("dataFile"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'No file uploaded' });
     }
 
     const uploadedFilePath = req.file.path;
-    const isZipFile = req.file.originalname.endsWith('.zip');
+    
+    // Detect file type by reading magic bytes instead of relying on extension
+    // ZIP files start with "PK" (0x50 0x4B)
+    const fileBuffer = fs.readFileSync(uploadedFilePath);
+    const isZipFile = fileBuffer.length >= 2 && fileBuffer[0] === 0x50 && fileBuffer[1] === 0x4B;
+    
     let importData;
     let extractedDir;
 
@@ -1546,7 +1620,7 @@ app.post("/api/admin/import/site-data", ensureAdmin, upload.single("dataFile"), 
       importData = JSON.parse(fs.readFileSync(dataJsonPath, 'utf-8'));
     } else {
       // Handle plain JSON file (backward compatibility)
-      importData = JSON.parse(fs.readFileSync(uploadedFilePath, 'utf-8'));
+      importData = JSON.parse(fileBuffer.toString('utf-8'));
     }
     
     // Validate import data structure
@@ -1620,7 +1694,7 @@ app.post("/api/admin/import/site-data", ensureAdmin, upload.single("dataFile"), 
 });
 
 // Import tracks data (admin only)
-app.post("/api/admin/import/tracks", ensureAdmin, upload.single("dataFile"), (req, res) => {
+app.post("/api/admin/import/tracks", ensureAdmin, dataImportUpload.single("dataFile"), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'No file uploaded' });
