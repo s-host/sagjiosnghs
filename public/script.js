@@ -73,6 +73,8 @@ let isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 let currentlyPlayingSlug = null;
 let savedSpeed = 1.0;
 let tracks = []; // Global tracks array
+// reposts for current logged in user
+window.currentUserReposts = [];
 
 function getSavedSpeed() {
   let s = parseFloat(localStorage.getItem('htn_speed'));
@@ -500,14 +502,11 @@ function renderSong(artistSlug, songSlug) {
 
   if (!track) return renderNotFound();
 
-  // Add slug properties for edit functionality
   track.slugArtist = artistSlug;
   track.slugTitle = songSlug;
 
-  // Initial render with loading state - we'll check audio validity after
   const audioFileProvided = track.file && track.file !== '';
-  
-  // Render all artists as clickable links
+
   const artistLinks = renderArtistLinks(track.artist);
   
   getApp().innerHTML = `
@@ -546,6 +545,10 @@ function renderSong(artistSlug, songSlug) {
             </svg>
           </button>
 
+          ${window.isLoggedIn ? `<button id="btnRepost" class="btn-repost noprint" title="Repost" data-inactive-color="#aaa" onclick="toggleRepostButton(this, '${track.slugArtist}','${track.slugTitle}','${escapeHtml(track.title)}','${escapeHtml(track.artist)}')" style="cursor:pointer; background:none; border:none; color:${isTrackReposted(track.slugArtist, track.slugTitle) ? getThemeAccentColor() : '#aaa'}; width:28px; height:28px; display:flex; align-items:center; justify-content:center;">
+            <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:20px;height:20px;"><path d="M7.08034 5.71966L4.05001 2.68933L1.01968 5.71966L2.08034 6.78032L3.30002 5.56065V9.75C3.30002 11.2688 4.53124 12.5 6.05002 12.5H8.05002V11H6.05002C5.35966 11 4.80002 10.4404 4.80002 9.75V5.56066L6.01968 6.78032L7.08034 5.71966Z" fill="currentColor"></path><path d="M11.95 13.3107L8.91969 10.2803L9.98035 9.21968L11.2 10.4393L11.2 5.75C11.2 5.05964 10.6404 4.5 9.95001 4.5L7.95001 4.5L7.95001 3L9.95001 3C11.4688 3 12.7 4.23122 12.7 5.75L12.7 10.4394L13.9197 9.21968L14.9803 10.2803L11.95 13.3107Z" fill="currentColor"></path></svg>
+          </button>` : ''}
+
           <div class="volume-container" style="position:relative; display:flex; align-items:center;">
             <svg class="volume-icon" id="volumeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px; height:24px; cursor:pointer;">
               <path d="M3 9v6h4l5 5V4L7 9H3z"></path>
@@ -564,7 +567,6 @@ function renderSong(artistSlug, songSlug) {
           </div>
           <div class="speed-container" style="position:relative; display:flex; align-items:center;">
           <button id="speedBtn" title="Playback Speed" style="cursor:pointer; background:none; border:none; color:#aaa; width:28px; height:28px; border-radius:4px; display:flex; align-items:center; justify-content:center; transition: color 0.3s;">
-            <!-- Your sliders SVG -->
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-sliders">
               <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line>
               <line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line>
@@ -602,7 +604,6 @@ function renderSong(artistSlug, songSlug) {
       ` : '')}
     </div>
 
-    <!-- Comments Section -->
     <div class="max-w-xl mx-auto mt-6 space-y-4">
       <h3 class="text-xl font-bold">Comments</h3>
 
@@ -620,6 +621,15 @@ function renderSong(artistSlug, songSlug) {
   `;
 
   setupAudioPlayer(track);
+
+  // initialize repost button state
+  try {
+    const rb = document.getElementById('btnRepost');
+    if (rb) {
+      if (isTrackReposted(track.slugArtist, track.slugTitle)) rb.classList.add('text-green-400');
+      else rb.classList.remove('text-green-400');
+    }
+  } catch(e){}
 
   // Load comments and show form for authenticated users
   initComments(track);
@@ -1703,6 +1713,68 @@ function closePlaylistMenu(e) {
   }
 }
 
+// Repost helpers
+async function loadCurrentUserReposts(userId) {
+  try {
+    const resp = await fetch(`/api/me/reposts`);
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (data.success) {
+      window.currentUserReposts = data.reposts || [];
+    }
+  } catch (e) {
+    console.error('Failed to load reposts', e);
+  }
+}
+
+function isTrackReposted(artistSlug, songSlug) {
+  const key = `${artistSlug}:${songSlug}`;
+  return window.currentUserReposts.includes(key);
+}
+
+async function toggleRepostButton(btn, artistSlug, songSlug, title, artist) {
+  if (!window.isLoggedIn) return showAuthPopup('Please log in to repost');
+  btn.disabled = true;
+  try {
+    const result = await toggleRepost(artistSlug, songSlug);
+    if (result) {
+      if (isTrackReposted(artistSlug, songSlug)) {
+        btn.style.color = getThemeAccentColor();
+        btn.classList.remove('text-green-400');
+        if (btn.dataset.inactiveClass) btn.classList.remove(btn.dataset.inactiveClass);
+      } else {
+        btn.style.color = btn.dataset.inactiveColor || ''; 
+        btn.classList.remove('text-green-400');
+        if (btn.dataset.inactiveClass) btn.classList.add(btn.dataset.inactiveClass);
+      }
+    }
+  } catch (e) {
+    console.error('Repost failed', e);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function toggleRepost(artistSlug, songSlug) {
+  try {
+    const resp = await fetch('/api/repost', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ artistSlug, songSlug })
+    });
+    
+    const data = await resp.json();
+    if (data.success) {
+      window.currentUserReposts = data.reposts;
+      return true;
+    }
+    return false;
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
+}
+
 // Queue menu helper functions
 function addToQueueFromMenu(artistSlug, songSlug, title, artist, file, cover, album) {
   addToQueue(artistSlug, songSlug, title, artist, file, cover, album);
@@ -1916,7 +1988,6 @@ function renderNotFound() {
 function renderLogin() {
   getApp().innerHTML = `
     <div class="max-w-md mx-auto space-y-6">
-      <!-- User Login -->
       <div class="bg-gray-800 p-6 rounded-lg shadow-lg track">
         <h2 class="text-2xl font-bold mb-4 text-center">Sign In</h2>
         <form id="user-login-form" class="space-y-4">
@@ -1990,13 +2061,13 @@ function renderRegister() {
 async function renderProfile(userId) {
   // skeleton UI while loading
   getApp().innerHTML = `
-    <div class="p-6">
-      <div class="bg-gray-800 rounded-lg shadow-lg p-6 mb-6 track animate-pulse">
-        <div class="flex items-center space-x-4">
-          <div class="w-20 h-20 bg-gray-700 rounded-full"></div>
-          <div class="space-y-2">
-            <div class="h-6 w-48 bg-gray-700 rounded"></div>
-            <div class="h-4 w-64 bg-gray-700 rounded"></div>
+    <div class="profile-load-container">
+      <div class="profile-skeleton-card track">
+        <div class="profile-skeleton-content">
+          <div class="profile-skeleton-avatar"></div>
+          <div class="profile-skeleton-text-group">
+            <div class="profile-skeleton-title"></div>
+            <div class="profile-skeleton-subtitle"></div>
           </div>
         </div>
       </div>
@@ -2009,11 +2080,11 @@ async function renderProfile(userId) {
     const data = await resp.json();
     if (!data.success) {
       getApp().innerHTML = `
-        <div class="text-center p-8">
-          <div class="bg-red-900 border border-red-600 rounded-lg p-6 max-w-md mx-auto">
-            <h2 class="text-xl font-bold mb-2">Profile not found</h2>
-            <p class="text-red-200 mb-4">${escapeHtml(data.message || 'The requested profile could not be loaded.')}</p>
-            <button class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded" onclick="navigateTo('/')">Go to Home</button>
+        <div class="profile-error-container">
+          <div class="profile-error-box">
+            <h2 class="profile-error-title">Profile not found</h2>
+            <p class="profile-error-text">${escapeHtml(data.message || 'The requested profile could not be loaded.')}</p>
+            <button class="profile-error-button" onclick="navigateTo('/')">Go to Home</button>
           </div>
         </div>`;
       return;
@@ -2036,125 +2107,139 @@ async function renderProfile(userId) {
     }
 
     getApp().innerHTML = `
-      <div class="max-w-5xl mx-auto p-6">
-        <div class="bg-gray-800 rounded-lg shadow-lg p-6 mb-6 track">
-          <div class="flex items-center space-x-4">
-            <div id="profile-picture" class="w-20 h-20 rounded-full flex items-center justify-center ${user.profilePicture ? '' : getProfileGradientClass(user)}" ${user.profilePicture ? `style="background-image: url('${user.profilePicture}'); background-size: cover; background-position: center;"` : ''}>
-              ${user.profilePicture ? '' : `<span class="text-2xl font-bold text-white">${getInitials(user.username)}</span>`}
-            </div>
-            <div>
-              <h1 class="text-3xl font-bold flex items-center">
-                ${escapeHtml(user.username)}${renderVerifiedBadge(user.isVerified)}
-              </h1>
-              <p class="text-gray-400">Member since ${formatDate(user.createdAt)}</p>
-              <div class="flex gap-2 mt-1">
-                ${user.isAdmin ? '<span class="bg-yellow-600 text-yellow-100 px-2 py-1 rounded text-xs font-semibold">ADMIN</span>' : ''}
-                ${user.isVerified && !user.isAdmin ? '<span class="bg-blue-600 text-blue-100 px-2 py-1 rounded text-xs font-semibold">VERIFIED</span>' : ''}
+      <div class="profile-page-container">
+        <div class="profile-header-card track">
+          <div class="profile-header-content">
+            <div class="profile-main-info">
+              <div class="profile-user-info">
+                <div id="profile-picture" class="profile-avatar ${user.profilePicture ? '' : getProfileGradientClass(user)}" ${user.profilePicture ? `style="background-image: url('${user.profilePicture}'); background-size: cover; background-position: center;"` : ''}>
+                  ${user.profilePicture ? '' : `<span class="profile-avatar-initials">${getInitials(user.username)}</span>`}
+                </div>
+                <div>
+                  <h1 class="profile-username">
+                    ${escapeHtml(user.username)}${renderVerifiedBadge(user.isVerified)}
+                  </h1>
+                  <p class="profile-join-date">Member since ${formatDate(user.createdAt)}</p>
+                  <div class="profile-badges">
+                    ${user.isAdmin ? '<span class="badge-admin">ADMIN</span>' : ''}
+                    ${user.isVerified && !user.isAdmin ? '<span class="badge-verified">VERIFIED</span>' : ''}
+                  </div>
+                </div>
+              </div>
+
+              <div class="profile-bio-section" id="profile-bio-section">
+                <div id="profile-bio-display">
+                  <h3 class="profile-section-title">About</h3>
+                  <p id="profile-bio" class="profile-bio-text"></p>
+                </div>
+
+                <div id="profile-bio-edit" class="hidden">
+                  <h3 class="profile-section-title">Edit Bio</h3>
+                  <textarea id="bio-edit-input" rows="4" class="profile-bio-textarea"></textarea>
+                  <div class="profile-bio-actions">
+                    <button id="save-bio-btn" class="btn-primary">Save</button>
+                    <button id="cancel-bio-btn" class="btn-secondary navbutton">Cancel</button>
+                  </div>
+                </div>
+
+                ${isOwnProfile ? '<button id="edit-bio-btn" class="btn-primary" style="margin-top: 0.5rem;">Edit Bio</button>' : ''}
               </div>
             </div>
-          </div>
 
-          <div class="mt-4" id="profile-bio-section">
-            <div id="profile-bio-display">
-              <h3 class="text-lg font-semibold mb-2">About</h3>
-              <p id="profile-bio" class="text-gray-300"></p>
+            <div class="profile-account-info">
+               <h3 class="profile-section-title">Account Info</h3>
+               <div class="profile-info-list">
+                  <div>
+                    <span class="profile-label">Account Type:</span>
+                    <span class="profile-value">${user.isAdmin ? 'Administrator' : (user.isVerified ? 'Verified User' : 'Standard User')}</span>
+                  </div>
+                  <div>
+                    <span class="profile-label">Member Since:</span>
+                    <span class="profile-value">${formatDate(user.createdAt)}</span>
+                  </div>
+                  ${user.isVerified && user.verifiedAt ? `<div><span class="profile-label">Verified:</span> ${formatDate(user.verifiedAt)}</div>` : ''}
+               </div>
+               ${isOwnProfile ? `
+                  <div class="profile-actions-list">
+                    ${user.id !== "0" ? `
+                      <button id="change-password-link" class="btn-text-blue">
+                        🔒 Change Password
+                      </button>
+                    ` : ''}
+                    <div class="profile-picture-controls" style="margin-top: 0.5rem;">
+                      <input type="file" id="profile-picture-upload" accept="image/*" style="display: none;">
+                      <button id="upload-picture-btn" class="btn-text-green">
+                        📷 Upload Profile Picture
+                      </button>
+                      ${user.profilePicture ? `<button id="delete-picture-btn" class="btn-text-red">
+                        🗑️ Delete Profile Picture
+                      </button>` : ''}
+                    </div>
+                    ${!user.isAdmin ? `
+                      <div class="verification-controls" style="padding-top: 0.5rem;">
+                        ${user.isVerified ? `
+                          <div class="btn-text-green flex-gap-1" style="cursor: default; text-decoration: none;">
+                            ✓ Your account is verified
+                          </div>
+                        ` : user.verificationPending ? `
+                          <div style="margin-top: 0.5rem;">
+                            <div class="text-yellow-status">⏳ Verification request pending...</div>
+                            <button id="cancel-verification-btn" class="btn-text-red">
+                              ✕ Cancel Verification Request
+                            </button>
+                          </div>
+                        ` : `
+                          <button id="request-verification-btn" class="btn-text-purple">
+                            ✓ Request Verification
+                          </button>
+                        `}
+                      </div>
+                    ` : ''}
+                  </div>
+                ` : ''}
             </div>
-
-            <div id="profile-bio-edit" class="hidden">
-              <h3 class="text-lg font-semibold mb-2">Edit Bio</h3>
-              <textarea id="bio-edit-input" rows="4" class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none"></textarea>
-              <div class="mt-2 space-x-2">
-                <button id="save-bio-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">Save</button>
-                <button id="cancel-bio-btn" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm navbutton">Cancel</button>
-              </div>
-            </div>
-
-            ${isOwnProfile ? '<button id="edit-bio-btn" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">Edit Bio</button>' : ''}
           </div>
         </div>
 
-        <div class="grid gap-6 md:grid-cols-2">
-          <div class="bg-gray-800 rounded-lg shadow-lg p-6 track">
-            <h2 class="text-xl font-bold mb-4">Account Information</h2>
-            <div class="space-y-3 text-gray-300">
-              <div><span class="text-gray-400">User ID:</span> ${escapeHtml(user.id)}</div>
-              <div><span class="text-gray-400">Username:</span> ${escapeHtml(user.username)}</div>
-              <div><span class="text-gray-400">Account Type:</span> ${user.isAdmin ? 'Administrator' : (user.isVerified ? 'Verified User' : 'Standard User')}</div>
-              <div><span class="text-gray-400">Created:</span> ${formatDate(user.createdAt)}</div>
-              ${user.isVerified && user.verifiedAt ? `<div><span class="text-gray-400">Verified:</span> ${formatDate(user.verifiedAt)}</div>` : ''}
+        <div class="profile-grid">
+          <div class="profile-content-card track profile-content-scrollable">
+            <div class="profile-card-header">
+              <h2 class="profile-card-title">Playlists</h2>
+              ${isOwnProfile ? `
+                <button id="create-playlist-btn" class="btn-green">
+                  Create Playlist
+                </button>
+              ` : ''}
             </div>
-            ${isOwnProfile ? `
-              <div class="mt-4 pt-4 border-t border-gray-700 space-y-2">
-                ${user.id !== "0" ? `
-                  <button id="change-password-link" class="text-blue-400 hover:text-blue-300 text-sm hover:underline block">
-                    🔒 Change Password
-                  </button>
-                ` : ''}
-                <div class="profile-picture-controls space-y-2">
-                  <input type="file" id="profile-picture-upload" accept="image/*" style="display: none;">
-                  <button id="upload-picture-btn" class="text-green-400 hover:text-green-300 text-sm hover:underline block">
-                    📷 Upload Profile Picture
-                  </button>
-                  ${user.profilePicture ? `<button id="delete-picture-btn" class="text-red-400 hover:text-red-300 text-sm hover:underline block">
-                    🗑️ Delete Profile Picture
-                  </button>` : ''}
-                </div>
-                ${!user.isAdmin ? `
-                  <div class="verification-controls pt-2">
-                    ${user.isVerified ? `
-                      <div class="text-green-400 text-sm flex items-center gap-1">
-                        ✓ Your account is verified
-                      </div>
-                    ` : user.verificationPending ? `
-                      <div class="space-y-2">
-                        <div class="text-yellow-400 text-sm">⏳ Verification request pending...</div>
-                        <button id="cancel-verification-btn" class="text-red-400 hover:text-red-300 text-sm hover:underline block">
-                          ✕ Cancel Verification Request
-                        </button>
-                      </div>
-                    ` : `
-                      <button id="request-verification-btn" class="text-purple-400 hover:text-purple-300 text-sm hover:underline block">
-                        ✓ Request Verification
-                      </button>
-                    `}
-                  </div>
-                ` : ''}
-              </div>
-            ` : ''}
+            <div id="playlists-container">
+              <p class="profile-empty-text">Loading playlists...</p>
+            </div>
           </div>
 
-          <div class="bg-gray-800 rounded-lg shadow-lg p-6 track">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-xl font-bold">Activity Tracking</h2>
+          <div class="profile-content-card track">
+            <div class="profile-card-header">
+              <h2 class="profile-card-title">Activity Tracking</h2>
               ${isOwnProfile ? `
-                <div class="flex gap-2">
-                  <button id="toggle-activity-btn" class="text-sm px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white">
+                <div class="profile-card-actions">
+                  <button id="toggle-activity-btn" class="btn-primary">
                     Loading...
                   </button>
-                  <button id="reset-activity-btn" class="text-sm px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white">
+                  <button id="reset-activity-btn" class="btn-red-action">
                     Reset Data
                   </button>
                 </div>
               ` : ''}
             </div>
             <div id="activity-content">
-              <div class="text-gray-400">Loading activity...</div>
+              <div class="profile-empty-text">Loading activity...</div>
             </div>
           </div>
         </div>
 
-        <!-- Playlists Section -->
-        <div class="playlists bg-gray-800 rounded-lg shadow-lg p-6 mt-6 track">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-bold">Playlists</h2>
-            ${isOwnProfile ? `
-              <button id="create-playlist-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">
-                Create Playlist
-              </button>
-            ` : ''}
-          </div>
-          <div id="playlists-container">
-            <p class="text-gray-400">Loading playlists...</p>
+        <div class="profile-content-card-reposts track">
+          <h2 class="profile-card-title" style="margin-bottom: 1rem;">Reposted Songs</h2>
+          <div id="reposts-container" class="profile-reposts-list">
+            <p class="profile-empty-text">Loading reposts...</p>
           </div>
         </div>
       </div>
@@ -2163,10 +2248,10 @@ async function renderProfile(userId) {
     const bioEl = document.getElementById('profile-bio');
     if (user.bio && user.bio.trim()) {
       bioEl.textContent = user.bio;
-      bioEl.classList.remove('text-gray-500', 'italic');
+      bioEl.classList.remove('profile-bio-placeholder');
     } else {
       bioEl.textContent = user.isAdmin ? 'System Administrator' : 'No bio available.';
-      bioEl.classList.add('text-gray-500', 'italic');
+      bioEl.classList.add('profile-bio-placeholder');
     }
 
     // Wire bio editing if allowed
@@ -2196,12 +2281,12 @@ async function renderProfile(userId) {
           const result = await r.json();
           if (result.success) {
             user.bio = newBio;
-            bioEl.classList.remove('text-gray-500', 'italic');
+            bioEl.classList.remove('profile-bio-placeholder');
             if (newBio) {
               bioEl.textContent = newBio;
             } else {
               bioEl.textContent = 'No bio available.';
-              bioEl.classList.add('text-gray-500', 'italic');
+              bioEl.classList.add('profile-bio-placeholder');
             }
             document.getElementById('profile-bio-display').classList.remove('hidden');
             document.getElementById('profile-bio-edit').classList.add('hidden');
@@ -2221,6 +2306,28 @@ async function renderProfile(userId) {
 
     // Load playlists
     await loadUserPlaylists(userId, isOwnProfile);
+
+    // Render reposts
+    const repostsContainer = document.getElementById('reposts-container');
+    if (repostsContainer) {
+      if (user.reposts && user.reposts.length > 0) {
+        const repostsHtml = user.reposts.map(repostKey => {
+          // repostKey is "artistSlug:songSlug"
+          const parts = repostKey.split(':');
+          if (parts.length !== 2) return '';
+          const [artistSlug, songSlug] = parts;
+          // Find track in global tracks array
+          const track = tracks.find(t => trackHasArtist(t, artistSlug) && slugify(t.title) === songSlug);
+          if (!track) return ''; // Track might have been deleted
+          
+          return renderRepostItem(track);
+        }).join('');
+        
+        repostsContainer.innerHTML = repostsHtml || '<p class="text-gray-400">No reposts found.</p>';
+      } else {
+        repostsContainer.innerHTML = '<p class="text-gray-400">No reposts yet.</p>';
+      }
+    }
 
     // Wire change password link
     const changePasswordLink = document.getElementById('change-password-link');
@@ -3159,6 +3266,23 @@ function restorePersistentPlayer() {
             progressBar.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${percent}%, #444 ${percent}%, #444 100%)`;
             timestamp.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
           }
+
+          // Update repost item progress bar if visible
+          if (hasDuration && albumPlayer.tracks && albumPlayer.tracks[albumPlayer.currentIndex]) {
+            const currentTrack = albumPlayer.tracks[albumPlayer.currentIndex];
+            const artistSlug = slugify(parseArtists(currentTrack.artist)[0] || currentTrack.artist);
+            const songSlug = slugify(currentTrack.title);
+            
+            const repostProgressFill = document.getElementById(`repost-progress-fill-${artistSlug}-${songSlug}`);
+            const repostTimestamp = document.getElementById(`repost-timestamp-${artistSlug}-${songSlug}`);
+            
+            if (repostProgressFill) {
+               repostProgressFill.style.width = `${percent}%`;
+            }
+            if (repostTimestamp) {
+               repostTimestamp.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+            }
+          }
         });
 
         // Keep album view durations fresh when restoring
@@ -3518,6 +3642,9 @@ function updatePersistentPlayer() {
         </div>
       </div>
       <div class="flex items-center gap-4">
+        ${isLoggedIn ? `<button id="persistent-repost-btn" class="text-white hover:text-opacity-80" title="Repost">
+          <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:20px;height:20px;"><path d="M7.08034 5.71966L4.05001 2.68933L1.01968 5.71966L2.08034 6.78032L3.30002 5.56065V9.75C3.30002 11.2688 4.53124 12.5 6.05002 12.5H8.05002V11H6.05002C5.35966 11 4.80002 10.4404 4.80002 9.75V5.56066L6.01968 6.78032L7.08034 5.71966Z" fill="currentColor"></path><path d="M11.95 13.3107L8.91969 10.2803L9.98035 9.21968L11.2 10.4393L11.2 5.75C11.2 5.05964 10.6404 4.5 9.95001 4.5L7.95001 4.5L7.95001 3L9.95001 3C11.4688 3 12.7 4.23122 12.7 5.75L12.7 10.4394L13.9197 9.21968L14.9803 10.2803L11.95 13.3107Z" fill="currentColor"></path></svg>
+        </button>` : ''}
         <button id="albumSpeedBtn" class="text-white" title="Playback Speed">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line>
@@ -3608,6 +3735,24 @@ function updatePersistentPlayer() {
         albumPlayer.audio.currentTime = percent * albumPlayer.audio.duration;
       }
     });
+
+    // Repost functionality for persistent player
+    const repostBtn = bar.querySelector("#persistent-repost-btn");
+    if (repostBtn) {
+      const currentArtistSlug = slugify(parseArtists(current.artist)[0] || current.artist);
+      const currentSongSlug = slugify(current.title);
+
+      // Set initial state
+      if (isTrackReposted(currentArtistSlug, currentSongSlug)) {
+        repostBtn.style.color = getThemeAccentColor();
+        repostBtn.classList.remove("text-green-400"); // cleanup only
+      }
+
+      repostBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleRepostButton(repostBtn, currentArtistSlug, currentSongSlug, current.title, current.artist);
+      });
+    }
 
     // volume
     const volumeSlider = bar.querySelector("#volumeSlider");
@@ -4320,6 +4465,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   // Always try to restore the persistent player first
   restorePersistentPlayer();
+  // Load current user's reposts if authenticated
+  try { const auth = await getAuthStatus(); if (auth.isLoggedIn && auth.user) await loadCurrentUserReposts(auth.user.id); } catch(e){}
   
   await router();
 
@@ -5199,7 +5346,6 @@ function showCollaboratorModal(playlistId) {
           </button>
         </div>
         <div id="collaborator-list" class="max-h-40 overflow-y-auto">
-          <!-- Collaborators will be loaded here -->
         </div>
         <div class="flex gap-2">
           <button onclick="closeCollaboratorModal()" 
@@ -5533,3 +5679,88 @@ function formatNotificationTime(timestamp) {
   if (minutes > 0) return minutes === 1 ? '1 minute ago' : `${minutes} minutes ago`;
   return 'Just now';
 }
+
+function renderRepostItem(track) {
+  const artistSlug = slugify(parseArtists(track.artist)[0] || track.artist);
+  const songSlug = slugify(track.title);
+  const isReposted = isTrackReposted(artistSlug, songSlug);
+  const accentColor = getThemeAccentColor();
+  const duration = trackDurationMap[track.title] || '--:--';
+  const progressId = `repost-progress-fill-${artistSlug}-${songSlug}`;
+  const timestampId = `repost-timestamp-${artistSlug}-${songSlug}`;
+  
+  return `
+    <div class="profile-repost-item repost-card">
+      <img src="${track.cover}" class="profile-repost-cover" alt="Cover">
+      
+      <div class="profile-repost-content">
+        <div class="profile-repost-top">
+          <button class="profile-repost-play-btn" onclick="playRepostTrack('${artistSlug}', '${songSlug}')">
+             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+               <polygon points="5 3 19 12 5 21 5 3"/>
+             </svg>
+          </button>
+
+          <div class="profile-repost-info">
+            <div class="profile-repost-title" onclick="navigateTo('/${artistSlug}/${songSlug}')">${escapeHtml(track.title)}</div>
+            <div class="profile-repost-artist">
+              <span class="profile-repost-link" onclick="navigateTo('/${artistSlug}')">${escapeHtml(track.artist)}</span>
+              <span class="profile-repost-separator">•</span>
+              <span class="profile-repost-link" onclick="navigateTo('/album/${slugify(track.album)}')">${escapeHtml(track.album)}</span>
+            </div>
+          </div>
+          
+          <button class="profile-repost-action-btn" 
+                  style="${isReposted ? `color: ${accentColor}` : ''}"
+                  onclick="event.stopPropagation(); toggleRepostButton(this, '${artistSlug}', '${songSlug}', '${escapeHtml(track.title)}', '${escapeHtml(track.artist)}')"
+                  title="${isReposted ? 'Unrepost' : 'Repost'}">
+            <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:20px;height:20px;"><path d="M7.08034 5.71966L4.05001 2.68933L1.01968 5.71966L2.08034 6.78032L3.30002 5.56065V9.75C3.30002 11.2688 4.53124 12.5 6.05002 12.5H8.05002V11H6.05002C5.35966 11 4.80002 10.4404 4.80002 9.75V5.56066L6.01968 6.78032L7.08034 5.71966Z" fill="currentColor"></path><path d="M11.95 13.3107L8.91969 10.2803L9.98035 9.21968L11.2 10.4393L11.2 5.75C11.2 5.05964 10.6404 4.5 9.95001 4.5L7.95001 4.5L7.95001 3L9.95001 3C11.4688 3 12.7 4.23122 12.7 5.75L12.7 10.4394L13.9197 9.21968L14.9803 10.2803L11.95 13.3107Z" fill="currentColor"></path></svg>
+          </button>
+        </div>
+
+        <div class="profile-repost-progress-container">
+          <div id="${timestampId}" class="profile-repost-timestamp">0:00 / ${duration}</div>
+          <div class="profile-repost-bar-bg">
+            <div id="${progressId}" class="profile-repost-bar-fill" style="background-color: ${accentColor}"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function playRepostTrack(artistSlug, songSlug) {
+  const track = tracks.find(t => trackHasArtist(t, artistSlug) && slugify(t.title) === songSlug);
+  if (!track) return;
+  
+  albumPlayer.tracks = [track];
+  albumPlayer.albumSlug = 'reposts';
+  albumPlayer.currentIndex = 0;
+  albumPlayer.loopMode = 0;
+  
+  // Need to ensure global tracks array is used correctly or we might lose context?
+  // Actually albumPlayer relies on .tracks property.
+  
+  addTracksToQueue([track], true);
+  
+  // startAlbumAudio calls playTrack(albumPlayer.currentIndex) which uses albumPlayer.tracks
+  startAlbumAudio();
+  updatePersistentPlayer();
+}
+
+function getThemeAccentColor() {
+  const body = document.body;
+  
+  if (body.classList.contains('theme-midnight-blurple')) return '#9b89fd';
+  if (body.classList.contains('theme-strawberry-lemonade')) return '#e84c8c';
+  if (body.classList.contains('theme-ocean-breeze')) return '#20B2AA';
+  if (body.classList.contains('theme-sunset-glow')) return '#FF6347';
+  if (body.classList.contains('theme-lavender-dreams')) return '#9370DB';
+  if (body.classList.contains('theme-game')) return '#f41414'; 
+  if (body.classList.contains('theme-sc')) return '#f45714';
+  if (body.classList.contains('theme-forest-night')) return '#32CD32';
+  if (body.classList.contains('theme-aero-glass')) return '#4A90E2';
+  
+  return '#3b82f6'; // Default Blue
+}
+

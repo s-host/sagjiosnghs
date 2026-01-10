@@ -6,6 +6,13 @@ body {
   transition: color 0.3s;
 }
 
+.repost-card {
+  background-color: #374151;
+}
+.repost-card:hover {
+  background-color: #4b5563;
+}
+
 #albumProgress {
   background: linear-gradient(to right, #3b82f6 0%, #3b82f6 0%, #444 0%, #444 100%);
 }
@@ -1149,6 +1156,7 @@ body.theme-midnight-blurple .artistlink,
 body.theme-midnight-blurple .albumtrack,
 body.theme-midnight-blurple .currenttrack,
 body.theme-midnight-blurple .song-card,
+body.theme-midnight-blurple .repost-card,
 body.theme-midnight-blurple .search-results,
 body.theme-midnight-blurple #persistent-album-bar {
   background: rgba(255,255,255,0.08);
@@ -1179,6 +1187,7 @@ body.theme-midnight-blurple .artistPointer {
 body.theme-midnight-blurple .albumlink:hover,
 body.theme-midnight-blurple .artistlink:hover,
 body.theme-midnight-blurple .albumtrack:hover,
+body.theme-midnight-blurple .repost-card:hover,
 body.theme-midnight-blurple .currenttrack:hover {
   background: rgba(255,255,255,0.16);
 }
@@ -1345,6 +1354,7 @@ body.theme-strawberry-lemonade header {
 body.theme-strawberry-lemonade .track,
 body.theme-strawberry-lemonade .albumlink,
 body.theme-strawberry-lemonade .artistlink,
+body.theme-strawberry-lemonade .repost-card,
 body.theme-strawberry-lemonade .albumtrack,
 body.theme-strawberry-lemonade .currenttrack,
 body.theme-strawberry-lemonade .song-card,
@@ -1982,6 +1992,7 @@ body.theme-ocean-breeze header {
 body.theme-ocean-breeze .track,
 body.theme-ocean-breeze .albumlink,
 body.theme-ocean-breeze .artistlink,
+body.theme-ocean-breeze .repost-card,
 body.theme-ocean-breeze .albumtrack,
 body.theme-ocean-breeze .currenttrack,
 body.theme-ocean-breeze .song-card,
@@ -2191,6 +2202,7 @@ body.theme-sunset-glow header {
 body.theme-sunset-glow .track,
 body.theme-sunset-glow .albumlink,
 body.theme-sunset-glow .artistlink,
+body.theme-sunset-glow .repost-card,
 body.theme-sunset-glow .albumtrack,
 body.theme-sunset-glow .currenttrack,
 body.theme-sunset-glow .song-card,
@@ -2400,6 +2412,7 @@ body.theme-lavender-dreams header {
 body.theme-lavender-dreams .track,
 body.theme-lavender-dreams .albumlink,
 body.theme-lavender-dreams .artistlink,
+body.theme-lavender-dreams .repost-card,
 body.theme-lavender-dreams .albumtrack,
 body.theme-lavender-dreams .currenttrack,
 body.theme-lavender-dreams .song-card,
@@ -3685,7 +3698,8 @@ body.theme-aero-glass #theme-select {
 }
 
 /* Track cards with authentic Aero glass */
-body.theme-aero-glass .track {
+body.theme-aero-glass .track,
+body.theme-aero-glass .repost-card {
   background: linear-gradient(135deg,
     rgba(255,255,255,0.25) 0%,
     rgba(255,255,255,0.15) 50%,
@@ -5582,3 +5596,546 @@ body.theme-games .notification-history-btn.active {
 }
 
 /* =================== END FOLLOW & NOTIFICATION SYSTEM STYLES =================== */
+
+.profile-load-container { 
+  padding: 1.5rem; 
+}
+.profile-page-container { 
+  max-width: 64rem; 
+  margin-left: auto; 
+  margin-right: auto; 
+  padding: 1.5rem; 
+}
+
+.profile-header-card { 
+  background-color: #1f2937; 
+  border-radius: 0.5rem; 
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); 
+  padding: 1.5rem; margin-bottom: 1.5rem; 
+  margin-bottom: 1.5rem; 
+}
+
+.profile-header-content { 
+  display: flex; 
+  flex-direction: column; 
+  justify-content: space-between; 
+}
+
+@media (min-width: 768px) {
+  .profile-header-content { flex-direction: row; } 
+}
+
+.profile-main-info { 
+  flex: 1 1 0%; 
+}
+
+.profile-user-info { 
+  display: flex; 
+  align-items: center; 
+}
+
+.profile-user-info > :not([hidden]) ~ :not([hidden]) { 
+  margin-right: 0; 
+  margin-left: 1rem; 
+}
+
+.profile-grid { 
+  display: grid; 
+  gap: 1.5rem; 
+}
+
+@media (min-width: 768px) { 
+  .profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } 
+}
+
+.profile-skeleton-card { 
+  background-color: #1f2937; 
+  border-radius: 0.5rem; 
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); 
+  padding: 1.5rem; 
+  margin-bottom: 1.5rem; 
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; 
+}
+
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+
+.profile-skeleton-content { 
+  display: flex; 
+  align-items: center; 
+}
+
+.profile-skeleton-content > :not([hidden]) ~ :not([hidden]) { 
+  margin-left: 1rem; 
+}
+
+.profile-skeleton-avatar { 
+  width: 5rem; 
+  height: 5rem; 
+  background-color: #374151; 
+  border-radius: 9999px; 
+}
+
+.profile-skeleton-text-group > :not([hidden]) ~ :not([hidden]) { 
+  margin-top: 0.5rem; 
+}
+
+.profile-skeleton-title { 
+  height: 1.5rem; 
+  width: 12rem; 
+  background-color: #374151; 
+  border-radius: 0.25rem; 
+}
+.profile-skeleton-subtitle { 
+  height: 1rem; 
+  width: 16rem; 
+  background-color: #374151; 
+  border-radius: 0.25rem; 
+}
+
+/* Error State */
+.profile-error-container { 
+  text-align: center; padding: 2rem; 
+  padding: 2rem; 
+}
+.profile-error-box { 
+  background-color: #7f1d1d; 
+  border: 1px solid #dc2626; 
+  border-radius: 0.5rem; 
+  padding: 1.5rem; 
+  max-width: 28rem; 
+  margin-left: auto; 
+  margin-right: auto; 
+}
+
+.profile-error-title { 
+  font-size: 1.25rem; 
+  line-height: 1.75rem;
+  font-weight: 700; 
+  margin-bottom: 0.5rem; 
+}
+
+.profile-error-text { 
+  color: #fecaca; 
+  margin-bottom: 1rem; 
+}
+
+.profile-error-button { 
+  background-color: #374151; 
+  color: white; 
+  padding: 0.5rem 1rem; 
+  border-radius: 0.25rem; 
+  cursor: pointer; 
+}
+
+.profile-error-button:hover { 
+  background-color: #4b5563; 
+}
+
+.profile-avatar { 
+  width: 5rem; 
+  height: 5rem; 
+  border-radius: 9999px;
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  background-size: cover; 
+  background-position: center; 
+}
+
+.profile-avatar-initials { 
+  font-size: 1.5rem; 
+  font-weight: 700; 
+  color: white; 
+}
+
+.profile-username { 
+  font-size: 1.875rem;
+  line-height: 2.25rem; 
+  font-weight: 700; 
+  display: flex; 
+  align-items: center; 
+}
+
+.profile-join-date { 
+  color: #9ca3af; 
+}
+
+.profile-badges { 
+  display: flex; 
+  gap: 0.5rem; 
+  margin-top: 0.25rem; 
+}
+
+.badge-admin { 
+  background-color: #d97706; 
+  color: #fef3c7; 
+  padding: 0.25rem 0.5rem; 
+  border-radius: 0.25rem; 
+  font-size: 0.75rem; 
+  font-weight: 600; 
+}
+
+.badge-verified { 
+  background-color: #2563eb; 
+  color: #dbeafe; 
+  padding: 0.25rem 0.5rem; 
+  border-radius: 0.25rem; 
+  font-size: 0.75rem; 
+  font-weight: 600; 
+}
+
+/* Bio Section */
+.profile-bio-section { 
+  margin-top: 1rem; 
+}
+
+.profile-section-title { 
+  font-size: 1.125rem; 
+  font-weight: 600; 
+  margin-bottom: 0.5rem; 
+}
+.profile-bio-text { 
+  color: #d1d5db; 
+}
+
+.profile-bio-text.italic { 
+  font-style: italic; 
+}
+.profile-bio-textarea { 
+  width: 100%; 
+  padding: 0.5rem; 
+  border-radius: 0.25rem; 
+  background-color: #374151; 
+  color: white; 
+  border: 1px solid #4b5563; 
+}
+
+.profile-bio-textarea:focus { 
+  outline: none; 
+  border-color: #60a5fa; 
+}
+
+.profile-bio-actions { 
+  margin-top: 0.5rem; 
+  display: flex; 
+  gap: 0.5rem; 
+}
+
+/* Buttons */
+.btn-primary { 
+  background-color: #2563eb; 
+  color: white; 
+  padding: 0.25rem 0.75rem; 
+  border-radius: 0.25rem; 
+  font-size: 0.875rem; 
+  cursor: pointer;
+}
+
+.btn-primary:hover { 
+  background-color: #1d4ed8; 
+}
+
+.btn-secondary { 
+  background-color: #4b5563; 
+  color: white; 
+  padding: 0.25rem 0.75rem; 
+  border-radius: 0.25rem; 
+  font-size: 0.875rem; 
+  cursor: pointer; 
+}
+
+.btn-secondary:hover { 
+  background-color: #374151; 
+}
+.btn-green { 
+  background-color: #059669; 
+  color: white; 
+  padding: 0.5rem 1rem; 
+  border-radius: 0.25rem; 
+  font-size: 0.875rem; 
+  cursor: pointer; 
+}
+
+.btn-green:hover { 
+  background-color: #047857; 
+}
+.btn-red-action { 
+  background-color: #dc2626; 
+  color: white; 
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.25rem; 
+  font-size: 0.875rem; 
+  cursor: pointer; 
+}
+
+.btn-red-action:hover { 
+  background-color: #b91c1c; 
+}
+
+.profile-account-info { 
+  margin-top: 1rem; 
+  padding-left: 1.5rem; 
+}
+@media (min-width: 768px) { 
+  .profile-account-info { margin-top: 0; margin-left: 1.5rem; width: 33.333333%; } 
+}
+
+.profile-info-list { 
+  font-size: 0.875rem; 
+  color: #d1d5db; 
+}
+.profile-info-list > :not([hidden]) ~ :not([hidden]) { 
+  margin-top: 0.5rem; 
+}
+
+.profile-label { 
+  color: #9ca3af; 
+}
+.profile-value { 
+  margin-left: 0.5rem; 
+}
+
+.profile-actions-list { 
+  margin-top: 1rem; 
+  padding-top: 1rem; 
+  border-top: 1px solid #374151; 
+}
+
+.profile-actions-list > :not([hidden]) ~ :not([hidden]) { 
+  margin-top: 0.5rem; 
+}
+
+.btn-text-blue { 
+  color: #60a5fa; 
+  font-size: 0.875rem; 
+  display: block; 
+  cursor: pointer; 
+}
+.btn-text-blue:hover { 
+  color: #93c5fd; 
+  text-decoration: underline; 
+}
+.btn-text-green { 
+  color: #4ade80; 
+  font-size: 0.875rem; 
+  display: block; 
+  cursor: pointer; 
+}
+
+.btn-text-green:hover { 
+  color: #86efac; 
+  text-decoration: underline; 
+}
+
+.btn-text-red { 
+  color: #f87171; 
+  font-size: 0.875rem; 
+  display: block; 
+  cursor: pointer; 
+}
+
+.btn-text-red:hover {
+  color: #fca5a5;
+  text-decoration: underline;
+}
+
+.btn-text-purple {
+  color: #c084fc;
+  font-size: 0.875rem;
+  display: block;
+  cursor: pointer;
+}
+
+.btn-text-purple:hover {
+  color: #d8b4fe;
+  text-decoration: underline;
+}
+
+.text-yellow-status {
+  color: #facc15;
+  font-size: 0.875rem;
+}
+
+.flex-gap-1 {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+/* Content Cards (Playlist / Activity / Reposts) */
+.profile-content-card {
+  background-color: #1f2937;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+}
+
+.profile-content-card-reposts {
+  background-color: #1f2937;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.profile-content-scrollable {
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.profile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.profile-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.profile-card-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.profile-empty-text {
+  color: #9ca3af;
+}
+
+.profile-reposts-list {}
+
+.profile-reposts-list> :not([hidden])~ :not([hidden]) {
+  margin-top: 0.5rem;
+}
+
+.profile-bio-placeholder {
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Repost Item Styles */
+.profile-repost-item {
+  display: flex;
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-duration: 150ms;
+  margin-bottom: 0.5rem;
+}
+
+.profile-repost-cover {
+  border-radius: 0.25rem;
+  object-fit: cover;
+  margin-right: 1rem;
+  width: 200px;
+  height: 200px;
+  flex-shrink: 0;
+}
+
+.profile-repost-content {
+  flex: 1 1 0%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 200px;
+}
+
+.profile-repost-top {
+  display: flex;
+  align-items: flex-start;
+}
+
+.profile-repost-play-btn {
+  padding: 0.5rem;
+  margin-right: 0.75rem;
+  color: white;
+  transition: opacity 150ms;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.profile-repost-play-btn:hover {
+  opacity: 0.8;
+}
+
+.profile-repost-info {
+  min-width: 0;
+  flex: 1 1 0%;
+  padding-top: 0.25rem;
+}
+
+.profile-repost-title {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.profile-repost-title:hover {
+  text-decoration: underline;
+}
+
+.profile-repost-artist {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #9ca3af;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-repost-link {
+  cursor: pointer;
+}
+
+.profile-repost-link:hover {
+  text-decoration: underline;
+}
+
+.profile-repost-separator {
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+}
+
+.profile-repost-action-btn {
+  padding: 0.5rem;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-duration: 150ms;
+  color: #9ca3af;
+  margin-left: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.profile-repost-progress-container {
+  width: 100%;
+}
+
+.profile-repost-timestamp {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: #9ca3af;
+  margin-bottom: 0.25rem;
+}
+
+.profile-repost-bar-bg {
+  height: 0.25rem;
+  background-color: #4b5563;
+  border-radius: 9999px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.profile-repost-bar-fill {
+  height: 100%;
+  width: 0;
+}

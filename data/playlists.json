@@ -208,5 +208,15 @@
     ],
     "createdAt": "2025-12-14T01:06:44.164Z",
     "updatedAt": "2025-12-14T01:15:41.525Z"
+  },
+  {
+    "id": "1765844781531",
+    "userId": "16",
+    "name": "Untitled Playlist",
+    "description": "",
+    "collaborators": [],
+    "songs": [],
+    "createdAt": "2025-12-16T00:26:21.531Z",
+    "updatedAt": "2025-12-16T00:26:21.531Z"
   }
 ]

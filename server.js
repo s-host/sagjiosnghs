@@ -1005,6 +1005,56 @@ app.put("/api/profile/:userId", async (req, res) => {
   res.json({ success: true, user: userProfile });
 });
 
+// Toggle repost
+app.post("/api/repost", (req, res) => {
+  if (!req.session.isLoggedIn && !req.session.isAdmin) {
+    return res.status(401).json({ success: false, message: "Not authenticated" });
+  }
+
+  const { artistSlug, songSlug } = req.body;
+  const trackKey = `${artistSlug}:${songSlug}`;
+  const userId = req.session.user.id;
+  const userIndex = users.findIndex(u => u.id === userId);
+
+  if (userIndex === -1) {
+    return res.status(404).json({ success: false, message: "User not found" });
+  }
+
+  if (!users[userIndex].reposts) {
+    users[userIndex].reposts = [];
+  }
+
+  const repostIndex = users[userIndex].reposts.indexOf(trackKey);
+  let isReposted = false;
+
+  if (repostIndex === -1) {
+    users[userIndex].reposts.push(trackKey);
+    isReposted = true;
+  } else {
+    users[userIndex].reposts.splice(repostIndex, 1);
+    isReposted = false;
+  }
+
+  saveUsers();
+  res.json({ success: true, isReposted, reposts: users[userIndex].reposts });
+});
+
+// Get current user's reposts
+app.get("/api/me/reposts", (req, res) => {
+  if (!req.session.isLoggedIn && !req.session.isAdmin) {
+    return res.json({ success: true, reposts: [] });
+  }
+
+  const userId = req.session.user.id;
+  const user = users.find(u => u.id === userId);
+
+  if (!user) {
+    return res.json({ success: true, reposts: [] });
+  }
+
+  res.json({ success: true, reposts: user.reposts || [] });
+});
+
 // Change password endpoint (requires authentication)
 app.put("/api/profile/:userId/change-password", async (req, res) => {
   const { userId } = req.params;

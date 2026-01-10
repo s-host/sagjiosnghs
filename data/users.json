@@ -7,7 +7,7 @@
     "isAdmin": true,
     "bio": "ok im cool",
     "selectedGradient": 5,
-    "profilePicture": "/profile-pictures/1_1765048847905.jpg"
+    "profilePicture": "/profile-pictures/1_1766701339718.png"
   },
   {
     "id": "2",
@@ -126,8 +126,8 @@
     "isVerified": true,
     "verifiedAt": "2025-12-13T23:33:53.735Z",
     "dailyUploads": {
-      "count": 2,
-      "date": "2025-12-13"
+      "count": 0,
+      "date": "2025-12-20"
     },
     "muted": false
   },
@@ -180,5 +180,22 @@
     "bio": "i d k",
     "selectedGradient": 1,
     "profilePicture": null
+  },
+  {
+    "id": "16",
+    "username": "eddie",
+    "password": "$2b$10$145LoYO1osWAJM7OSBoKZeg0U4xA6gbK1tCVMzpo5LUHuFA2MJMW.",
+    "createdAt": "2025-12-16T00:25:55.752Z",
+    "isAdmin": false,
+    "bio": "",
+    "selectedGradient": 1,
+    "profilePicture": null,
+    "isVerified": true,
+    "verifiedAt": "2025-12-20T15:37:03.517Z",
+    "verificationPending": false,
+    "dailyUploads": {
+      "count": 0,
+      "date": "2025-12-20"
+    }
   }
 ]

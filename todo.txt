@@ -1,0 +1,66 @@
+// TODO //
+
+- shuffle feature  
+    shuffle icon svg
+    when pressed turns .loop1 color
+    shuffles songs around in queue and shows it
+    when deactivated will return songs to original queue positions
+    works just like spotify/other music platforms
+
+- save feature
+    option to download file, three downloads per day/week/other time
+    only for verified users and admins
+
+- repost feature [COMPLETED]
+    under each track next to play, loop, speed etc. is a repost button 
+    button is the loop button but tilted 90 degrees on the side, like soundcloud
+    reposting will make it show up on the user's profile
+    button doesn't show up if user is not authenticated
+
+- user profile redesign [COMPLETED]
+    move account information div items to the top with the nametag div on the right side
+        - don't remove the div that currently holds the Account Information container yet, will be used for later
+        - remove user id from the account information
+        - remove username from the account information
+        - move remaining items to the div at the top with the username and bio on the right side across from the bio and other stuff
+    move playlists to the old account information spot, next to activity tracking
+        - keep the same proportions, scroll within the div
+    in the old playlists spot (under the activity tracking and now playlists div), add the reposted songs
+        - song div spans the entire width of the container (from left end of the playlists div to right end of the activity tracking div)
+        - cover on the left side
+        - song name in relative big
+        - artist name smaller
+        - next to artist name, album name
+        - a play button at the right side
+        - playing activates a persistent bar like with albums and playlists
+
+- mobile friendly
+    general css changes to make site mobile friendly
+    change the arrangement of the persistent bar to
+        - make the progress bar longer
+        - move the buttons to the side or on top of the progress bar
+    clean and organized
+
+- misc bux fixes
+    admin panel missing audio file ui should have an upload song option, not an input audio path
+    queue still gets buggy when dealing with playlists and albums
+    multiple artists on one song credited incorrectly in the persistent bar
+    make song upload ui more intuitive for verified users
+    change playlist creation system to use a built in ui instead of default browser messages
+    fix playlist functionality for admins
+        - admins can't add songs to playlists, option shows up as 'no playlists found' for admins
+        - admins can only create playlists
+    make playlists able to be public or private
+        - public playlist accessed by anyone
+        - private accessed by only whoever made it and who they select in a menu, similar to collaborators
+    playlists can have their own custom image as the cover on the page and in menus 
+        - an image upload button
+        - images are deleted if not in use by any playlist
+    previous profile pictures are able to be selected in the ui to change profile pictures
+    classify albums as album, ep, or single based on tracks
+        - one track: single
+        - two - six tracks: ep
+        - seven plus: album
+    play counts for tracks are public
+    profile pictures don't show up when initially commenting, just show the default gradient until refresh (fix this)
+    old backup json files aren't automatically deleted and pile up data (fix this)
