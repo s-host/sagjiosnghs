@@ -30,7 +30,7 @@ function renderArtistLinks(artistString, separator = ', ') {
   const artists = parseArtists(artistString);
   if (artists.length === 0) return artistString;
   return artists.map(artist => 
-    `<span class="hover:underline cursor-pointer" onclick="navigateTo('/${slugify(artist)}')">${artist}</span>`
+    `<span class="link-hover" onclick="navigateTo('/${slugify(artist)}')">${artist}</span>`
   ).join(separator);
 }
 
@@ -170,8 +170,8 @@ function renderHome() {
 
     recentArtistSection = `
       <section>
-        <h2 class="text-2xl mb-4 font-semibold">From ${lastArtist}</h2>
-        <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <h2 class="section-title">From ${lastArtist}</h2>
+        <div class="track-grid">
           ${picks.map(track => track ? renderTrackCard(track) : '<div></div>').join("")}
         </div>
       </section>
@@ -183,10 +183,10 @@ function renderHome() {
     const firstFour = filtered.slice(0, 4);
     return `
       <section>
-        <h2 class="text-2xl mb-4 font-semibold">
-          <span class="hover:underline cursor-pointer" onclick="navigateTo('/section/${key}')">${label}</span>
+        <h2 class="section-title">
+          <span class="link-hover" onclick="navigateTo('/section/${key}')">${label}</span>
         </h2>
-        <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div class="track-grid">
           ${firstFour.map(renderTrackCard).join("")}
         </div>
       </section>
@@ -377,8 +377,8 @@ function renderCategoryPage(categoryKey, page = 1) {
 
   getApp().innerHTML = `
     <section>
-      <h2 class="text-3xl font-bold mb-6">${category.label}</h2>
-      <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <h2 class="page-title">${category.label}</h2>
+      <div class="track-grid">
         ${paginatedTracks.map(renderTrackCard).join("")}
       </div>
       ${generatePagination(page, totalPages)}
@@ -470,17 +470,17 @@ function renderTrackCard(track) {
   const artistLinks = renderArtistLinks(track.artist);
 
   return `
-    <div class="bg-gray-800 rounded-lg overflow-hidden shadow-lg p-4 text-center track relative">
-      <button class="absolute top-2 right-2 text-gray-400 hover:text-white p-1 playlist-menu-btn" 
+    <div class="track-card track">
+      <button class="track-card-btn playlist-menu-btn" 
               onclick="event.stopPropagation(); togglePlaylistMenu(this, '${artistSlug}', '${songSlug}', '${escapeHtml(track.title)}', '${escapeHtml(track.artist)}')"
               aria-label="Add to playlist">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-more-vertical"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
       </button>
-      <img src="${track.cover}" alt="${track.album}" class="w-32 h-32 mx-auto object-cover rounded mb-4" />
-      <h3 class="text-lg font-bold hover:underline cursor-pointer" onclick="navigateTo('/${artistSlug}/${songSlug}')" title="${track.title}">
+      <img src="${track.cover}" alt="${track.album}" class="track-cover" />
+      <h3 class="track-title-card" onclick="navigateTo('/${artistSlug}/${songSlug}')" title="${track.title}">
         ${truncatedTitle}
       </h3>
-      <p class="text-sm text-gray-400">
+      <p class="track-meta-card">
         ${artistLinks}
       </p>
     </div>
@@ -3776,16 +3776,20 @@ function updatePersistentPlayer() {
 
     volumeIcon.addEventListener("click", () => {
       albumPlayer.volumeVisible = !albumPlayer.volumeVisible;
-      volumeSlider.style.display = albumPlayer.volumeVisible ? "block" : "none";
+      if (albumPlayer.volumeVisible) {
+        volumeSlider.classList.remove("hidden");
+      } else {
+        volumeSlider.classList.add("hidden");
+      }
       volumeContainer.classList.toggle("active", albumPlayer.volumeVisible);
     });
 
     volumeContainer.addEventListener("mouseenter", () => {
-      if (!albumPlayer.volumeVisible) volumeSlider.style.display = "block";
+      if (!albumPlayer.volumeVisible) volumeSlider.classList.remove("hidden");
     });
 
     volumeContainer.addEventListener("mouseleave", () => {
-      if (!albumPlayer.volumeVisible) volumeSlider.style.display = "none";
+      if (!albumPlayer.volumeVisible) volumeSlider.classList.add("hidden");
     });
 
     updateVolumeFill();

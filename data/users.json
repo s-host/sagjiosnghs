@@ -7,7 +7,12 @@
     "isAdmin": true,
     "bio": "ok im cool",
     "selectedGradient": 5,
-    "profilePicture": "/profile-pictures/1_1766701339718.png"
+    "profilePicture": "/profile-pictures/1_1766701339718.png",
+    "reposts": [
+      "ta1lsd0ll:ta1lsd024",
+      "porter-robinson:everything-goes-on",
+      "kms_xp:im-still-active"
+    ]
   },
   {
     "id": "2",
