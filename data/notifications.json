@@ -3,6 +3,33 @@
     "unread": [],
     "history": [
       {
+        "id": "1770487658504_4uh82u",
+        "type": "new_release",
+        "artistSlug": "jane-remover",
+        "artistName": "Jane Remover",
+        "trackTitle": "your clothes",
+        "trackSlug": "your-clothes",
+        "createdAt": 1770487658504
+      },
+      {
+        "id": "1770487496012_ejz1zf",
+        "type": "new_release",
+        "artistSlug": "jane-remover",
+        "artistName": "Jane Remover",
+        "trackTitle": "movies for guys",
+        "trackSlug": "movies-for-guys",
+        "createdAt": 1770487496012
+      },
+      {
+        "id": "1769278619476_s5nf1u",
+        "type": "new_release",
+        "artistSlug": "xaev",
+        "artistName": "xaev",
+        "trackTitle": "virgin aspiring VGM musician vs. chad hyperflip producer",
+        "trackSlug": "virgin-aspiring-vgm-musician-vs-chad-hyperflip-producer",
+        "createdAt": 1769278619476
+      },
+      {
         "id": "1765658110465_gukphq",
         "type": "new_release",
         "artistSlug": "jane-remover",
@@ -68,7 +95,17 @@
     ]
   },
   "6": {
-    "unread": [],
+    "unread": [
+      {
+        "id": "1769278619476_zlkcrv",
+        "type": "new_release",
+        "artistSlug": "xaev",
+        "artistName": "xaev",
+        "trackTitle": "virgin aspiring VGM musician vs. chad hyperflip producer",
+        "trackSlug": "virgin-aspiring-vgm-musician-vs-chad-hyperflip-producer",
+        "createdAt": 1769278619476
+      }
+    ],
     "history": []
   }
 }

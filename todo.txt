@@ -42,9 +42,12 @@
     clean and organized
 
 - misc bux fixes
-    admin panel missing audio file ui should have an upload song option, not an input audio path
+    admin panel missing audio file ui should have an upload song option, not an input audio path [COMPLETED]
     queue still gets buggy when dealing with playlists and albums
-    multiple artists on one song credited incorrectly in the persistent bar
+    multiple artists on one song credited incorrectly in the persistent bar [COMPLETED]
+    multiple artists on one song credited incorrently when: [COMPLETED]
+        viewed from the album page after starting a track or pressing the green play button
+        attempting to access the track page from the album page via the tracklist link beneath the tilte (in the albumtrack div list)
     make song upload ui more intuitive for verified users
     change playlist creation system to use a built in ui instead of default browser messages
     fix playlist functionality for admins

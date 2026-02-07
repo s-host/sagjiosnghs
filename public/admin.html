@@ -93,6 +93,7 @@
       </div>
 
       <div id="missing-audio-container" class="hidden">
+        <input type="file" id="admin-audio-upload" class="hidden" accept="audio/*">
         <div class="mb-4 flex items-center justify-between">
           <div id="missing-audio-stats" class="text-gray-400">
             <!-- Stats will be inserted here -->
@@ -962,6 +963,15 @@
     // Missing Audio Files Functions
     let allTracks = [];
     let missingAudioTracks = [];
+    let currentUploadTrack = null;
+
+    // Initialize file upload listener
+    document.addEventListener('DOMContentLoaded', () => {
+      const uploadInput = document.getElementById('admin-audio-upload');
+      if (uploadInput) {
+        uploadInput.addEventListener('change', handleAdminAudioUpload);
+      }
+    });
 
     async function loadMissingAudioTracks() {
       const isAdmin = await checkAuth();
@@ -1024,7 +1034,7 @@
           <td class="px-4 py-3">
             <a href="/${artistSlug}/${titleSlug}" target="_blank" class="hover:underline text-blue-400">${escapeHtml(track.title)}</a>
           </td>
-          <td class="px-4 py-3">${escapeHtml(track.artist)}</td>
+          <td class="px-4 py-3">${escapeHtml(track.artist.replace(/;/g, ', '))}</td>
           <td class="px-4 py-3">${escapeHtml(track.album || 'N/A')}</td>
           <td class="px-4 py-3 text-right">
             <button onclick="addAudioFileToTrack('${artistSlug}', '${titleSlug}', '${escapeHtml(track.title)}', '${escapeHtml(track.artist)}')" 
@@ -1039,22 +1049,32 @@
     }
 
     async function addAudioFileToTrack(artistSlug, titleSlug, title, artist) {
-      const audioPath = prompt(`Enter the audio file path for "${title}" by ${artist}:\n\nExample: /audio/song-name.mp3`);
-      
-      if (!audioPath) {
-        return; // User cancelled
-      }
+      currentUploadTrack = { artistSlug, titleSlug, title, artist };
+      document.getElementById('admin-audio-upload').click();
+    }
 
-      if (!audioPath.trim()) {
-        alert('Audio file path cannot be empty');
-        return;
-      }
+    async function handleAdminAudioUpload(event) {
+      if (!event.target.files || !event.target.files.length) return;
+      
+      const file = event.target.files[0];
+      if (!currentUploadTrack) return;
+      
+      const { artistSlug, titleSlug, title } = currentUploadTrack;
+      
+      // Clear the value so the same file can be selected again
+      // We do this after processing or before? Better before so change event works next time.
+      // But let's keep the reference to file first.
+      
+      const formData = new FormData();
+      formData.append('audioFile', file);
+      
+      // Reset input value
+      event.target.value = '';
 
       try {
-        const res = await fetch(`/api/tracks/${artistSlug}/${titleSlug}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ file: audioPath.trim() })
+        const res = await fetch(`/api/tracks/${artistSlug}/${titleSlug}/file`, {
+          method: 'PUT',
+          body: formData
         });
 
         if (!res.ok) {
@@ -1065,7 +1085,7 @@
         const result = await res.json();
         
         if (result.success) {
-          showImportSuccess(`Audio file added to "${title}"`);
+          showImportSuccess(`Audio file uploaded for "${title}"`);
           
           // Refresh the list
           await loadMissingAudioTracks();
@@ -1074,7 +1094,13 @@
         }
       } catch (error) {
         console.error('Error adding audio file:', error);
-        showImportError('Failed to add audio file: ' + error.message);
+        if (typeof showImportError === 'function') {
+           showImportError('Failed to add audio file: ' + error.message);
+        } else {
+           alert('Failed to add audio file: ' + error.message);
+        }
+      } finally {
+        currentUploadTrack = null;
       }
     }
 
@@ -1091,7 +1117,11 @@
     }
 
     function slugifyText(str) {
-      return str.toLowerCase().replace(/[^\w]+/g, "-");
+      return str
+        .toLowerCase()
+        .replace(/'/g, '')
+        .replace(/[^\w]+/g, '-')
+        .replace(/^-+|-+$/g, '');
     }
 
     // =================== VERIFICATION SYSTEM ===================

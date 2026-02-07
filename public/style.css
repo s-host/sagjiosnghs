@@ -271,6 +271,27 @@ body.theme-light .track {
   color: black;
 }
 
+body.theme-light .repost-card {
+  background-color: rgb(255, 255, 255);
+  color: black;
+}
+
+body.theme-light .repost-card:hover {
+  background-color: rgb(240, 240, 240);
+}
+
+body.theme-light .profile-repost-artist, 
+body.theme-light .profile-repost-timestamp,
+body.theme-light .profile-repost-action-btn {
+  color: #4b5563;
+}
+
+body.theme-light .profile-repost-bar-bg {
+  background-color: #d1d5db;
+}
+
+
+
 body.theme-light select, body.theme-light #releaseDate {
   background-color: rgb(218, 218, 218);
   color: black;
@@ -369,6 +390,15 @@ body.theme-blue select {
 
 body.theme-blue .track {
   background-color: rgb(18, 52, 139);
+}
+
+body.theme-blue .repost-card {
+  background-color: rgb(18, 52, 139);
+  color: white;
+}
+
+body.theme-blue .repost-card:hover {
+  background-color: rgb(30, 64, 175);
 }
 
 body.theme-blue .track p {
@@ -560,6 +590,27 @@ body.theme-sc .track {
   color: black;
 }
 
+body.theme-sc .repost-card {
+  background-color: rgb(255, 255, 255);
+  color: black;
+}
+
+body.theme-sc .repost-card:hover {
+  background-color: rgb(240, 240, 240);
+}
+
+body.theme-sc .profile-repost-artist, 
+body.theme-sc .profile-repost-timestamp,
+body.theme-sc .profile-repost-action-btn {
+  color: #4b5563;
+}
+
+body.theme-sc .profile-repost-bar-bg {
+  background-color: #d1d5db;
+}
+
+
+
 body.theme-sc .timestamp, body.theme-light input {
   color: black;
 }
@@ -685,6 +736,16 @@ body.theme-games .track {
   background-color: rgb(65, 65, 65);
   color: rgb(255, 255, 255);
 }
+
+body.theme-games .repost-card {
+  background-color: rgb(65, 65, 65);
+  color: rgb(255, 255, 255);
+}
+
+body.theme-games .repost-card:hover {
+  background-color: rgb(80, 80, 80);
+}
+
 
 body.theme-games .timestamp, body.theme-games input, body.theme-games label {
   color: white;
@@ -1589,6 +1650,7 @@ body.theme-strawberry-lemonade #btnPlayPause svg {
 .speed-modal label {
   display: block;
   margin-bottom: 4px;
+  color: black !important;
 }
 
 .speed-value {

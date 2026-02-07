@@ -843,7 +843,7 @@ function renderAlbum(albumSlug) {
             <div class="flex-1">
               <div class="text-lg font-semibold hover:underline cursor-pointer" onclick="playAlbumTrack('${albumSlug}', ${idx})">${track.title}</div>
               <div class="text-gray-400 text-sm albumtracktext">
-                #${track.albumNumber || '?'} <span class="text-xs text-gray-500 albumtracktext">(Track ${idx + 1})</span> • <span class="text-gray-500" data-track-title="${track.title.replace(/"/g, '&quot;')}">${trackDurationMap[track.title] || '<span class="animate-pulse">--:--</span>'}</span>
+                #${track.albumNumber || '?'} <span class="text-xs text-gray-500 albumtracktext">(Track ${idx + 1})</span> • <span class="text-gray-500 albumtracktext" data-track-title="${track.title.replace(/"/g, '&quot;')}">${trackDurationMap[track.title] || '<span class="animate-pulse">--:--</span>'}</span>
               </div>
             </div>
             <div class="flex items-center gap-2">
@@ -3560,7 +3560,10 @@ function renderCurrentAlbumView() {
   const uniqueArtists = {};
 
   for (let track of albumPlayer.tracks) {
-    uniqueArtists[track.artist] = (uniqueArtists[track.artist] || 0) + 1;
+    const artists = parseArtists(track.artist);
+    artists.forEach(artist => {
+      uniqueArtists[artist] = (uniqueArtists[artist] || 0) + 1;
+    });
   }
   const sortedArtists = Object.entries(uniqueArtists).sort((a, b) => b[1] - a[1]);
 
@@ -3578,7 +3581,7 @@ function renderCurrentAlbumView() {
           <div class="p-4 flex justify-between items-center albumtrack ${idx === albumPlayer.currentIndex ? 'bg-gray-700 currenttrack' : 'bg-gray-800'}">
             <div>
               <div class="text-lg font-semibold hover:underline cursor-pointer" onclick="playAlbumTrack('${albumSlug}', ${idx})">${track.title}</div>
-              <div class="text-gray-400 text-sm albumtracktext hover:underline cursor-pointer" onclick="navigateTo('/${slugify(track.artist)}/${slugify(track.title)}')">
+              <div class="text-gray-400 text-sm albumtracktext hover:underline cursor-pointer" onclick="navigateTo('/${slugify(parseArtists(track.artist)[0] || track.artist)}/${slugify(track.title)}')">
                 #${track.albumNumber || '?'} <span class="text-xs text-gray-500 albumtracktext">(Track ${idx + 1})</span> • ${trackDurationMap[track.title] || '--:--'}
               </div>
             </div>
@@ -3975,7 +3978,7 @@ function updatePersistentPlayer() {
     }
 
   bar.querySelector("#bar-track-title").textContent = current.title;
-  bar.querySelector("#bar-track-meta").textContent = `${current.album} • ${current.artist}`;
+  // bar.querySelector("#bar-track-meta").textContent = `${current.album} • ${current.artist}`;
   const playIcon = bar.querySelector("#albumPlayIcon");
   const pauseIcon = bar.querySelector("#albumPauseIcon");
 
@@ -5708,7 +5711,7 @@ function renderRepostItem(track) {
           <div class="profile-repost-info">
             <div class="profile-repost-title" onclick="navigateTo('/${artistSlug}/${songSlug}')">${escapeHtml(track.title)}</div>
             <div class="profile-repost-artist">
-              <span class="profile-repost-link" onclick="navigateTo('/${artistSlug}')">${escapeHtml(track.artist)}</span>
+              ${renderArtistLinks(track.artist)}
               <span class="profile-repost-separator">•</span>
               <span class="profile-repost-link" onclick="navigateTo('/album/${slugify(track.album)}')">${escapeHtml(track.album)}</span>
             </div>

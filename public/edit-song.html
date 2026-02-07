@@ -149,7 +149,7 @@
     // Fill form
     const form = document.getElementById("editTrackForm");
     form.title.value = track.title;
-    form.artist.value = track.artist;
+    form.artist.value = track.artist.replace(/;/g, ', ');
     form.album.value = track.album || '';
     form.cover.value = track.cover || '';
     form.file.value = track.file || '';
@@ -215,7 +215,7 @@
       // Prepare track data
       const updatedTrack = {
         title: form.title.value,
-        artist: form.artist.value,
+        artist: form.artist.value.split(',').map(a => a.trim()).filter(a => a.length > 0).join(';'),
         album: form.album.value,
         cover: form.cover.value,
         file: newFilePath,
