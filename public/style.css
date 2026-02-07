@@ -1647,10 +1647,13 @@ body.theme-strawberry-lemonade #btnPlayPause svg {
   border: 1px solid rgb(0,0,0);
 }
 
+body.theme-light .speed-modal label {
+  color: black !important;
+}
+
 .speed-modal label {
   display: block;
   margin-bottom: 4px;
-  color: black !important;
 }
 
 .speed-value {
