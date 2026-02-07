@@ -2163,16 +2163,16 @@ async function renderProfile(userId) {
                   <div class="profile-actions-list">
                     ${user.id !== "0" ? `
                       <button id="change-password-link" class="btn-text-blue">
-                        🔒 Change Password
+                        Change Password
                       </button>
                     ` : ''}
                     <div class="profile-picture-controls" style="margin-top: 0.5rem;">
                       <input type="file" id="profile-picture-upload" accept="image/*" style="display: none;">
                       <button id="upload-picture-btn" class="btn-text-green">
-                        📷 Upload Profile Picture
+                        Upload Profile Picture
                       </button>
                       ${user.profilePicture ? `<button id="delete-picture-btn" class="btn-text-red">
-                        🗑️ Delete Profile Picture
+                        Delete Profile Picture
                       </button>` : ''}
                     </div>
                     ${!user.isAdmin ? `
@@ -2183,7 +2183,7 @@ async function renderProfile(userId) {
                           </div>
                         ` : user.verificationPending ? `
                           <div style="margin-top: 0.5rem;">
-                            <div class="text-yellow-status">⏳ Verification request pending...</div>
+                            <div class="text-yellow-status">Verification request pending...</div>
                             <button id="cancel-verification-btn" class="btn-text-red">
                               ✕ Cancel Verification Request
                             </button>
@@ -2942,7 +2942,7 @@ function renderChangePassword(userId) {
   getApp().innerHTML = `
     <div class="max-w-md mx-auto p-6">
       <div class="bg-gray-800 rounded-lg shadow-lg p-6 track">
-        <h2 class="text-2xl font-bold mb-4">🔒 Change Password</h2>
+        <h2 class="text-2xl font-bold mb-4">Change Password</h2>
         
         <form id="change-password-form" class="space-y-4">
           <div>
