@@ -3461,6 +3461,14 @@ function startAlbumAudio(startTime = 0) {
       saveVolume(parseFloat(persistentVolumeSlider.value));
     });
   }
+  if (persistentVolumeSlider) {
+    persistentVolumeSlider.value = defaultVolume;
+    setupVolumeSlider(persistentVolumeSlider, albumPlayer.audio);
+
+    persistentVolumeSlider.addEventListener("input", () => {
+      saveVolume(parseFloat(persistentVolumeSlider.value));
+    });
+  }
 
   // Prevent auto-play from resetting position if we manually handle it elsewhere (e.g. transfer)
   audio.addEventListener("canplaythrough", () => {
