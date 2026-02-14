@@ -3,6 +3,51 @@
     "unread": [],
     "history": [
       {
+        "id": "1771093068876_p3dquk",
+        "type": "new_release",
+        "artistSlug": "jane-remover",
+        "artistName": "Jane Remover",
+        "trackTitle": "seventeen",
+        "trackSlug": "seventeen",
+        "createdAt": 1771093068876
+      },
+      {
+        "id": "1771093032771_7fngzj",
+        "type": "new_release",
+        "artistSlug": "jane-remover",
+        "artistName": "Jane Remover",
+        "trackTitle": "beast friend",
+        "trackSlug": "beast-friend",
+        "createdAt": 1771093032771
+      },
+      {
+        "id": "1771093008933_81wqis",
+        "type": "new_release",
+        "artistSlug": "jane-remover",
+        "artistName": "Jane Remover",
+        "trackTitle": "cartridge",
+        "trackSlug": "cartridge",
+        "createdAt": 1771093008933
+      },
+      {
+        "id": "1771092969960_sz7d7q",
+        "type": "new_release",
+        "artistSlug": "jane-remover",
+        "artistName": "Jane Remover",
+        "trackTitle": "dysphoria",
+        "trackSlug": "dysphoria",
+        "createdAt": 1771092969960
+      },
+      {
+        "id": "1771092926484_77spce",
+        "type": "new_release",
+        "artistSlug": "jane-remover",
+        "artistName": "Jane Remover",
+        "trackTitle": "let down",
+        "trackSlug": "let-down",
+        "createdAt": 1771092926484
+      },
+      {
         "id": "1770487658504_4uh82u",
         "type": "new_release",
         "artistSlug": "jane-remover",

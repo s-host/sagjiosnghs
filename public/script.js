@@ -801,6 +801,55 @@ function renderAlbum(albumSlug) {
   const sorted = matchingTracks.sort((a, b) => parseInt(a.albumNumber || 9999) - parseInt(b.albumNumber || 9999));
   const albumTitle = sorted[0].album;
 
+  // Check if we're transitioning from a single song page that is playing a track from this album
+  try {
+    const singleAudio = document.getElementById("audio");
+    if (singleAudio && !singleAudio.paused && !albumPlayer.audio) {
+      // Try to find if the currently playing single track is in this album
+      // We can use the 'currentlyPlayingSlug' global variable if set, or match by file/src
+      let matchIndex = -1;
+      
+      // First try filtering by slug if available (most reliable)
+      // Note: currentlyPlayingSlug is usually "slugified-title"
+      if (typeof currentlyPlayingSlug !== 'undefined' && currentlyPlayingSlug) {
+        matchIndex = sorted.findIndex(t => slugify(t.title) === currentlyPlayingSlug);
+      }
+      
+      // If no match by slug, try matching by src URL
+      if (matchIndex === -1 && singleAudio.src) {
+          const decodedSrc = decodeURIComponent(singleAudio.src);
+          matchIndex = sorted.findIndex(t => decodedSrc.endsWith(t.file) || decodedSrc.endsWith(t.file.replace(/^\//,'')));
+      }
+  
+      if (matchIndex !== -1) {
+         console.log("Transferring playback from single page to album player...", matchIndex);
+         const currentTime = singleAudio.currentTime;
+         const currentVolume = singleAudio.volume;
+         
+         // Updates the UI to avoid double audio confusion, though we are about to navigate away or replace innerHTML anyway
+         singleAudio.pause(); 
+         
+         // Setup album player context
+         albumPlayer.tracks = sorted;
+         albumPlayer.currentIndex = matchIndex;
+         albumPlayer.albumSlug = albumSlug;
+         
+         // Initialize album audio
+         startAlbumAudio(currentTime);
+         
+         // Apply state to new audio
+         if (albumPlayer.audio) {
+             const newAudio = albumPlayer.audio;
+             newAudio.volume = currentVolume;
+             
+             // No manual seeking needed, handled by startAlbumAudio(currentTime)
+         }
+      }
+    }
+  } catch (err) {
+    console.warn("Error transferring playback to album player:", err);
+  }
+
   // Get currently playing track info (from queue or album player)
   let currentlyPlayingTrack = null;
   if (albumPlayer.tracks && albumPlayer.tracks.length > 0 && albumPlayer.currentIndex >= 0) {
@@ -1130,16 +1179,6 @@ async function playPlaylist(playlistId) {
     startAlbumAudio();
     updatePersistentPlayer();
     saveAlbumPlayerState();
-
-    const persistentVolumeSlider = document.getElementById("volumeSlider");
-    if (albumPlayer.audio && persistentVolumeSlider) {
-      const volume = parseFloat(persistentVolumeSlider.value);
-      albumPlayer.audio.volume = volume;
-      persistentVolumeSlider.value = volume;
-      const percent = volume * 100;
-      const color = getProgressBarColor();
-      persistentVolumeSlider.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${percent}%, #444 ${percent}%, #444 100%)`;
-    }
   } catch (error) {
     console.error('Error playing playlist:', error);
     alert('Failed to play playlist');
@@ -3346,9 +3385,9 @@ function setupVolumeSlider(slider, audio) {
   if (!slider || !audio) return;
 
   function updateVolumeFill() {
-    const percent = parseFloat(volumeSlider.value) * 100;
+    const percent = parseFloat(slider.value) * 100;
     const color = getProgressBarColor();
-    volumeSlider.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${percent}%, #444 ${percent}%, #444 100%)`;
+    slider.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${percent}%, #444 ${percent}%, #444 100%)`;
   }
 
   slider.addEventListener("input", () => {
@@ -3384,24 +3423,7 @@ function stopAlbumAudio() {
   }
 }
 
-function setupVolumeSlider(slider, audio) {
-  if (!slider || !audio) return;
-
-  function updateVolumeFill() {
-    const percent = parseFloat(volumeSlider.value) * 100;
-    const color = getProgressBarColor();
-    volumeSlider.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${percent}%, #444 ${percent}%, #444 100%)`;
-  }
-
-  slider.addEventListener("input", () => {
-    audio.volume = parseFloat(slider.value);
-    updateVolumeFill();
-  });
-
-  updateVolumeFill();
-}
-
-function startAlbumAudio() {
+function startAlbumAudio(startTime = 0) {
   stopAlbumAudio();
   const bar = document.getElementById("persistent-album-bar");
   if (bar) bar.classList.remove("hide");
@@ -3419,6 +3441,14 @@ function startAlbumAudio() {
   audio.src = currentTrack.file;
   audio.load();
 
+  if (startTime > 0) {
+      const setInitialTime = () => {
+          if (Number.isFinite(startTime)) audio.currentTime = startTime;
+      };
+      if (audio.readyState >= 1) setInitialTime();
+      else audio.addEventListener('loadedmetadata', setInitialTime, { once: true });
+  }
+
   let defaultVolume = getSavedVolume();
   audio.volume = defaultVolume;
 
@@ -3432,11 +3462,18 @@ function startAlbumAudio() {
     });
   }
 
+  // Prevent auto-play from resetting position if we manually handle it elsewhere (e.g. transfer)
   audio.addEventListener("canplaythrough", () => {
-    audio.play();
-    // Track the play for album track (use first artist slug)
-    trackPlay(slugify(firstArtist), slugify(currentTrack.title));
-  });
+    // We rely on either the manual play call at end of function OR transfer logic
+  }, { once: true });
+  
+  // Track play when we actually start playing for the first time
+  const trackPlayHandler = () => {
+      trackPlay(slugify(firstArtist), slugify(currentTrack.title));
+      audio.removeEventListener('playing', trackPlayHandler);
+  };
+  audio.addEventListener('playing', trackPlayHandler);
+
 
   audio.addEventListener("error", () => {
     console.error("Audio failed to load:", currentTrack.file);
@@ -3537,6 +3574,7 @@ function startAlbumAudio() {
       progressBar &&
       timestamp &&
       typeof currentlyPlayingSlug !== "undefined" &&
+      albumPlayer.tracks[albumPlayer.currentIndex] &&
       slugify(albumPlayer.tracks[albumPlayer.currentIndex].title) === currentlyPlayingSlug
     ) {
       progressBar.value = percent;
@@ -3550,7 +3588,25 @@ function startAlbumAudio() {
     }
   };
 
-  audio.play();
+  // Don't auto-play at end of function, let caller handle it or use event listeners
+  // But for legacy compatibility with other calls, check if we want to auto-play? 
+  // Most calls expect auto-play. 
+  // But if we are transferring, we handle the play call in the transfer logic after seeking.
+  // We can check if currentTime was modified? No, it's 0 here.
+  
+  // Only call play if we are not in a transferring state?
+  // We can pass an optional argument to startAlbumAudio(autoPlay = true)
+  // But function signature change is risky if I miss callers.
+  
+  // Let's just return the audio object and let the caller play if they want?
+  // No, that breaks existing callers.
+
+  // Let's just leave it as is, audio.play() should be harmless if we seek later.
+  // Unless... 
+  
+  if (albumPlayer.audio.paused) { 
+      albumPlayer.audio.play().catch(e => console.log("Start play failed", e));
+  }
 }
 
 function renderCurrentAlbumView() {
